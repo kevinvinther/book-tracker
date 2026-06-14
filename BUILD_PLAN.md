@@ -61,11 +61,11 @@ Read/write markdown files with YAML frontmatter. Build the index that loads them
 
 Full CRUD for Work entities over REST.
 
-- [ ] `POST /api/works` — create Work file + update index
-- [ ] `GET /api/works` — list all, with `?q=&sort=&order=` params
-- [ ] `GET /api/works/:slug` — single work, resolves edition + copy counts
-- [ ] `PATCH /api/works/:slug` — update fields (title, subtitle, authors, genres, description, series, series_position, primary_cover)
-- [ ] `DELETE /api/works/:slug` — orphan-protected (refuse if editions exist, cascade override)
+- [x] `POST /api/works` — create Work file + update index
+- [x] `GET /api/works` — list all, with `?q=&sort=&order=` params
+- [x] `GET /api/works/:slug` — single work, resolves edition + copy counts
+- [x] `PATCH /api/works/:slug` — update fields (title, subtitle, authors, genres, description, series, series_position, primary_cover)
+- [x] `DELETE /api/works/:slug` — orphan-protected (refuse if editions exist, cascade override)
 
 ---
 
