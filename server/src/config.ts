@@ -18,7 +18,7 @@ export interface AppConfig {
   library_path: string;
 }
 
-function expandHome(path: string): string {
+export function expandHome(path: string): string {
   if (path.startsWith("~")) {
     return join(homedir(), path.slice(1));
   }
