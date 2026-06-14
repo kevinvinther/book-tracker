@@ -75,11 +75,11 @@ Full CRUD for Work entities over REST.
 
 Full CRUD for Author entities.
 
-- [ ] `POST /api/authors` — create Author file, slug from name
-- [ ] `GET /api/authors` — list all
-- [ ] `GET /api/authors/:slug` — single author, resolves list of works
-- [ ] `PATCH /api/authors/:slug` — update name/aliases
-- [ ] `DELETE /api/authors/:slug` — orphan-protected (refuse if works link to this author, cascade override)
+- [x] `POST /api/authors` — create Author file, slug from name
+- [x] `GET /api/authors` — list all
+- [x] `GET /api/authors/:slug` — single author, resolves list of works
+- [x] `PATCH /api/authors/:slug` — update name/aliases
+- [x] `DELETE /api/authors/:slug` — orphan-protected (refuse if works link to this author, cascade override)
 
 ---
 

@@ -1,4 +1,9 @@
-## ADDED Requirements
+# settings-page Specification
+
+## Purpose
+Client settings page for viewing and editing the library path
+
+## Requirements
 
 ### Requirement: Settings page
 The client SHALL have a Settings page accessible at `/settings` that allows the user to view and edit the library path.

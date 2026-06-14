@@ -1,0 +1,83 @@
+# author-api Specification
+
+## Purpose
+TBD - created by archiving change author-api. Update Purpose after archive.
+## Requirements
+### Requirement: Author file format
+An Author entity SHALL be stored as a markdown file at `authors/{slug}.md` with YAML frontmatter containing `type: author`, `slug`, `name` (required), optional `aliases[]`, `created_at`, and `_schema`.
+
+#### Scenario: Example author file on disk
+- **WHEN** an author with name "Fyodor Dostoevsky" and slug "fyodor-dostoevsky" is created
+- **THEN** the file `authors/fyodor-dostoevsky.md` exists on disk with:
+  ```yaml
+  ---
+  type: author
+  slug: fyodor-dostoevsky
+  name: "Fyodor Dostoevsky"
+  created_at: 2024-01-10T12:00:00.000Z
+  _schema: 1
+  ---
+  ```
+  followed by an auto-generated markdown body
+
+### Requirement: Create an author
+The system SHALL expose `POST /api/authors` that accepts a JSON body with at least a `name` field, generates a slug from the name via `generateSlug`, creates an Author file in `authors/{slug}.md`, inserts it into the index, and returns the created author with HTTP 201.
+
+#### Scenario: Successful creation
+- **WHEN** a POST request is made to `/api/authors` with `{ "name": "Fyodor Dostoevsky" }`
+- **THEN** the response has status 201 and the author has a generated slug `fyodor-dostoevsky`
+
+#### Scenario: Creation with aliases
+- **WHEN** a POST request is made to `/api/authors` with `{ "name": "Isaac Asimov", "aliases": ["Paul French"] }`
+- **THEN** the response has status 201 and `aliases` contains "Paul French"
+
+#### Scenario: Creation with missing name
+- **WHEN** a POST request is made to `/api/authors` with `{}`
+- **THEN** the response has status 400 with an error indicating name is required
+
+### Requirement: List all authors
+The system SHALL expose `GET /api/authors` that returns all authors as a JSON array.
+
+#### Scenario: List authors
+- **WHEN** a GET request is made to `/api/authors`
+- **THEN** the response has status 200 and a JSON array of all authors
+
+### Requirement: Get a single author with resolved works
+The system SHALL expose `GET /api/authors/:slug` that returns the full author entity with a resolved `works` array containing the slugs and titles of all works linked to this author via `[[wikilinks]]`.
+
+#### Scenario: Author with works
+- **WHEN** a GET request is made to `/api/authors/fyodor-dostoevsky` and the author has 2 works
+- **THEN** the response has status 200 and includes a `works` array with the slug and title of each linked work
+
+#### Scenario: Author does not exist
+- **WHEN** a GET request is made to `/api/authors/nonexistent`
+- **THEN** the response has status 404
+
+### Requirement: Update an author
+The system SHALL expose `PATCH /api/authors/:slug` that accepts a JSON body with `name` and/or `aliases`. The handler SHALL re-read the file from disk, merge incoming fields, write atomically, and update the index. The `slug` SHALL never be modified.
+
+#### Scenario: Update name
+- **WHEN** a PATCH request is made to `/api/authors/fyodor-dostoevsky` with `{ "name": "F. M. Dostoevsky" }`
+- **THEN** the author's name is updated and all other fields remain unchanged
+
+#### Scenario: Attempt to change slug
+- **WHEN** a PATCH request is made with `{ "slug": "new-slug" }`
+- **THEN** the slug in the request is ignored
+
+### Requirement: Delete an author with orphan protection
+The system SHALL expose `DELETE /api/authors/:slug` that deletes the author. If works reference this author via `[[wikilinks]]`, the system SHALL refuse with HTTP 409. The `?cascade=true` parameter SHALL override this: it deletes the author file and index entry without modifying any linked works. The works' `[[wikilinks]]` to the deleted author become dangling references (unresolved links in Obsidian).
+
+#### Scenario: Delete author with no works
+- **WHEN** a DELETE request is made to `/api/authors/unused-author` and no works reference this author
+- **THEN** the response has status 200 and the author is deleted
+
+#### Scenario: Delete author with works (orphan protected)
+- **WHEN** a DELETE request is made to `/api/authors/fyodor-dostoevsky` and 2 works reference this author
+- **THEN** the response has status 409 with an error listing the work count
+
+#### Scenario: Cascade delete author with works
+- **WHEN** a DELETE request is made to `/api/authors/fyodor-dostoevsky?cascade=true` and 2 works reference this author
+- **THEN** the response has status 200
+- **AND** the author file and index entry are removed
+- **AND** the works themselves are not modified — their `authors[]` still contain the dangling wikilink
+

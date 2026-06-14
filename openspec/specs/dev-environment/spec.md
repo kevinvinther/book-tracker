@@ -1,5 +1,8 @@
-## ADDED Requirements
+# dev-environment Specification
 
+## Purpose
+Monorepo development workflow with concurrent server and client
+## Requirements
 ### Requirement: Monorepo with concurrent dev workflow
 The project SHALL use a monorepo structure with `server/` and `client/` directories, and a root `package.json` that starts both services with a single `npm run dev` command.
 
@@ -13,18 +16,18 @@ The project SHALL use a monorepo structure with `server/` and `client/` director
 - **THEN** dependencies for both `server/` and `client/` are installed
 
 ### Requirement: Docker Compose development environment
-The project SHALL include a root `docker-compose.yml` and per-service `Dockerfile`s so that a developer can run the full stack with `docker compose up` without installing Node.js locally.
+The project SHALL include a root `docker-compose.yml` and per-service `Dockerfile`s so that a developer can run the full stack with `docker compose up` without installing Node.js locally. The server service SHALL set `BOOKTRACKER_LIBRARY_PATH=/data` and mount `./data/` (relative to the project root) to `/data` inside the container so library data persists on the host alongside the project.
 
 #### Scenario: Developer starts containers
 - **WHEN** the developer runs `docker compose up` from the project root
 - **THEN** both the server and client containers start
 - **AND** source directories are bind-mounted for live reload
+- **AND** `./data/` on the host is mounted to `/data` inside the server container
 - **AND** `node_modules/` uses a named volume inside each container
 
-#### Scenario: Developer accesses the application
-- **WHEN** both containers are running
-- **THEN** the client is reachable at `http://localhost:5173`
-- **AND** the server is reachable at `http://localhost:3001`
+#### Scenario: Library data persists on host
+- **WHEN** the server creates files in `/data/authors/` inside the container
+- **THEN** those files are visible on the host at `./data/authors/` relative to the project root
 
 ### Requirement: Server package structure
 The `server/` directory SHALL contain an Express application written in TypeScript, with a dev script using `tsx` for hot reload on file changes. The server SHALL have its own `tsconfig.json` targeting Node.js.
@@ -53,3 +56,4 @@ The Vite dev server SHALL proxy all requests to `/api/*` to the backend server a
 #### Scenario: Proxy does not interfere with static assets
 - **WHEN** the client loads `/src/main.tsx` or any non-API path
 - **THEN** Vite serves the file directly without proxying to the backend
+

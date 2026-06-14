@@ -1,4 +1,9 @@
-## ADDED Requirements
+# health-check Specification
+
+## Purpose
+Server health check endpoint for connectivity verification
+
+## Requirements
 
 ### Requirement: Health check endpoint
 The server SHALL expose a `GET /api/health` endpoint that returns a JSON response confirming the server is operational.
