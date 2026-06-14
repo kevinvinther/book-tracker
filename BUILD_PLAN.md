@@ -41,17 +41,17 @@ App knows where the library lives. Creates the directory tree on first launch.
 
 Read/write markdown files with YAML frontmatter. Build the index that loads them all at startup.
 
-- [ ] `readFile(path)` — parse YAML frontmatter + body, return typed object
-- [ ] `writeFile(path, frontmatter, body)` — serialize + atomic write (temp file + rename)
-- [ ] `deleteFile(path)`
-- [ ] `listFiles(dir)`
-- [ ] `generateSlug(input, existingSlugs)` — spec section 3.0 algorithm
-- [ ] `Index` class — `load()` walks tree, parses all files
-- [ ] Notes: also load markdown body for search
-- [ ] Lookup methods: `getWork(slug)`, `getCopy(slug)`, `getWorksByAuthor(slug)`, `getCopiesByEdition(slug)`, `getEditionsByWork(slug)`
-- [ ] `searchWorks(query)` — filter by title/author/genre
-- [ ] Index updates on write: `index.upsert(entity)`, `index.remove(type, slug)`
-- [ ] Log startup time; verify <1s for 500 test files
+- [x] `readFile(path)` — parse YAML frontmatter + body, return typed object
+- [x] `writeFile(path, frontmatter, body)` — serialize + atomic write (temp file + rename)
+- [x] `deleteFile(path)`
+- [x] `listFiles(dir)`
+- [x] `generateSlug(input, existingSlugs)` — sole slug authority: transliterate, normalize, dedup
+- [x] `Index` class — `load()` walks tree, parses all files
+- [x] Notes: also load markdown body for search
+- [x] Lookup methods: `getWork(slug)`, `getCopy(slug)`, `getWorksByAuthor(slug)`, `getCopiesByEdition(slug)`, `getEditionsByWork(slug)`
+- [x] `searchWorks(query)` — filter by title/author/genre
+- [x] Index updates on write: `index.upsert(entity)`, `index.remove(type, slug)`
+- [x] Log startup time; verify <1s for 500 test files
 
 ---
 
