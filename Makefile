@@ -1,4 +1,4 @@
-.PHONY: up down build clean dev-local install
+.PHONY: up down build clean dev-local install test
 
 up:
 	docker compose up --build
@@ -17,3 +17,6 @@ dev-local:
 
 install:
 	npm install --prefix server && npm install --prefix client
+
+test:
+	npm run test --prefix server
