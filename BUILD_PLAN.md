@@ -12,12 +12,12 @@
 
 Set up the monorepo: Node.js/Express backend, Vite/React/shadcn frontend, single dev command, health-check roundtrip.
 
-- [ ] `server/` — Express + TypeScript, `npm run dev` via tsx
-- [ ] `client/` — Vite + React + TypeScript + Tailwind + shadcn/ui
-- [ ] Root `package.json`: `npm run dev` starts both (concurrently)
-- [ ] Vite proxies `/api/*` to `localhost:3001` in dev
-- [ ] `GET /api/health` returns `{ status: "ok" }`
-- [ ] Client calls `/api/health` on mount, displays "OK" from the server
+- [x] `server/` — Express + TypeScript, `npm run dev` via tsx
+- [x] `client/` — Vite + React + TypeScript + Tailwind + shadcn/ui
+- [x] Root `package.json`: `npm run dev` starts both (concurrently)
+- [x] Vite proxies `/api/*` to `localhost:3001` in dev
+- [x] `GET /api/health` returns `{ status: "ok" }`
+- [x] Client calls `/api/health` on mount, displays "OK" from the server
 
 ---
 
