@@ -20,7 +20,8 @@ The library path is configured through two competing mechanisms: a `.booktracker
 ### Modified Capabilities
 
 - `app-config`: `readConfig` uses env var only; `writeConfig` is removed; config file is deprecated
-- `settings-page`: PATCH endpoint acknowledges but does not persist; UI shows env var source
+- `settings-page`: Settings page becomes read-only display; PATCH endpoint is removed
+- `dev-environment`: Docker Compose no longer hardcodes `BOOKTRACKER_LIBRARY_PATH`; `.env` is mounted so the container reads the same config as local dev. The `./data:/data` volume mount handles the default path.
 
 ## Impact
 

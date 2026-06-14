@@ -15,10 +15,28 @@ npm install
 npm run dev
 ```
 
-Opens the web app on `localhost:5173`. Your library lives in `~/book-tracker-data/`.
+Opens the web app on `localhost:5173`.
+
+## Configuration
+
+The library data directory is controlled by the `BOOKTRACKER_LIBRARY_PATH` environment variable. Defaults to `./data/` (alongside the project).
+
+```bash
+# .env (copy from .env.example)
+BOOKTRACKER_LIBRARY_PATH=./data/
+```
+
+### Docker
+
+Docker Compose reads the same `.env` file. The default `./data/` is mounted automatically. If you change the path to something else (e.g. `~/book-tracker-data/`), add a matching volume mount to `docker-compose.yml`:
+
+```yaml
+volumes:
+  - ~/book-tracker-data:/root/book-tracker-data  # matches ~ expansion in container
+```
+
+Then `docker compose up --build`.
 
 ## Documentation
 
-- `spec.md` — Full specification (data model, features, architecture, 44 resolved decisions)
-- `intent.md` — Original confirmed intent from project inception
 - `BUILD_PLAN.md` — 33-step implementation sequence with dependency graph
