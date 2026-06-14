@@ -29,14 +29,21 @@ export function readConfig(): AppConfig {
   if (!existsSync(CONFIG_PATH)) {
     mkdirSync(CONFIG_DIR, { recursive: true });
     writeConfig(DEFAULT_CONFIG);
-    return { ...DEFAULT_CONFIG };
+    return resolveConfig({ ...DEFAULT_CONFIG });
   }
 
   const raw = readFileSync(CONFIG_PATH, "utf-8");
   const config = load(raw) as AppConfig;
-  return {
+  return resolveConfig({
     library_path: config.library_path || DEFAULT_CONFIG.library_path,
-  };
+  });
+}
+
+function resolveConfig(config: AppConfig): AppConfig {
+  if (process.env.BOOKTRACKER_LIBRARY_PATH) {
+    return { library_path: process.env.BOOKTRACKER_LIBRARY_PATH };
+  }
+  return config;
 }
 
 export function writeConfig(config: AppConfig): void {

@@ -6,8 +6,10 @@ services:
     volumes:
       - ./server/src:/app/src
       - server-node-modules:/app/node_modules
+      - ./data:/data
     environment:
       - NODE_ENV=development
+      - BOOKTRACKER_LIBRARY_PATH=/data
 
   client:
     build: ./client
