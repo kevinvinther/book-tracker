@@ -101,6 +101,10 @@ export class Index {
     return Array.from(this.copies.values());
   }
 
+  getAllNoteSlugs(): string[] {
+    return Array.from(this.notes.keys());
+  }
+
   getWorksByAuthor(authorSlug: string): Work[] {
     const wikilink = `[[authors/${authorSlug}]]`;
     return this.getAllWorks().filter((w) => w.authors.includes(wikilink));
@@ -147,6 +151,8 @@ export class Index {
       if (authorMatches) return true;
 
       if (w.genres?.some((g) => g.toLowerCase().includes(q))) return true;
+
+      if (w.aliases?.some((a) => a.toLowerCase().includes(q))) return true;
 
       return false;
     });

@@ -1,6 +1,7 @@
 import express from "express";
 import { readConfig, writeConfig, ensureLibraryDirectories } from "./config.js";
 import { Index } from "./lib/index.js";
+import { createWorksRouter } from "./routes/works.js";
 
 const app = express();
 const PORT = 3001;
@@ -32,6 +33,8 @@ app.patch("/api/config", (req, res) => {
   writeConfig(updated);
   res.json(updated);
 });
+
+app.use("/api/works", createWorksRouter(index, config.library_path));
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
