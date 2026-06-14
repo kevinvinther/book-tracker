@@ -27,11 +27,11 @@ Set up the monorepo: Node.js/Express backend, Vite/React/shadcn frontend, single
 
 App knows where the library lives. Creates the directory tree on first launch.
 
-- [ ] `.booktracker/config.yaml` — `library_path` (default: `~/book-tracker-data/`)
-- [ ] `GET /api/config` returns config
-- [ ] `PATCH /api/config` updates library_path
-- [ ] On startup, create directories if missing: `authors/`, `series/`, `works/`, `editions/`, `copies/`, `notes/`, `attachments/`, `.booktracker/cache/`
-- [ ] Client: Settings page with library path input
+- [x] `.booktracker/config.yaml` — `library_path` (default: `~/book-tracker-data/`)
+- [x] `GET /api/config` returns config
+- [x] `PATCH /api/config` updates library_path
+- [x] On startup, create directories if missing: `authors/`, `series/`, `works/`, `editions/`, `copies/`, `notes/`, `attachments/`, `.booktracker/cache/`
+- [x] Client: Settings page with library path input
 
 ---
 
