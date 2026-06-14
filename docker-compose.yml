@@ -1,0 +1,31 @@
+services:
+  server:
+    build: ./server
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./server/src:/app/src
+      - server-node-modules:/app/node_modules
+    environment:
+      - NODE_ENV=development
+
+  client:
+    build: ./client
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./client/src:/app/src
+      - ./client/index.html:/app/index.html
+      - ./client/vite.config.ts:/app/vite.config.ts
+      - ./client/tsconfig.json:/app/tsconfig.json
+      - ./client/components.json:/app/components.json
+      - client-node-modules:/app/node_modules
+    environment:
+      - NODE_ENV=development
+      - BACKEND_URL=http://server:3001
+    depends_on:
+      - server
+
+volumes:
+  server-node-modules:
+  client-node-modules:
