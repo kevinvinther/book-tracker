@@ -1,18 +1,11 @@
-import { readFileSync, writeFileSync, renameSync, unlinkSync, existsSync, mkdirSync } from "fs";
-import { dirname, resolve, join } from "path";
-import { fileURLToPath } from "url";
+import { existsSync, mkdirSync } from "fs";
+import { resolve, join, dirname } from "path";
 import { homedir } from "os";
-import { load, dump } from "js-yaml";
+import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const PROJECT_ROOT = resolve(__dirname, "../..");
-const CONFIG_DIR = join(PROJECT_ROOT, ".booktracker");
-const CONFIG_PATH = join(CONFIG_DIR, "config.yaml");
-
-const DEFAULT_CONFIG: AppConfig = {
-  library_path: "~/book-tracker-data/",
-};
 
 export interface AppConfig {
   library_path: string;
@@ -22,37 +15,16 @@ export function expandHome(path: string): string {
   if (path.startsWith("~")) {
     return join(homedir(), path.slice(1));
   }
+  if (path.startsWith("./") || path.startsWith("../")) {
+    return resolve(PROJECT_ROOT, path);
+  }
   return path;
 }
 
 export function readConfig(): AppConfig {
-  if (!existsSync(CONFIG_PATH)) {
-    mkdirSync(CONFIG_DIR, { recursive: true });
-    writeConfig(DEFAULT_CONFIG);
-    return resolveConfig({ ...DEFAULT_CONFIG });
-  }
-
-  const raw = readFileSync(CONFIG_PATH, "utf-8");
-  const config = load(raw) as AppConfig;
-  return resolveConfig({
-    library_path: config.library_path || DEFAULT_CONFIG.library_path,
-  });
-}
-
-function resolveConfig(config: AppConfig): AppConfig {
-  if (process.env.BOOKTRACKER_LIBRARY_PATH) {
-    return { library_path: process.env.BOOKTRACKER_LIBRARY_PATH };
-  }
-  return config;
-}
-
-export function writeConfig(config: AppConfig): void {
-  const yaml = dump(config, { lineWidth: -1 });
-  const tmpPath = CONFIG_PATH + ".tmp";
-
-  mkdirSync(CONFIG_DIR, { recursive: true });
-  writeFileSync(tmpPath, yaml, "utf-8");
-  renameSync(tmpPath, CONFIG_PATH);
+  return {
+    library_path: process.env.BOOKTRACKER_LIBRARY_PATH || "./data/",
+  };
 }
 
 const LIBRARY_DIRECTORIES = [

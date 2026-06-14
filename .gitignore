@@ -9,3 +9,4 @@ dist/
 
 # Test data 
 data/
+.booktracker/

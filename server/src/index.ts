@@ -1,5 +1,6 @@
+import "dotenv/config";
 import express from "express";
-import { readConfig, writeConfig, ensureLibraryDirectories } from "./config.js";
+import { readConfig, ensureLibraryDirectories } from "./config.js";
 import { Index } from "./lib/index.js";
 import { createWorksRouter } from "./routes/works.js";
 import { createAuthorsRouter } from "./routes/authors.js";
@@ -22,17 +23,6 @@ app.get("/api/health", (_req, res) => {
 
 app.get("/api/config", (_req, res) => {
   res.json(readConfig());
-});
-
-app.patch("/api/config", (req, res) => {
-  const { library_path } = req.body;
-  if (!library_path || typeof library_path !== "string" || !library_path.trim()) {
-    res.status(400).json({ error: "library_path is required" });
-    return;
-  }
-  const updated = { library_path: library_path.trim() };
-  writeConfig(updated);
-  res.json(updated);
 });
 
 app.use("/api/works", createWorksRouter(index, config.library_path));
