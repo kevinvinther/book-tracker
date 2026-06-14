@@ -1,5 +1,6 @@
 import express from "express";
 import { readConfig, writeConfig, ensureLibraryDirectories } from "./config.js";
+import { Index } from "./lib/index.js";
 
 const app = express();
 const PORT = 3001;
@@ -8,6 +9,10 @@ app.use(express.json());
 
 const config = readConfig();
 ensureLibraryDirectories(config.library_path);
+
+const index = new Index(config.library_path);
+index.load();
+app.locals.index = index;
 
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });
