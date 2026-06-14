@@ -3,35 +3,16 @@
 ## Purpose
 Persistent application configuration with a configurable library path
 ## Requirements
-### Requirement: Config file with library path
-The system SHALL maintain a `.booktracker/config.yaml` file in the project root with a `library_path` field. The default value SHALL be `~/book-tracker-data/`.
-
-#### Scenario: Config file does not exist on startup
-- **WHEN** the server starts and `.booktracker/config.yaml` does not exist
-- **THEN** the server creates the file with `library_path: ~/book-tracker-data/`
-
-#### Scenario: Config file exists on startup
-- **WHEN** the server starts and `.booktracker/config.yaml` already exists
-- **THEN** the server reads and uses the existing `library_path` value
-
 ### Requirement: Read config via API
-The system SHALL expose `GET /api/config` that returns the current configuration as JSON.
+The system SHALL expose `GET /api/config` that returns the current library path. The path SHALL come from the `BOOKTRACKER_LIBRARY_PATH` environment variable if set, otherwise default to `~/book-tracker-data/`. No config file is read.
 
-#### Scenario: Successful config read
-- **WHEN** a GET request is made to `/api/config`
-- **THEN** the server responds with HTTP 200 and a JSON body containing `library_path`
+#### Scenario: Environment variable is set
+- **WHEN** `BOOKTRACKER_LIBRARY_PATH=/data` and a GET request is made to `/api/config`
+- **THEN** the server responds with HTTP 200 and `{ "library_path": "/data" }`
 
-### Requirement: Update library path via API
-The system SHALL expose `PATCH /api/config` that accepts a JSON body with `library_path` and updates the config file atomically.
-
-#### Scenario: Valid library path update
-- **WHEN** a PATCH request is made to `/api/config` with `{ "library_path": "/home/user/my-books" }`
-- **THEN** the server writes the new value to `.booktracker/config.yaml`
-- **AND** responds with HTTP 200 and the updated config
-
-#### Scenario: Invalid library path update
-- **WHEN** a PATCH request is made to `/api/config` with missing or empty `library_path`
-- **THEN** the server responds with HTTP 400 and an error message
+#### Scenario: Environment variable is not set
+- **WHEN** `BOOKTRACKER_LIBRARY_PATH` is not set and a GET request is made to `/api/config`
+- **THEN** the server responds with HTTP 200 and `{ "library_path": "~/book-tracker-data/" }`
 
 ### Requirement: Library directory scaffold on startup
 On server startup, the system SHALL read the config, resolve the `library_path`, and create the following directories if they do not already exist: `authors/`, `series/`, `works/`, `editions/`, `copies/`, `notes/`, `attachments/`, `.booktracker/cache/`.
@@ -66,4 +47,15 @@ The `readConfig` function SHALL check for a `BOOKTRACKER_LIBRARY_PATH` environme
 #### Scenario: Environment variable is not set
 - **WHEN** `BOOKTRACKER_LIBRARY_PATH` is not set and `readConfig()` is called
 - **THEN** the returned config uses the value from `.booktracker/config.yaml`
+
+### Requirement: Environment variables are loaded from .env file
+The server SHALL load environment variables from a `.env` file in the project root at startup using `dotenv`. A `.env.example` file SHALL be provided documenting the `BOOKTRACKER_LIBRARY_PATH` variable. The `.env` file SHALL be gitignored. The default library path SHALL be `./data/`, resolved relative to the project root.
+
+#### Scenario: .env file is present
+- **WHEN** a `.env` file exists in the project root with `BOOKTRACKER_LIBRARY_PATH=./data/`
+- **THEN** `readConfig()` returns `{ "library_path": "./data/" }` and file operations resolve `./data/` to the absolute project-relative path
+
+#### Scenario: .env file is absent
+- **WHEN** no `.env` file exists and `BOOKTRACKER_LIBRARY_PATH` is not set in the environment
+- **THEN** `readConfig()` returns `{ "library_path": "./data/" }`
 
