@@ -4,6 +4,7 @@ import { readConfig, ensureLibraryDirectories } from "./config.js";
 import { Index } from "./lib/index.js";
 import { createWorksRouter } from "./routes/works.js";
 import { createAuthorsRouter } from "./routes/authors.js";
+import { createEditionsRouter } from "./routes/editions.js";
 
 const app = express();
 const PORT = 3001;
@@ -27,6 +28,7 @@ app.get("/api/config", (_req, res) => {
 
 app.use("/api/works", createWorksRouter(index, config.library_path));
 app.use("/api/authors", createAuthorsRouter(index, config.library_path));
+app.use("/api/editions", createEditionsRouter(index, config.library_path));
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
