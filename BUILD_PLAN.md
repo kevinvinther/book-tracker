@@ -89,11 +89,11 @@ Full CRUD for Author entities.
 
 Full CRUD for Edition entities.
 
-- [ ] `POST /api/editions` — create Edition file, links to Work via wikilink
-- [ ] `GET /api/editions` — list all
-- [ ] `GET /api/editions/:slug` — single edition, resolves copy count
-- [ ] `PATCH /api/editions/:slug` — update fields (isbn, publisher, publish_date, page_count, format, language, contributors)
-- [ ] `DELETE /api/editions/:slug` — orphan-protected (refuse if copies exist, cascade override)
+- [x] `POST /api/editions` — create Edition file, links to Work via wikilink
+- [x] `GET /api/editions` — list all
+- [x] `GET /api/editions/:slug` — single edition, resolves copy count
+- [x] `PATCH /api/editions/:slug` — update fields (isbn, publisher, publish_date, page_count, format, language, contributors)
+- [x] `DELETE /api/editions/:slug` — orphan-protected (refuse if copies exist, cascade override)
 
 ---
 
