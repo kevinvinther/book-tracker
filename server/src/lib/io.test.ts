@@ -44,6 +44,15 @@ describe("readFile", () => {
     expect(() => readFile(path)).toThrow("Failed to parse YAML frontmatter");
   });
 
+  it("converts Date objects in frontmatter to ISO strings", () => {
+    const path = join(tmpRoot, "date-field.md");
+    // Write an unquoted ISO timestamp — js-yaml parses these as Date objects
+    writeFileSync(path, "---\ncreated_at: 2024-01-10T12:00:00.000Z\n---\n", "utf-8");
+    const result = readFile(path);
+    expect(typeof result.frontmatter.created_at).toBe("string");
+    expect(result.frontmatter.created_at).toBe("2024-01-10T12:00:00.000Z");
+  });
+
   it("returns empty frontmatter for file with no frontmatter block", () => {
     const path = join(tmpRoot, "plain.md");
     writeFileSync(path, "# Just markdown\n\nNo frontmatter here", "utf-8");

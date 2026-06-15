@@ -11,6 +11,14 @@ function expandHome(path: string): string {
   return path;
 }
 
+function normalizeDates(obj: Record<string, unknown>): Record<string, unknown> {
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    result[key] = value instanceof Date ? value.toISOString() : value;
+  }
+  return result;
+}
+
 export function readFile(filePath: string): { frontmatter: Record<string, unknown>; body: string } {
   const resolved = expandHome(filePath);
   if (!existsSync(resolved)) {
@@ -28,7 +36,7 @@ export function readFile(filePath: string): { frontmatter: Record<string, unknow
   }
 
   return {
-    frontmatter: parsed.data as Record<string, unknown>,
+    frontmatter: normalizeDates(parsed.data as Record<string, unknown>),
     body: parsed.content,
   };
 }
