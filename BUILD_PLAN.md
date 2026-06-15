@@ -103,10 +103,10 @@ Full CRUD for Edition entities.
 
 Full CRUD for Copy entities.
 
-- [ ] `POST /api/copies` — create Copy file, links to Edition + Work via wikilinks
-- [ ] `GET /api/copies/:slug` — full copy detail, resolves edition/work metadata
-- [ ] `PATCH /api/copies/:slug` — update fields (condition, location, cover_image, release_date, acquisition_date, acquisition_source, price_amount, price_currency, status)
-- [ ] `DELETE /api/copies/:slug` — confirmation dialog, hard delete
+- [x] `POST /api/copies` — create Copy file, links to Edition + Work via wikilinks
+- [x] `GET /api/copies/:slug` — full copy detail, resolves edition/work metadata
+- [x] `PATCH /api/copies/:slug` — update fields (condition, location, cover_image, release_date, acquisition_date, acquisition_source, price_amount, price_currency, status)
+- [x] `DELETE /api/copies/:slug` — confirmation dialog, hard delete
 
 ---
 
