@@ -23,7 +23,7 @@ export function expandHome(path: string): string {
 
 export function readConfig(): AppConfig {
   return {
-    library_path: process.env.BOOKTRACKER_LIBRARY_PATH || "./data/",
+    library_path: expandHome(process.env.BOOKTRACKER_LIBRARY_PATH || "./data/"),
   };
 }
 
