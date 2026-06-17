@@ -60,10 +60,15 @@ export function createAuthorsRouter(index: Index, libraryPath: string): Router {
       return;
     }
 
-    const works = index.getWorksByAuthor(author.slug).map((w) => ({
-      slug: w.slug,
-      title: w.title,
-    }));
+    const works = index.getWorksByAuthor(author.slug)
+      .map((w) => ({
+        slug: w.slug,
+        title: w.title,
+        primary_cover: w.primary_cover ?? null,
+        edition_count: index.getEditionsByWork(w.slug).length,
+        copy_count: index.getCopiesByWork(w.slug).length,
+      }))
+      .sort((a, b) => a.title.localeCompare(b.title));
 
     res.json({ ...author, works });
   });

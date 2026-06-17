@@ -106,7 +106,7 @@ describe("Author API", () => {
   });
 
   describe("GET /api/authors/:slug", () => {
-    it("returns author with resolved works", async () => {
+    it("returns author with enriched work data", async () => {
       const res = await api("/api/authors/fyodor-dostoevsky");
       expect(res.status).toBe(200);
 
@@ -116,6 +116,51 @@ describe("Author API", () => {
       expect(author.works.length).toBe(1);
       expect(author.works[0].slug).toBe("the-brothers-karamazov");
       expect(author.works[0].title).toBe("The Brothers Karamazov");
+      expect(author.works[0]).toHaveProperty("primary_cover");
+      expect(author.works[0]).toHaveProperty("edition_count");
+      expect(author.works[0]).toHaveProperty("copy_count");
+      expect(author.works[0].edition_count).toBe(0);
+      expect(author.works[0].copy_count).toBe(0);
+    });
+
+    it("sorts works alphabetically by title", async () => {
+      const { writeFile } = await import("../lib/io.js");
+      writeFile(join(tmpRoot, "works/crime-and-punishment.md"), {
+        type: "work", slug: "crime-and-punishment",
+        title: "Crime and Punishment",
+        authors: ["[[authors/fyodor-dostoevsky]]"],
+        created_at: "2024-01-01T00:00:00.000Z", _schema: 1,
+      }, "# Crime and Punishment");
+      writeFile(join(tmpRoot, "works/notes-from-underground.md"), {
+        type: "work", slug: "notes-from-underground",
+        title: "Notes from Underground",
+        authors: ["[[authors/fyodor-dostoevsky]]"],
+        created_at: "2024-01-01T00:00:00.000Z", _schema: 1,
+      }, "# Notes from Underground");
+      const { Index } = await import("../lib/index.js");
+      const freshIndex = new Index(tmpRoot);
+      freshIndex.load();
+      const app = express();
+      app.use(express.json());
+      app.locals.index = freshIndex;
+      const { createAuthorsRouter: createRouter } = await import("./authors.js");
+      app.use("/api/authors", createRouter(freshIndex, tmpRoot));
+      const { Server } = await import("http");
+      const testServer = await new Promise<Server>((resolve) => {
+        const s = app.listen(0, () => resolve(s));
+      });
+      const addr = testServer!.address();
+      const testPort = addr && typeof addr === "object" ? addr.port : 0;
+
+      const res = await fetch(`http://localhost:${testPort}/api/authors/fyodor-dostoevsky`);
+      const author = await res.json();
+      expect(author.works.map((w: { title: string }) => w.title)).toEqual([
+        "Crime and Punishment",
+        "Notes from Underground",
+        "The Brothers Karamazov",
+      ]);
+
+      await new Promise<void>((r) => testServer.close(() => r()));
     });
 
     it("returns 404 for non-existent author", async () => {

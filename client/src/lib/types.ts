@@ -64,3 +64,40 @@ export interface Copy {
   status: "owned" | "lent" | "lost" | "given-away" | "sold";
   created_at: string;
 }
+
+export interface EnrichedWorkInAuthor {
+  slug: string;
+  title: string;
+  primary_cover: string | null;
+  edition_count: number;
+  copy_count: number;
+}
+
+export interface EnrichedWorkInSeries {
+  slug: string;
+  title: string;
+  series_position?: number;
+  authors_meta: AuthorMeta[];
+  primary_cover: string | null;
+  edition_count: number;
+  copy_count: number;
+}
+
+export interface Author {
+  type: "author";
+  slug: string;
+  name: string;
+  aliases?: string[];
+  created_at: string;
+  works: EnrichedWorkInAuthor[];
+}
+
+export interface Series {
+  type: "series";
+  slug: string;
+  name: string;
+  total_works?: number;
+  aliases?: string[];
+  created_at: string;
+  works: EnrichedWorkInSeries[];
+}

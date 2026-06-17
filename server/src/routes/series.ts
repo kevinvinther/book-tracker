@@ -61,7 +61,21 @@ export function createSeriesRouter(index: Index, libraryPath: string): Router {
 
     const works = index
       .getWorksBySeries(series.slug)
-      .map((w) => ({ slug: w.slug, title: w.title, series_position: w.series_position }))
+      .map((w) => ({
+        slug: w.slug,
+        title: w.title,
+        series_position: w.series_position,
+        authors_meta: w.authors
+          .map((wikilink) => {
+            const slug = wikilink.match(/^\[\[authors\/(.+)\]\]$/)?.[1];
+            const author = slug ? index.getAuthor(slug) : undefined;
+            return author ? { slug: author.slug, name: author.name } : null;
+          })
+          .filter((a): a is { slug: string; name: string } => a !== null),
+        primary_cover: w.primary_cover ?? null,
+        edition_count: index.getEditionsByWork(w.slug).length,
+        copy_count: index.getCopiesByWork(w.slug).length,
+      }))
       .sort((a, b) => (a.series_position ?? Infinity) - (b.series_position ?? Infinity));
 
     res.json({ ...series, works });
