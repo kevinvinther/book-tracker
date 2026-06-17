@@ -130,7 +130,7 @@ Full CRUD for Series entities.
 
 The main user-facing pages: searchable grid of works, full work detail with editions and copies.
 
-- [ ] Work Grid page (`/`):
+- [x] Work Grid page (`/`):
   - Cover thumbnails in a responsive grid (2 cols mobile, 3–4 cols desktop)
   - Search bar: live filter by title/author/genre
   - Sort: title, author, date added
@@ -138,7 +138,7 @@ The main user-facing pages: searchable grid of works, full work detail with edit
   - Each card: cover, title, author, reading_status badge, copy count
   - Click → Work Detail
   - Empty state: "No books yet. Add your first book."
-- [ ] Work Detail page (`/works/:slug`):
+- [x] Work Detail page (`/works/:slug`):
   - Metadata section: cover, title, authors (clickable → Author Detail), original language, genres, description
   - Series link (if set)
   - Editions section: grouped by edition, each with copy cards
