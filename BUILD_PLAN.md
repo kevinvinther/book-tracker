@@ -116,11 +116,11 @@ Full CRUD for Copy entities.
 
 Full CRUD for Series entities.
 
-- [ ] `POST /api/series` — create Series file
-- [ ] `GET /api/series` — list all
-- [ ] `GET /api/series/:slug` — single series, resolves works ordered by `series_position`
-- [ ] `PATCH /api/series/:slug` — update name, total_works
-- [ ] `DELETE /api/series/:slug` — orphan-protected (refuse if works link to this series; cascade clears series link from works)
+- [x] `POST /api/series` — create Series file
+- [x] `GET /api/series` — list all
+- [x] `GET /api/series/:slug` — single series, resolves works ordered by `series_position`
+- [x] `PATCH /api/series/:slug` — update name, total_works
+- [x] `DELETE /api/series/:slug` — orphan-protected (refuse if works link to this series; cascade clears series link from works)
 
 ---
 
