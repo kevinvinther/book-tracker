@@ -16,6 +16,21 @@ function extractFirstAuthorName(authors?: string[]): string | undefined {
   return match ? match[1] : undefined;
 }
 
+function slugFromWikilink(wikilink: string, prefix: string): string | null {
+  const match = wikilink.match(new RegExp(`^\\[\\[${prefix}/(.+)\\]\\]$`));
+  return match ? match[1] : null;
+}
+
+function resolveAuthorsMeta(work: Work, index: Index): { slug: string; name: string }[] {
+  return work.authors
+    .map((wikilink) => {
+      const slug = slugFromWikilink(wikilink, "authors");
+      const author = slug ? index.getAuthor(slug) : undefined;
+      return author ? { slug: author.slug, name: author.name } : null;
+    })
+    .filter((a): a is { slug: string; name: string } => a !== null);
+}
+
 function getAllSlugs(index: Index): Set<string> {
   const slugs = new Set<string>();
   for (const w of index.getAllWorks()) slugs.add(w.slug);
@@ -89,7 +104,13 @@ export function createWorksRouter(index: Index, libraryPath: string): Router {
       return order === "desc" ? -cmp : cmp;
     });
 
-    res.json(works);
+    res.json(
+      works.map((w) => ({
+        ...w,
+        copy_count: index.getCopiesByWork(w.slug).length,
+        authors_meta: resolveAuthorsMeta(w, index),
+      })),
+    );
   });
 
   router.get("/:slug", (req, res) => {
@@ -102,7 +123,13 @@ export function createWorksRouter(index: Index, libraryPath: string): Router {
     const editionCount = index.getEditionsByWork(work.slug).length;
     const copyCount = index.getCopiesByWork(work.slug).length;
 
-    res.json({ ...work, edition_count: editionCount, copy_count: copyCount });
+    const authors_meta = resolveAuthorsMeta(work, index);
+
+    const seriesSlug = work.series ? slugFromWikilink(work.series, "series") : null;
+    const series = seriesSlug ? index.getSeries(seriesSlug) : undefined;
+    const series_meta = series ? { slug: series.slug, name: series.name } : null;
+
+    res.json({ ...work, edition_count: editionCount, copy_count: copyCount, authors_meta, series_meta });
   });
 
   router.patch("/:slug", (req, res) => {
@@ -123,7 +150,9 @@ export function createWorksRouter(index: Index, libraryPath: string): Router {
     }
 
     for (const field of MUTABLE_FIELDS) {
-      if (req.body[field] !== undefined) {
+      if (req.body[field] === null) {
+        delete frontmatter[field];
+      } else if (req.body[field] !== undefined) {
         frontmatter[field] = req.body[field];
       }
     }

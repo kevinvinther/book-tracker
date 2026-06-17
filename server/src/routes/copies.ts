@@ -86,6 +86,16 @@ export function createCopiesRouter(index: Index, libraryPath: string): Router {
     res.status(201).json(copy);
   });
 
+  router.get("/", (req, res) => {
+    if (req.query.work) {
+      res.json(index.getCopiesByWork(req.query.work as string));
+    } else if (req.query.edition) {
+      res.json(index.getCopiesByEdition(req.query.edition as string));
+    } else {
+      res.json(index.getAllCopies());
+    }
+  });
+
   router.get("/:slug", (req, res) => {
     const copy = index.getCopy(req.params.slug);
     if (!copy) {

@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import { readConfig, ensureLibraryDirectories } from "./config.js";
+import { resolveLibraryPath } from "./lib/io.js";
 import { Index } from "./lib/index.js";
 import { createWorksRouter } from "./routes/works.js";
 import { createAuthorsRouter } from "./routes/authors.js";
@@ -33,6 +34,13 @@ app.use("/api/authors", createAuthorsRouter(index, config.library_path));
 app.use("/api/editions", createEditionsRouter(index, config.library_path));
 app.use("/api/copies", createCopiesRouter(index, config.library_path));
 app.use("/api/series", createSeriesRouter(index, config.library_path));
+app.use(
+  "/api/attachments",
+  express.static(resolveLibraryPath("attachments", config.library_path), { maxAge: "1d" }),
+);
+app.use("/api/attachments", (_req, res) => {
+  res.status(404).json({ error: "Attachment not found" });
+});
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

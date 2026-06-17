@@ -146,6 +146,39 @@ describe("Copy API", () => {
     });
   });
 
+  describe("GET /api/copies", () => {
+    it("returns all copies", async () => {
+      const res = await api("/api/copies");
+      expect(res.status).toBe(200);
+      const copies = await res.json();
+      expect(Array.isArray(copies)).toBe(true);
+      expect(copies.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it("filters by work", async () => {
+      const res = await api("/api/copies?work=dune");
+      expect(res.status).toBe(200);
+      const copies = await res.json();
+      expect(copies.length).toBeGreaterThanOrEqual(1);
+      expect(copies.every((c: { work: string }) => c.work === "[[works/dune]]")).toBe(true);
+    });
+
+    it("filters by edition", async () => {
+      const res = await api("/api/copies?edition=dune-ace-1990");
+      expect(res.status).toBe(200);
+      const copies = await res.json();
+      expect(copies.length).toBeGreaterThanOrEqual(1);
+      expect(copies.every((c: { edition: string }) => c.edition === "[[editions/dune-ace-1990]]")).toBe(true);
+    });
+
+    it("returns an empty array when the filter matches nothing", async () => {
+      const res = await api("/api/copies?work=nonexistent");
+      expect(res.status).toBe(200);
+      const copies = await res.json();
+      expect(copies).toEqual([]);
+    });
+  });
+
   describe("GET /api/copies/:slug", () => {
     it("returns copy with edition_meta and work_meta", async () => {
       const res = await api("/api/copies/dune-ace-1990");

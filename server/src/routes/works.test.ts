@@ -34,6 +34,29 @@ beforeAll(async () => {
     created_at: "2024-01-01T00:00:00.000Z", _schema: 1,
   }, "# Cascade Target");
 
+  writeFile(join(tmpRoot, `authors/fyodor-dostoevsky.md`), {
+    type: "author", slug: "fyodor-dostoevsky", name: "Fyodor Dostoevsky",
+    created_at: "2024-01-01T00:00:00.000Z", _schema: 1,
+  }, "# Fyodor Dostoevsky");
+
+  writeFile(join(tmpRoot, `authors/second-author.md`), {
+    type: "author", slug: "second-author", name: "Second Author",
+    created_at: "2024-01-01T00:00:00.000Z", _schema: 1,
+  }, "# Second Author");
+
+  writeFile(join(tmpRoot, `series/karamazov-series.md`), {
+    type: "series", slug: "karamazov-series", name: "Karamazov Series",
+    created_at: "2024-01-01T00:00:00.000Z", _schema: 1,
+  }, "");
+
+  writeFile(join(tmpRoot, `works/multi-author-work.md`), {
+    type: "work", slug: "multi-author-work",
+    title: "Multi Author Work",
+    authors: ["[[authors/fyodor-dostoevsky]]", "[[authors/second-author]]"],
+    series: "[[series/karamazov-series]]",
+    created_at: "2024-01-01T00:00:00.000Z", _schema: 1,
+  }, "# Multi Author Work");
+
   writeFile(join(tmpRoot, `editions/cascade-edition.md`), {
     type: "edition", slug: "cascade-edition",
     work: "[[works/cascade-target]]", publisher: "Test",
@@ -158,6 +181,26 @@ describe("Work API", () => {
       const dates = works.map((w: any) => w.created_at);
       expect(dates).toEqual([...dates].sort().reverse());
     });
+
+    it("includes a resolved copy_count on each work", async () => {
+      const res = await api("/api/works");
+      const works = await res.json();
+      const cascadeTarget = works.find((w: any) => w.slug === "cascade-target");
+      expect(cascadeTarget.copy_count).toBe(1);
+    });
+
+    it("includes resolved authors_meta on each work", async () => {
+      const res = await api("/api/works");
+      const works = await res.json();
+      const tbk = works.find((w: any) => w.slug === "the-brothers-karamazov");
+      expect(tbk.authors_meta).toEqual([{ slug: "fyodor-dostoevsky", name: "Fyodor Dostoevsky" }]);
+
+      const multiAuthor = works.find((w: any) => w.slug === "multi-author-work");
+      expect(multiAuthor.authors_meta).toEqual([
+        { slug: "fyodor-dostoevsky", name: "Fyodor Dostoevsky" },
+        { slug: "second-author", name: "Second Author" },
+      ]);
+    });
   });
 
   describe("GET /api/works/:slug", () => {
@@ -172,6 +215,27 @@ describe("Work API", () => {
     it("returns 404 for non-existent work", async () => {
       const res = await api("/api/works/nonexistent");
       expect(res.status).toBe(404);
+    });
+
+    it("resolves authors_meta for a work with multiple authors", async () => {
+      const res = await api("/api/works/multi-author-work");
+      const work = await res.json();
+      expect(work.authors_meta).toEqual([
+        { slug: "fyodor-dostoevsky", name: "Fyodor Dostoevsky" },
+        { slug: "second-author", name: "Second Author" },
+      ]);
+    });
+
+    it("resolves series_meta when the work has a linked series", async () => {
+      const res = await api("/api/works/multi-author-work");
+      const work = await res.json();
+      expect(work.series_meta).toEqual({ slug: "karamazov-series", name: "Karamazov Series" });
+    });
+
+    it("returns series_meta: null when the work has no series", async () => {
+      const res = await api("/api/works/cascade-target");
+      const work = await res.json();
+      expect(work.series_meta).toBeNull();
     });
   });
 
@@ -215,6 +279,23 @@ describe("Work API", () => {
         body: JSON.stringify({ title: "" }),
       });
       expect(res.status).toBe(400);
+    });
+
+    it("clears a field when explicitly sent as null", async () => {
+      await api(`/api/works/${slug}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ description: "Temporary description" }),
+      });
+
+      const res = await api(`/api/works/${slug}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ description: null }),
+      });
+
+      const work = await res.json();
+      expect(work.description).toBeUndefined();
     });
 
     it("preserves fields not in PATCH body", async () => {
