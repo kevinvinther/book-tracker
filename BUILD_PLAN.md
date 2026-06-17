@@ -154,12 +154,12 @@ The main user-facing pages: searchable grid of works, full work detail with edit
 
 Navigation hubs for authors and series.
 
-- [ ] Author Detail (`/authors/:slug`):
+- [x] Author Detail (`/authors/:slug`):
   - Author name + aliases
   - Works list: cover thumbnail, title, copy count, aggregate read status
-  - Sorted by most recently interacted-with
+  - Sorted alphabetically by title (interaction data not yet available)
   - Edit Author button
-- [ ] Series Detail (`/series/:slug`):
+- [x] Series Detail (`/series/:slug`):
   - Series name
   - Ordered work list by `series_position`: #1 title + read status, #2 title + read status, ...
   - Placeholders for books not yet in library (if `total_works` is set)

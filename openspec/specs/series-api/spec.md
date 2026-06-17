@@ -66,6 +66,21 @@ The system SHALL expose `GET /api/series/:slug` that returns the full series ent
 - **WHEN** a GET request is made to `/api/series/nonexistent`
 - **THEN** the response has status 404 with an error message
 
+### Requirement: Get series with enriched work metadata
+`GET /api/series/:slug` SHALL, for each work in the resolved `works` array, additionally include `authors_meta` (array of `{ slug, name }`), `primary_cover`, `edition_count`, and `copy_count` resolved from the in-memory index. The existing `slug`, `title`, and `series_position` fields SHALL remain present. Works SHALL remain ordered by `series_position` ascending, with unpositioned works last.
+
+#### Scenario: Series with works that have authors and covers
+- **WHEN** a GET request is made to `/series/dune-chronicles` with 2 linked works
+- **THEN** each element in the `works` array contains `slug`, `title`, `series_position`, `authors_meta` (array of `{ slug, name }`), `primary_cover`, `edition_count`, and `copy_count`
+
+#### Scenario: Series work with no cover
+- **WHEN** a work linked to the series has no `primary_cover`
+- **THEN** the work entry's `primary_cover` is `null`
+
+#### Scenario: Series with no works
+- **WHEN** a GET request is made to `/series/empty-series` with no linked works
+- **THEN** the `works` array is empty
+
 ### Requirement: Update a series
 The system SHALL expose `PATCH /api/series/:slug` that accepts a JSON body with any subset of mutable series fields (`name`, `total_works`, `aliases`). The handler SHALL re-read the file from disk, merge incoming fields, write atomically, and update the index. The `slug`, `type`, `created_at`, and `_schema` fields SHALL never be modified. The `name` field SHALL not be set to an empty string.
 
