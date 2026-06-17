@@ -173,13 +173,13 @@ Navigation hubs for authors and series.
 
 Detail views for editions and copies.
 
-- [ ] Edition Detail (`/editions/:slug`):
+- [x] Edition Detail (`/editions/:slug`):
   - Metadata: publisher, date, pages, format, language, ISBN, contributors (translator, etc.)
   - Link back to Work
   - Copies list: card per copy with status, location, read progress
   - Add Copy button
   - Edit Edition button
-- [ ] Copy Detail (`/copies/:slug`):
+- [x] Copy Detail (`/copies/:slug`):
   - Metadata: links to Work + Edition, format, condition, status, cover image, location, acquisition info, price
   - Sections with empty states: Read-through History, Loan History, Notes
   - Edit Copy button
