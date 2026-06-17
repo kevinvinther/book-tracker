@@ -229,6 +229,48 @@ describe("Index", () => {
     });
   });
 
+  describe("getWorksBySeries", () => {
+    const seriesDir = join(tmpRoot, "series-nav");
+    let index: Index;
+
+    beforeAll(() => {
+      for (const d of ["authors", "works", "series"]) {
+        mkdirSync(join(seriesDir, d), { recursive: true });
+      }
+      writeFile(join(seriesDir, "series/dune-chronicles.md"), {
+        type: "series", slug: "dune-chronicles", name: "Dune Chronicles",
+        created_at: "2024-01-01T00:00:00", _schema: 1,
+      }, "");
+      writeFile(join(seriesDir, "works/dune.md"), {
+        type: "work", slug: "dune", title: "Dune",
+        authors: [], series: "[[series/dune-chronicles]]", series_position: 1,
+        created_at: "2024-01-01T00:00:00", _schema: 1,
+      }, "# Dune");
+      writeFile(join(seriesDir, "works/dune-messiah.md"), {
+        type: "work", slug: "dune-messiah", title: "Dune Messiah",
+        authors: [], series: "[[series/dune-chronicles]]", series_position: 2,
+        created_at: "2024-01-01T00:00:00", _schema: 1,
+      }, "# Dune Messiah");
+      writeFile(join(seriesDir, "works/unrelated.md"), {
+        type: "work", slug: "unrelated", title: "Unrelated",
+        authors: [], created_at: "2024-01-01T00:00:00", _schema: 1,
+      }, "# Unrelated");
+
+      index = new Index(seriesDir);
+      index.load();
+    });
+
+    it("returns works linked to the series", () => {
+      const works = index.getWorksBySeries("dune-chronicles");
+      expect(works).toHaveLength(2);
+      expect(works.map((w) => w.slug).sort()).toEqual(["dune", "dune-messiah"]);
+    });
+
+    it("returns empty array for a series with no linked works", () => {
+      expect(index.getWorksBySeries("nonexistent")).toEqual([]);
+    });
+  });
+
   describe("searchWorks", () => {
     const searchDir = join(tmpRoot, "search");
     let index: Index;

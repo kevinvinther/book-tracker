@@ -1,0 +1,128 @@
+import { useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import { useWork } from "@/hooks/useWork";
+import { useEditionsByWork } from "@/hooks/useEditionsByWork";
+import { useCopiesByWork } from "@/hooks/useCopiesByWork";
+import { CopyCard } from "@/components/CopyCard";
+import { EditWorkModal } from "@/components/EditWorkModal";
+import { Button } from "@/components/ui/button";
+
+export default function WorkDetail() {
+  const { slug = "" } = useParams();
+  const { work, loading, notFound, refetch } = useWork(slug);
+  const { editions } = useEditionsByWork(slug);
+  const { copies } = useCopiesByWork(slug);
+  const [editOpen, setEditOpen] = useState(false);
+
+  if (notFound) {
+    return (
+      <div className="mx-auto max-w-2xl px-6 py-24 text-center">
+        <p className="font-display text-2xl text-foreground">No such book.</p>
+        <p className="mt-2 text-sm text-muted-foreground">It may have been removed or never existed.</p>
+        <Link to="/" className="mt-6 inline-block text-sm text-primary underline-offset-4 hover:underline">
+          Back to the shelf
+        </Link>
+      </div>
+    );
+  }
+
+  if (loading || !work) {
+    return <div className="mx-auto max-w-5xl px-6 py-24 text-center text-sm text-muted-foreground">Loading…</div>;
+  }
+
+  return (
+    <div className="mx-auto max-w-5xl px-6 py-8">
+      <div className="mb-6 flex items-center justify-between">
+        <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">
+          ← Back to shelf
+        </Link>
+        <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+          Edit Work
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-[minmax(200px,280px)_1fr] md:gap-12">
+        <div className="md:mr-[-1.5rem]">
+          {work.primary_cover ? (
+            <img
+              src={`/api/attachments/${work.primary_cover}`}
+              alt={`Cover of ${work.title}`}
+              className="w-full rounded-sm border border-rule shadow-[0_20px_40px_-16px_oklch(0.2_0.02_50_/_0.45)]"
+            />
+          ) : (
+            <div className="flex aspect-[2/3] w-full items-center justify-center rounded-sm border border-rule bg-muted">
+              <span className="text-xs text-muted-foreground">No cover</span>
+            </div>
+          )}
+        </div>
+
+        <div className="border-t border-stamp/40 pt-6 md:border-t-0 md:border-l-2 md:border-stamp/40 md:pt-0 md:pl-10">
+          <h1 className="font-display text-3xl text-foreground sm:text-4xl">{work.title}</h1>
+          {work.subtitle && <p className="mt-1 text-lg text-muted-foreground">{work.subtitle}</p>}
+
+          {work.authors_meta && work.authors_meta.length > 0 && (
+            <p className="mt-3 text-sm">
+              {work.authors_meta.map((a, i) => (
+                <span key={a.slug}>
+                  {i > 0 && ", "}
+                  <Link to={`/authors/${a.slug}`} className="text-primary underline-offset-4 hover:underline">
+                    {a.name}
+                  </Link>
+                </span>
+              ))}
+            </p>
+          )}
+
+          {work.series_meta && (
+            <p className="mt-2 text-sm text-muted-foreground">
+              Series:{" "}
+              <Link to={`/series/${work.series_meta.slug}`} className="text-primary underline-offset-4 hover:underline">
+                {work.series_meta.name}
+              </Link>
+              {work.series_position != null && ` #${work.series_position}`}
+            </p>
+          )}
+
+          <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
+            {work.original_language && <span>{work.original_language.toUpperCase()}</span>}
+            {work.genres?.map((g) => (
+              <span key={g} className="rounded-sm bg-secondary px-2 py-0.5">
+                {g}
+              </span>
+            ))}
+          </div>
+
+          {work.description && <p className="mt-4 text-sm leading-relaxed text-foreground/90">{work.description}</p>}
+        </div>
+      </div>
+
+      <div className="mt-12">
+        <h2 className="text-sm font-semibold text-foreground">Editions</h2>
+        <div className="mt-3 space-y-8">
+          {editions.length === 0 && <p className="text-sm text-muted-foreground">No editions yet.</p>}
+          {editions.map((edition) => {
+            const editionCopies = copies.filter((c) => c.edition === `[[editions/${edition.slug}]]`);
+            return (
+              <div key={edition.slug} className="border-t border-rule pt-4">
+                <h3 className="text-sm font-medium text-foreground">
+                  {[edition.publisher, edition.publish_date?.slice(0, 4), edition.format]
+                    .filter(Boolean)
+                    .join(" · ") || edition.slug}
+                </h3>
+                <div className="mt-1">
+                  {editionCopies.length === 0 ? (
+                    <p className="py-3 text-sm text-muted-foreground">No copies of this edition yet.</p>
+                  ) : (
+                    editionCopies.map((copy) => <CopyCard key={copy.slug} copy={copy} edition={edition} />)
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <EditWorkModal work={work} open={editOpen} onOpenChange={setEditOpen} onSaved={refetch} />
+    </div>
+  );
+}

@@ -89,11 +89,11 @@ Full CRUD for Author entities.
 
 Full CRUD for Edition entities.
 
-- [ ] `POST /api/editions` — create Edition file, links to Work via wikilink
-- [ ] `GET /api/editions` — list all
-- [ ] `GET /api/editions/:slug` — single edition, resolves copy count
-- [ ] `PATCH /api/editions/:slug` — update fields (isbn, publisher, publish_date, page_count, format, language, contributors)
-- [ ] `DELETE /api/editions/:slug` — orphan-protected (refuse if copies exist, cascade override)
+- [x] `POST /api/editions` — create Edition file, links to Work via wikilink
+- [x] `GET /api/editions` — list all
+- [x] `GET /api/editions/:slug` — single edition, resolves copy count
+- [x] `PATCH /api/editions/:slug` — update fields (isbn, publisher, publish_date, page_count, format, language, contributors)
+- [x] `DELETE /api/editions/:slug` — orphan-protected (refuse if copies exist, cascade override)
 
 ---
 
@@ -103,10 +103,10 @@ Full CRUD for Edition entities.
 
 Full CRUD for Copy entities.
 
-- [ ] `POST /api/copies` — create Copy file, links to Edition + Work via wikilinks
-- [ ] `GET /api/copies/:slug` — full copy detail, resolves edition/work metadata
-- [ ] `PATCH /api/copies/:slug` — update fields (condition, location, cover_image, release_date, acquisition_date, acquisition_source, price_amount, price_currency, status)
-- [ ] `DELETE /api/copies/:slug` — confirmation dialog, hard delete
+- [x] `POST /api/copies` — create Copy file, links to Edition + Work via wikilinks
+- [x] `GET /api/copies/:slug` — full copy detail, resolves edition/work metadata
+- [x] `PATCH /api/copies/:slug` — update fields (condition, location, cover_image, release_date, acquisition_date, acquisition_source, price_amount, price_currency, status)
+- [x] `DELETE /api/copies/:slug` — confirmation dialog, hard delete
 
 ---
 
@@ -116,11 +116,11 @@ Full CRUD for Copy entities.
 
 Full CRUD for Series entities.
 
-- [ ] `POST /api/series` — create Series file
-- [ ] `GET /api/series` — list all
-- [ ] `GET /api/series/:slug` — single series, resolves works ordered by `series_position`
-- [ ] `PATCH /api/series/:slug` — update name, total_works
-- [ ] `DELETE /api/series/:slug` — orphan-protected (refuse if works link to this series; cascade clears series link from works)
+- [x] `POST /api/series` — create Series file
+- [x] `GET /api/series` — list all
+- [x] `GET /api/series/:slug` — single series, resolves works ordered by `series_position`
+- [x] `PATCH /api/series/:slug` — update name, total_works
+- [x] `DELETE /api/series/:slug` — orphan-protected (refuse if works link to this series; cascade clears series link from works)
 
 ---
 
@@ -130,7 +130,7 @@ Full CRUD for Series entities.
 
 The main user-facing pages: searchable grid of works, full work detail with editions and copies.
 
-- [ ] Work Grid page (`/`):
+- [x] Work Grid page (`/`):
   - Cover thumbnails in a responsive grid (2 cols mobile, 3–4 cols desktop)
   - Search bar: live filter by title/author/genre
   - Sort: title, author, date added
@@ -138,7 +138,7 @@ The main user-facing pages: searchable grid of works, full work detail with edit
   - Each card: cover, title, author, reading_status badge, copy count
   - Click → Work Detail
   - Empty state: "No books yet. Add your first book."
-- [ ] Work Detail page (`/works/:slug`):
+- [x] Work Detail page (`/works/:slug`):
   - Metadata section: cover, title, authors (clickable → Author Detail), original language, genres, description
   - Series link (if set)
   - Editions section: grouped by edition, each with copy cards

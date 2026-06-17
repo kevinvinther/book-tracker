@@ -1,6 +1,8 @@
 node_modules/
+docker-compose.override.yml
 dist/
 .env
+*.tsbuildinfo
 
 # Agent-specific
 .claude
