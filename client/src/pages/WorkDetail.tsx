@@ -104,16 +104,27 @@ export default function WorkDetail() {
             const editionCopies = copies.filter((c) => c.edition === `[[editions/${edition.slug}]]`);
             return (
               <div key={edition.slug} className="border-t border-rule pt-4">
-                <h3 className="text-sm font-medium text-foreground">
+                <Link
+                  to={`/editions/${edition.slug}`}
+                  className="block text-sm font-medium text-foreground hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+                >
                   {[edition.publisher, edition.publish_date?.slice(0, 4), edition.format]
                     .filter(Boolean)
                     .join(" · ") || edition.slug}
-                </h3>
+                </Link>
                 <div className="mt-1">
                   {editionCopies.length === 0 ? (
                     <p className="py-3 text-sm text-muted-foreground">No copies of this edition yet.</p>
                   ) : (
-                    editionCopies.map((copy) => <CopyCard key={copy.slug} copy={copy} edition={edition} />)
+                    editionCopies.map((copy) => (
+                      <Link
+                        key={copy.slug}
+                        to={`/copies/${copy.slug}`}
+                        className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm"
+                      >
+                        <CopyCard copy={copy} edition={edition} />
+                      </Link>
+                    ))
                   )}
                 </div>
               </div>

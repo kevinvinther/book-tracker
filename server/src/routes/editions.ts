@@ -79,7 +79,12 @@ export function createEditionsRouter(index: Index, libraryPath: string): Router 
     }
 
     const copy_count = index.getCopiesByEdition(edition.slug).length;
-    res.json({ ...edition, copy_count });
+
+    const workSlug = edition.work.match(/^\[\[works\/(.+)\]\]$/)?.[1];
+    const work = workSlug ? index.getWork(workSlug) : undefined;
+    const work_meta = work ? { slug: work.slug, title: work.title, authors: work.authors } : null;
+
+    res.json({ ...edition, copy_count, work_meta });
   });
 
   router.patch("/:slug", (req, res) => {

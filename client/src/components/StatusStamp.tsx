@@ -1,12 +1,12 @@
 import { cn } from "@/lib/utils";
 import type { Copy } from "@/lib/types";
 
-const STAMP_CONFIG: Record<Copy["status"], { label: string; className: string }> = {
-  owned: { label: "On Shelf", className: "border-verdigris text-verdigris" },
-  lent: { label: "Charged Out", className: "border-stamp text-stamp" },
-  lost: { label: "Lost", className: "border-destructive text-destructive" },
-  sold: { label: "Withdrawn", className: "border-muted-foreground text-muted-foreground" },
-  "given-away": { label: "Withdrawn", className: "border-muted-foreground text-muted-foreground" },
+const STATUS_CONFIG: Record<Copy["status"], { label: string; className: string }> = {
+  owned: { label: "On Shelf", className: "bg-verdigris text-verdigris-foreground" },
+  lent: { label: "Lent Out", className: "bg-stamp text-stamp-foreground" },
+  lost: { label: "Lost", className: "bg-destructive text-primary-foreground" },
+  sold: { label: "Sold", className: "bg-muted text-muted-foreground" },
+  "given-away": { label: "Given Away", className: "bg-muted text-muted-foreground" },
 };
 
 interface StatusStampProps {
@@ -15,12 +15,12 @@ interface StatusStampProps {
 }
 
 export function StatusStamp({ status, className }: StatusStampProps) {
-  const config = STAMP_CONFIG[status];
+  const config = STATUS_CONFIG[status];
 
   return (
     <span
       className={cn(
-        "inline-block -rotate-3 rounded-[3px] border-2 px-2 py-0.5 font-mono text-[0.6875rem] font-semibold tracking-[0.08em] uppercase mix-blend-multiply dark:mix-blend-normal",
+        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
         config.className,
         className,
       )}

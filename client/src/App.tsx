@@ -3,6 +3,8 @@ import WorkGrid from "./pages/WorkGrid";
 import WorkDetail from "./pages/WorkDetail";
 import AuthorDetail from "./pages/AuthorDetail";
 import SeriesDetail from "./pages/SeriesDetail";
+import EditionDetail from "./pages/EditionDetail";
+import CopyDetail from "./pages/CopyDetail";
 import Settings from "./pages/Settings";
 
 export default function App() {
@@ -24,6 +26,8 @@ export default function App() {
           <Route path="/works/:slug" element={<WorkDetail />} />
           <Route path="/authors/:slug" element={<AuthorDetail />} />
           <Route path="/series/:slug" element={<SeriesDetail />} />
+          <Route path="/editions/:slug" element={<EditionDetail />} />
+          <Route path="/copies/:slug" element={<CopyDetail />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>
       </main>

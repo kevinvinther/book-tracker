@@ -48,6 +48,16 @@ export interface Edition {
   copy_count?: number;
 }
 
+export interface EditionWorkMeta {
+  slug: string;
+  title: string;
+  authors: string[];
+}
+
+export interface EditionFull extends Edition {
+  work_meta: EditionWorkMeta | null;
+}
+
 export interface Copy {
   type: "copy";
   slug: string;
@@ -63,6 +73,25 @@ export interface Copy {
   location?: string;
   status: "owned" | "lent" | "lost" | "given-away" | "sold";
   created_at: string;
+}
+
+export interface CopyEditionMeta {
+  slug: string;
+  publisher?: string;
+  format?: string;
+  page_count?: number;
+  isbn?: string;
+}
+
+export interface CopyWorkMeta {
+  slug: string;
+  title: string;
+  authors: string[];
+}
+
+export interface CopyFull extends Copy {
+  edition_meta: CopyEditionMeta | null;
+  work_meta: CopyWorkMeta | null;
 }
 
 export interface EnrichedWorkInAuthor {

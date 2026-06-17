@@ -157,12 +157,17 @@ describe("Edition API", () => {
   });
 
   describe("GET /api/editions/:slug", () => {
-    it("returns edition with resolved copy_count", async () => {
+    it("returns edition with resolved copy_count and work_meta", async () => {
       const res = await api("/api/editions/dune-chilton-1965");
       expect(res.status).toBe(200);
       const edition = await res.json();
       expect(edition.slug).toBe("dune-chilton-1965");
       expect(edition.copy_count).toBe(1);
+      expect(edition.work_meta).toEqual({
+        slug: "dune",
+        title: "Dune",
+        authors: [],
+      });
     });
 
     it("returns 404 for non-existent edition", async () => {
