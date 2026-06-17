@@ -110,6 +110,11 @@ export class Index {
     return this.getAllWorks().filter((w) => w.authors.includes(wikilink));
   }
 
+  getWorksBySeries(seriesSlug: string): Work[] {
+    const wikilink = `[[series/${seriesSlug}]]`;
+    return this.getAllWorks().filter((w) => w.series === wikilink);
+  }
+
   getEditionsByWork(workSlug: string): Edition[] {
     const wikilink = `[[works/${workSlug}]]`;
     return this.getAllEditions().filter((e) => e.work === wikilink);
