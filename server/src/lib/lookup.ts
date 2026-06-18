@@ -43,16 +43,20 @@ export function readCache(isbn: string, libraryPath: string): LookupResult | nul
 }
 
 export function writeCache(isbn: string, data: LookupResult, libraryPath: string): void {
-  const resolved = expandHome(libraryPath);
-  const cacheDir = join(resolved, ".booktracker", "cache");
-  if (!existsSync(cacheDir)) {
-    mkdirSync(cacheDir, { recursive: true });
+  try {
+    const resolved = expandHome(libraryPath);
+    const cacheDir = join(resolved, ".booktracker", "cache");
+    if (!existsSync(cacheDir)) {
+      mkdirSync(cacheDir, { recursive: true });
+    }
+    const cachePath = join(cacheDir, `${isbn}.json`);
+    const tmpPath = cachePath + ".tmp";
+    const json = JSON.stringify(data, null, 2);
+    writeFileSync(tmpPath, json, "utf-8");
+    renameSync(tmpPath, cachePath);
+  } catch {
+    // Cache write failure is non-fatal — the lookup result is still valid
   }
-  const cachePath = join(cacheDir, `${isbn}.json`);
-  const tmpPath = cachePath + ".tmp";
-  const json = JSON.stringify(data, null, 2);
-  writeFileSync(tmpPath, json, "utf-8");
-  renameSync(tmpPath, cachePath);
 }
 
 // ---- Fetch helpers ----

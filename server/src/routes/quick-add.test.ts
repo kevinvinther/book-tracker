@@ -213,5 +213,143 @@ describe("Quick-add API", () => {
       const authors = idx.getAllAuthors().filter((a) => a.name.toLowerCase() === "frank herbert");
       expect(authors.length).toBe(1);
     });
+
+    it("attaches to existing Work via attachToWorkSlug", async () => {
+      // First create a Work to attach to
+      const createRes = await api("/api/quick-add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: "God Emperor of Dune",
+          authorNames: ["Frank Herbert"],
+        }),
+      });
+      expect(createRes.status).toBe(201);
+      const { workSlug: existingSlug } = await createRes.json();
+
+      // Now attach with the same ISBN but to an existing work
+      const res = await api("/api/quick-add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          attachToWorkSlug: existingSlug,
+          isbn: "978-0-441-00272-9",
+          publisher: "Ace",
+          condition: "fine",
+          location: "Desk",
+        }),
+      });
+      expect(res.status).toBe(201);
+
+      const body = await res.json();
+      expect(body.workSlug).toBe(existingSlug);
+
+      // Verify a new Edition and Copy were created but no new Work
+      const { Index } = await import("../lib/index.js");
+      const idx = new Index(tmpRoot);
+      idx.load();
+
+      const editions = idx.getEditionsByWork(existingSlug);
+      expect(editions.length).toBe(2); // One from initial create, one from attach
+      const attachedEdition = editions.find((e) => e.isbn === "978-0-441-00272-9");
+      expect(attachedEdition).toBeTruthy();
+
+      const copies = idx.getCopiesByEdition(attachedEdition!.slug);
+      expect(copies.length).toBe(1);
+      expect(copies[0].condition).toBe("fine");
+      expect(copies[0].location).toBe("Desk");
+    });
+
+    it("returns 400 when attachToWorkSlug points to nonexistent Work", async () => {
+      const res = await api("/api/quick-add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          attachToWorkSlug: "nonexistent-work",
+          publisher: "Test",
+        }),
+      });
+      expect(res.status).toBe(400);
+      const body = await res.json();
+      expect(body.error).toContain("does not exist");
+    });
+
+    it("returns 400 when neither title nor attachToWorkSlug provided", async () => {
+      const res = await api("/api/quick-add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          publisher: "Test",
+        }),
+      });
+      expect(res.status).toBe(400);
+      const body = await res.json();
+      expect(body.error).toContain("either title or attachToWorkSlug");
+    });
+  });
+
+  describe("GET /api/quick-add/check-dedup", () => {
+    beforeAll(async () => {
+      // Seed an edition with ISBN for dedup tests
+      const { Index } = await import("../lib/index.js");
+      const idx = new Index(tmpRoot);
+      idx.load();
+
+      // Create a Work with author and an Edition with ISBN
+      const res = await api("/api/quick-add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: "Children of Dune",
+          authorNames: ["Frank Herbert"],
+          isbn: "978-0-441-10402-9",
+          publisher: "Berkley",
+        }),
+      });
+      expect(res.status).toBe(201);
+    });
+
+    it("detects ISBN exact match on Edition", async () => {
+      const res = await api("/api/quick-add/check-dedup?isbn=978-0-441-10402-9");
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.editionMatch).toBeTruthy();
+      expect(body.editionMatch.workTitle).toBe("Children of Dune");
+      expect(body.editionMatch.copyCount).toBe(1);
+    });
+
+    it("detects title+author match on Work", async () => {
+      const res = await api("/api/quick-add/check-dedup?title=Children%20of%20Dune&author=Frank%20Herbert");
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.workMatches.length).toBeGreaterThanOrEqual(1);
+      const match = body.workMatches.find((m: any) => m.workTitle === "Children of Dune");
+      expect(match).toBeTruthy();
+      expect(match.authorNames).toContain("Frank Herbert");
+    });
+
+    it("returns null/empty for non-matching ISBN", async () => {
+      const res = await api("/api/quick-add/check-dedup?isbn=000-0-000-00000-0");
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.editionMatch).toBeNull();
+      expect(body.workMatches).toEqual([]);
+    });
+
+    it("returns empty when no params provided", async () => {
+      const res = await api("/api/quick-add/check-dedup");
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.editionMatch).toBeNull();
+      expect(body.workMatches).toEqual([]);
+    });
+
+    it("returns both editionMatch and workMatches when both match", async () => {
+      const res = await api("/api/quick-add/check-dedup?isbn=978-0-441-10402-9&title=Children%20of%20Dune&author=Frank%20Herbert");
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.editionMatch).toBeTruthy();
+      expect(body.workMatches.length).toBeGreaterThanOrEqual(1);
+    });
   });
 });

@@ -19,42 +19,92 @@ function getAllSlugs(index: Index): Set<string> {
 export function createQuickAddRouter(index: Index, libraryPath: string): Router {
   const router = Router();
 
+  router.get("/check-dedup", (req, res) => {
+    const { isbn, title, author } = req.query as Record<string, string | undefined>;
+
+    const editionMatch = (() => {
+      if (!isbn) return null;
+      const edition = index.getEditionByISBN(isbn);
+      if (!edition) return null;
+      const workSlug = edition.work.match(/\[\[works\/(.+)\]\]/)?.[1];
+      if (!workSlug) return null;
+      const work = index.getWork(workSlug);
+      if (!work) return null;
+      const copyCount = index.getCopiesByEdition(edition.slug).length;
+      return {
+        editionSlug: edition.slug,
+        workSlug: work.slug,
+        workTitle: work.title,
+        copyCount,
+      };
+    })();
+
+    const workMatches = (() => {
+      if (!title || !author) return [];
+      const matches = index.getWorksByTitleAndAuthor(title, author);
+      return matches.map((w) => ({
+        workSlug: w.slug,
+        workTitle: w.title,
+        authorNames: w.authors
+          .map((a) => {
+            const slug = a.match(/\[\[authors\/(.+)\]\]/)?.[1];
+            if (!slug) return null;
+            return index.getAuthor(slug)?.name ?? null;
+          })
+          .filter((n): n is string => n !== null),
+      }));
+    })();
+
+    res.json({ editionMatch, workMatches });
+  });
+
   router.post("/", (req, res) => {
     try {
-      const { title, subtitle, authorNames } = req.body;
+      const { title, subtitle, attachToWorkSlug } = req.body;
 
-    if (!title || typeof title !== "string" || !title.trim()) {
-      res.status(400).json({ error: "title is required" });
+    let workSlug: string;
+
+    if (attachToWorkSlug && typeof attachToWorkSlug === "string" && attachToWorkSlug.trim()) {
+      const existingWork = index.getWork(attachToWorkSlug.trim());
+      if (!existingWork) {
+        res.status(400).json({ error: "attachToWorkSlug references a Work that does not exist" });
+        return;
+      }
+      workSlug = existingWork.slug;
+    } else if (title && typeof title === "string" && title.trim()) {
+      const { authorNames } = req.body;
+
+      if (!Array.isArray(authorNames) || authorNames.length === 0) {
+        res.status(400).json({ error: "at least one author is required" });
+        return;
+      }
+
+      const authorResults = findOrCreateAuthors(authorNames, index, libraryPath);
+      const authorSlugs = authorResults.map((r) => r.slug);
+
+      workSlug = generateSlug(title.trim(), getAllSlugs(index));
+      const work: Work = {
+        type: "work",
+        slug: workSlug,
+        title: title.trim(),
+        authors: authorSlugs.map((s) => `[[authors/${s}]]`),
+        created_at: new Date().toISOString(),
+        _schema: 1,
+      };
+
+      if (subtitle && typeof subtitle === "string" && subtitle.trim()) {
+        work.subtitle = subtitle.trim();
+      }
+      if (req.body.cover_image && typeof req.body.cover_image === "string" && req.body.cover_image.trim()) {
+        work.primary_cover = req.body.cover_image.trim();
+      }
+
+      writeFile(resolveLibraryPath(`works/${workSlug}.md`, libraryPath), work as unknown as Record<string, unknown>, "");
+      index.upsert("work", work);
+    } else {
+      res.status(400).json({ error: "either title or attachToWorkSlug is required" });
       return;
     }
-
-    if (!Array.isArray(authorNames) || authorNames.length === 0) {
-      res.status(400).json({ error: "at least one author is required" });
-      return;
-    }
-
-    const authorResults = findOrCreateAuthors(authorNames, index, libraryPath);
-    const authorSlugs = authorResults.map((r) => r.slug);
-
-    const workSlug = generateSlug(title.trim(), getAllSlugs(index));
-    const work: Work = {
-      type: "work",
-      slug: workSlug,
-      title: title.trim(),
-      authors: authorSlugs.map((s) => `[[authors/${s}]]`),
-      created_at: new Date().toISOString(),
-      _schema: 1,
-    };
-
-    if (subtitle && typeof subtitle === "string" && subtitle.trim()) {
-      work.subtitle = subtitle.trim();
-    }
-    if (req.body.cover_image && typeof req.body.cover_image === "string" && req.body.cover_image.trim()) {
-      work.primary_cover = req.body.cover_image.trim();
-    }
-
-    writeFile(resolveLibraryPath(`works/${workSlug}.md`, libraryPath), work as unknown as Record<string, unknown>, "");
-    index.upsert("work", work);
 
     const editionSlug = generateSlug(workSlug, getAllSlugs(index));
     const edition: Edition = {

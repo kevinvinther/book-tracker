@@ -135,6 +135,30 @@ export class Index {
     return Array.from(this.notes.values()).filter((n) => n.copy === wikilink);
   }
 
+  getEditionByISBN(isbn: string): Edition | undefined {
+    return this.getAllEditions().find((e) => e.isbn === isbn);
+  }
+
+  getWorksByTitleAndAuthor(title: string, authorName: string): Work[] {
+    const titleLower = title.toLowerCase().trim();
+    const authorLower = authorName.toLowerCase().trim();
+
+    return this.getAllWorks()
+      .filter((w) => w.title.toLowerCase().includes(titleLower))
+      .filter((w) =>
+        w.authors.some((a) => {
+          const slug = extractSlugFromWikilink(a);
+          if (!slug) return false;
+          const author = this.authors.get(slug);
+          if (!author) return false;
+          if (author.name.toLowerCase() === authorLower) return true;
+          if (author.aliases?.some((alias) => alias.toLowerCase() === authorLower)) return true;
+          return false;
+        })
+      )
+      .slice(0, 5);
+  }
+
   searchWorks(query: string): Work[] {
     if (!query.trim()) {
       return this.getAllWorks();

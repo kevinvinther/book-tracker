@@ -363,4 +363,146 @@ describe("Index", () => {
       expect(() => index.remove("work", "nonexistent")).not.toThrow();
     });
   });
+
+  describe("getEditionByISBN", () => {
+    const isbnDir = join(tmpRoot, "isbn-lookup");
+    let index: Index;
+
+    beforeAll(() => {
+      for (const d of ["authors", "works", "editions"]) {
+        mkdirSync(join(isbnDir, d), { recursive: true });
+      }
+      writeFile(join(isbnDir, "authors/orwell.md"), {
+        type: "author", slug: "orwell", name: "George Orwell",
+        created_at: "2024-01-01T00:00:00", _schema: 1,
+      }, "# George Orwell");
+      writeFile(join(isbnDir, "works/1984.md"), {
+        type: "work", slug: "1984", title: "1984",
+        authors: ["[[authors/orwell]]"],
+        created_at: "2024-01-01T00:00:00", _schema: 1,
+      }, "# 1984");
+      writeFile(join(isbnDir, "editions/1984-pb.md"), {
+        type: "edition", slug: "1984-pb",
+        work: "[[works/1984]]",
+        isbn: "978-0-452-28423-4",
+        publisher: "Signet Classic",
+        created_at: "2024-01-01T00:00:00", _schema: 1,
+      }, "# Edition 1984");
+      writeFile(join(isbnDir, "editions/no-isbn.md"), {
+        type: "edition", slug: "no-isbn",
+        work: "[[works/1984]]",
+        publisher: "Unknown",
+        created_at: "2024-01-01T00:00:00", _schema: 1,
+      }, "# No ISBN");
+
+      index = new Index(isbnDir);
+      index.load();
+    });
+
+    it("finds edition by exact ISBN match", () => {
+      const edition = index.getEditionByISBN("978-0-452-28423-4");
+      expect(edition).toBeTruthy();
+      expect(edition!.slug).toBe("1984-pb");
+      expect(edition!.publisher).toBe("Signet Classic");
+    });
+
+    it("returns undefined for unknown ISBN", () => {
+      const edition = index.getEditionByISBN("000-0-000-00000-0");
+      expect(edition).toBeUndefined();
+    });
+
+    it("returns undefined for edition without ISBN", () => {
+      // Edition "no-isbn" has no ISBN field
+      const edition = index.getEditionByISBN("");
+      expect(edition).toBeUndefined();
+    });
+  });
+
+  describe("getWorksByTitleAndAuthor", () => {
+    const dedupDir = join(tmpRoot, "title-author-search");
+    let index: Index;
+
+    beforeAll(() => {
+      for (const d of ["authors", "works"]) {
+        mkdirSync(join(dedupDir, d), { recursive: true });
+      }
+      writeFile(join(dedupDir, "authors/hera.md"), {
+        type: "author", slug: "hera", name: "Frank Herbert",
+        aliases: ["Frank P. Herbert"],
+        created_at: "2024-01-01T00:00:00", _schema: 1,
+      }, "# Frank Herbert");
+      writeFile(join(dedupDir, "authors/asimov.md"), {
+        type: "author", slug: "asimov", name: "Isaac Asimov",
+        created_at: "2024-01-01T00:00:00", _schema: 1,
+      }, "# Isaac Asimov");
+      writeFile(join(dedupDir, "works/dune.md"), {
+        type: "work", slug: "dune", title: "Dune",
+        authors: ["[[authors/hera]]"],
+        genres: ["fiction"],
+        created_at: "2024-01-01T00:00:00", _schema: 1,
+      }, "# Dune");
+      writeFile(join(dedupDir, "works/dune-messiah.md"), {
+        type: "work", slug: "dune-messiah", title: "Dune Messiah",
+        authors: ["[[authors/hera]]"],
+        genres: ["fiction"],
+        created_at: "2024-01-01T00:00:00", _schema: 1,
+      }, "# Dune Messiah");
+      writeFile(join(dedupDir, "works/foundation.md"), {
+        type: "work", slug: "foundation", title: "Foundation",
+        authors: ["[[authors/asimov]]"],
+        genres: ["fiction"],
+        created_at: "2024-01-01T00:00:00", _schema: 1,
+      }, "# Foundation");
+
+      index = new Index(dedupDir);
+      index.load();
+    });
+
+    it("finds works by title substring and exact author name", () => {
+      const results = index.getWorksByTitleAndAuthor("Dune", "Frank Herbert");
+      expect(results).toHaveLength(2);
+      const titles = results.map((w) => w.title).sort();
+      expect(titles).toEqual(["Dune", "Dune Messiah"]);
+    });
+
+    it("matches author by alias", () => {
+      const results = index.getWorksByTitleAndAuthor("Dune", "Frank P. Herbert");
+      expect(results).toHaveLength(2);
+    });
+
+    it("case-insensitive matching", () => {
+      const results = index.getWorksByTitleAndAuthor("dune", "frank herbert");
+      expect(results).toHaveLength(2);
+    });
+
+    it("does not match works with different author", () => {
+      const results = index.getWorksByTitleAndAuthor("Dune", "Isaac Asimov");
+      expect(results).toHaveLength(0);
+    });
+
+    it("returns empty array when no title match", () => {
+      const results = index.getWorksByTitleAndAuthor("Nonexistent", "Frank Herbert");
+      expect(results).toEqual([]);
+    });
+
+    it("returns empty array when no author match", () => {
+      const results = index.getWorksByTitleAndAuthor("Dune", "Nonexistent");
+      expect(results).toEqual([]);
+    });
+
+    it("caps results at 5", () => {
+      // Create 6 works matching the same title + author pattern
+      for (let i = 1; i <= 6; i++) {
+        writeFile(join(dedupDir, `works/multi-${i}.md`), {
+          type: "work", slug: `multi-${i}`, title: `Multi Test ${i}`,
+          authors: ["[[authors/hera]]"],
+          created_at: "2024-01-01T00:00:00", _schema: 1,
+        }, `# Multi Test ${i}`);
+      }
+      const freshIndex = new Index(dedupDir);
+      freshIndex.load();
+      const results = freshIndex.getWorksByTitleAndAuthor("Multi Test", "Frank Herbert");
+      expect(results).toHaveLength(5);
+    });
+  });
 });
