@@ -245,10 +245,10 @@ Scan ISBN barcodes from device camera.
 
 Resolve author name strings from API to existing or new Author files.
 
-- [ ] `findOrCreateAuthors(names: string[]): {slug, name, isNew}[]`
-- [ ] For each name: check all Authors for exact match on `name` or `aliases` (case-insensitive, whitespace-normalized)
-- [ ] Match → return existing slug. No match → create new Author, return new slug.
-- [ ] No fuzzy matching (transliteration variants create a new Author; user corrects on preview)
+- [x] `findOrCreateAuthors(names: string[]): {slug, name, isNew}[]`
+- [x] For each name: check all Authors for exact match on `name` or `aliases` (case-insensitive, whitespace-normalized)
+- [x] Match → return existing slug. No match → create new Author, return new slug.
+- [x] No fuzzy matching (transliteration variants create a new Author; user corrects on preview)
 
 ---
 
