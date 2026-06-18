@@ -168,7 +168,7 @@ export default function AddBook() {
         setSubtitle(data.subtitle || "");
         setIsbn(isbnString);
         setPublisher(data.publisher || "");
-        setPublishDate(data.publish_date || "");
+        setPublishDate(normalizeDate(data.publish_date));
         setPageCount(data.page_count != null ? String(data.page_count) : "");
         setFormat(data.format || "");
         setLanguage(data.language || "");
@@ -177,23 +177,20 @@ export default function AddBook() {
           setCoverPreview(data.cover_url);
         }
 
-        // Find or create authors — call the same API to get resolved author data
-        if (data.authors.length > 0) {
-          populateAuthorsFromLookup(data.authors);
-        }
+        // Resolve authors (returns a promise)
+        const authorPromise = data.authors.length > 0
+          ? populateAuthorsFromLookup(data.authors)
+          : Promise.resolve();
 
         // Check dedup
         const firstAuthor = data.authors[0] || "";
         const dedupUrl = `/api/quick-add/check-dedup?isbn=${encodeURIComponent(isbnString)}&title=${encodeURIComponent(data.title)}&author=${encodeURIComponent(firstAuthor)}`;
+        const dedupPromise = fetch(dedupUrl).then((r) => r.json()).catch(() => null);
 
-        fetch(dedupUrl)
-          .then((r) => r.json())
-          .then((dedup: DedupResult) => {
+        // Wait for both async operations before showing preview
+        Promise.all([authorPromise, dedupPromise])
+          .then(([, dedup]) => {
             setDedupResult(dedup);
-            setPageState("preview");
-          })
-          .catch(() => {
-            setDedupResult(null);
             setPageState("preview");
           });
       })
@@ -209,10 +206,23 @@ export default function AddBook() {
       });
   }
 
-  function populateAuthorsFromLookup(authorNames: string[]) {
+  function normalizeDate(raw: string | undefined): string {
+    if (!raw) return "";
+    // If it's already YYYY-MM-DD, return as-is
+    if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+    // Try parsing as a full date (e.g., "July 5, 2006", "2006-07-05")
+    const d = new Date(raw);
+    if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+    // Try just a year (e.g., "1965")
+    const year = raw.match(/^\d{4}$/);
+    if (year) return `${year[0]}-01-01`;
+    return "";
+  }
+
+  function populateAuthorsFromLookup(authorNames: string[]): Promise<void> {
     setStatusMessage("Resolving authors…");
 
-    fetch("/api/authors")
+    return fetch("/api/authors")
       .then((r) => r.json())
       .then((allAuthors: AuthorMeta[]) => {
         const resolved: AuthorMeta[] = [];
