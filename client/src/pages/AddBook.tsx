@@ -87,7 +87,13 @@ export default function AddBook() {
   }
 
   function cleanIsbn(raw: string): string {
-    return raw.replace(/[^0-9-]/g, "");
+    // Keep only digits — barcodes may include spaces, price add-ons, or other noise
+    const digits = raw.replace(/\D/g, "");
+    // Some books use 12-digit UPC-A; convert to EAN-13 by prepending '0'
+    if (digits.length === 12) return "0" + digits;
+    // Some scanners capture a 5-digit price add-on after the main 13-digit barcode
+    if (digits.length > 13 && (digits.startsWith("978") || digits.startsWith("979"))) return digits.slice(0, 13);
+    return digits;
   }
 
   function handleCoverUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -119,6 +125,7 @@ export default function AddBook() {
   // --- Scan / Lookup flow ---
 
   function handleScan(isbnString: string) {
+    console.log("[scanner] raw:", JSON.stringify(isbnString), "cleaned:", cleanIsbn(isbnString));
     clearError();
     setPageState("loading");
     setStatusMessage("Looking up ISBN…");
