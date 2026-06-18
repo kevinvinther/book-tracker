@@ -6,13 +6,17 @@ services:
     volumes:
       - ./server/src:/app/src
       - server-node-modules:/app/node_modules
-      - ./data:/data
-      - ./.env:/app/.env
+      - ./data:/app/data:z
+      - ./.env:/app/.env:ro
     environment:
       - NODE_ENV=development
+      - BOOKTRACKER_LIBRARY_PATH=/app/data
+    user: "1000:1000"
 
   client:
-    build: ./client
+    build:
+      context: ./client
+      target: dev-https
     ports:
       - "5173:5173"
     volumes:

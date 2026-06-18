@@ -1,16 +1,23 @@
 import { fileURLToPath, URL } from "node:url";
-import { defineConfig } from "vite";
+import { existsSync, readFileSync } from "node:fs";
+import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import basicSsl from "@vitejs/plugin-basic-ssl";
 
-// Enable HTTPS with a self-signed cert only when HTTPS=true. Needed to test
-// camera/getUserMedia features (e.g. the barcode scanner) on a phone over the
-// LAN, since those APIs require a secure context.
 const useHttps = process.env.HTTPS === "true";
+const certDir = "/app/certs";
+const dockerKey = `${certDir}/localhost.key`;
+const dockerCert = `${certDir}/localhost.crt`;
+const hasDockerCerts = existsSync(dockerKey) && existsSync(dockerCert);
+
+const plugins: Plugin[] = [react(), tailwindcss()];
+if (useHttps && !hasDockerCerts) {
+  plugins.push(basicSsl());
+}
 
 export default defineConfig({
-  plugins: [react(), tailwindcss(), ...(useHttps ? [basicSsl()] : [])],
+  plugins,
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
@@ -21,5 +28,10 @@ export default defineConfig({
     proxy: {
       "/api": process.env.BACKEND_URL || "http://localhost:3001",
     },
+    ...(hasDockerCerts
+      ? { https: { key: readFileSync(dockerKey), cert: readFileSync(dockerCert) } }
+      : useHttps
+        ? { https: true }
+        : {}),
   },
 });
