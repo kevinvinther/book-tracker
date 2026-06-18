@@ -229,13 +229,13 @@ Given an ISBN, return structured book metadata from open APIs.
 
 Scan ISBN barcodes from device camera.
 
-- [ ] Integrate `html5-qrcode` or `zxing-js/library`
-- [ ] Camera permission request on first use
-- [ ] Viewfinder overlay with cancel button
-- [ ] On detection: beep/vibrate, capture ISBN, close camera
-- [ ] Fallback if camera denied: show manual ISBN input field
-- [ ] Desktop: use webcam. If no webcam, show manual ISBN input.
-- [ ] Component is reusable: `<BarcodeScanner onScan={(isbn) => ...} />`
+- [x] Integrate `html5-qrcode` or `zxing-js/library`
+- [x] Camera permission request on first use
+- [x] Viewfinder overlay with cancel button
+- [x] On detection: beep/vibrate, capture ISBN, close camera
+- [x] Fallback if camera denied: show manual ISBN input field
+- [x] Desktop: use webcam. If no webcam, show manual ISBN input.
+- [x] Component is reusable: `<BarcodeScanner onScan={(isbn) => ...} />`
 
 ---
 
