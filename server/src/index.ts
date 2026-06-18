@@ -19,6 +19,16 @@ const PORT = 3001;
 
 app.use(express.json());
 
+// Request logger
+app.use((req, _res, next) => {
+  const start = Date.now();
+  next();
+  const ms = Date.now() - start;
+  if (req.path.startsWith("/api/")) {
+    console.log(`[req] ${req.method} ${req.path} ${ms}ms`);
+  }
+});
+
 const config = readConfig();
 ensureLibraryDirectories(config.library_path);
 

@@ -188,6 +188,7 @@ export default function AddBook() {
 
         console.log("[lookup] got data:", data.title, "| authors:", data.authors, "| date:", data.publish_date);
 
+        setStatusMessage("Checking for duplicates…");
         const dedupPromise = fetch(dedupUrl)
           .then((r) => {
             if (!r.ok) throw new Error(`dedup returned ${r.status}`);

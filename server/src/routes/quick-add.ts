@@ -21,6 +21,7 @@ export function createQuickAddRouter(index: Index, libraryPath: string): Router 
 
   router.get("/check-dedup", (req, res) => {
     const { isbn, title, author } = req.query as Record<string, string | undefined>;
+    console.log(`[check-dedup] isbn=${isbn} title="${title}" author="${author}"`);
 
     const editionMatch = (() => {
       if (!isbn) return null;
@@ -55,6 +56,7 @@ export function createQuickAddRouter(index: Index, libraryPath: string): Router 
       }));
     })();
 
+    console.log(`[check-dedup] editionMatch=${!!editionMatch} workMatches=${workMatches.length}`);
     res.json({ editionMatch, workMatches });
   });
 
