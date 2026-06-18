@@ -219,7 +219,7 @@ interface GBSearchResponse {
 }
 
 export async function fetchGoogleBooks(isbn: string): Promise<GBVolumeInfo | null> {
-  const apiKey = process.env.GOOGLE_BOOKS_API_KEY;
+  const apiKey = (process.env.GOOGLE_BOOKS_API_KEY || "").trim();
   if (!apiKey) return null;
 
   try {
@@ -227,7 +227,8 @@ export async function fetchGoogleBooks(isbn: string): Promise<GBVolumeInfo | nul
       `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&key=${apiKey}`
     );
     if (!resp.ok) {
-      console.warn(`[lookup] Google Books returned ${resp.status} for ISBN ${isbn}`);
+      const body = await resp.text().catch(() => "(unreadable)");
+      console.warn(`[lookup] Google Books returned ${resp.status} for ISBN ${isbn}: ${body.slice(0, 200)}`);
       return null;
     }
     const data: GBSearchResponse = await resp.json();
