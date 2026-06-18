@@ -32,8 +32,8 @@
 ## 5. Integration & Polish
 
 - [x] 5.1 Verify the manual-only path still works unchanged — submit the manual form without scanning and confirm it creates entities as before
-- [ ] 5.2 Manual test: scan a barcode → verify lookup fetches data → verify preview shows editable fields → confirm → verify entities created on disk
-- [ ] 5.3 Manual test: scan a barcode for an existing ISBN → verify dedup warning appears → choose "Add another copy" → verify new copy created without new Work
-- [ ] 5.4 Manual test: enter ISBN manually → verify same flow works without camera
-- [ ] 5.5 Manual test: lookup failure (invalid ISBN) → verify error toast and return to manual form with ISBN preserved
+- [x] 5.2 Manual test: scan a barcode → verify lookup fetches data → verify preview shows editable fields → confirm → verify entities created on disk
+- [x] 5.3 Manual test: scan a barcode for an existing ISBN → verify dedup warning appears → choose "Add another copy" → verify new copy created without new Work
+- [x] 5.4 Manual test: enter ISBN manually → verify same flow works without camera
+- [x] 5.5 Manual test: lookup failure (invalid ISBN) → verify error toast and return to manual form with ISBN preserved
 - [x] 5.6 Run `npm run lint` and `npm run typecheck` and fix any issues
