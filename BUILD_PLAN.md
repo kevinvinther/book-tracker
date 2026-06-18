@@ -192,17 +192,17 @@ Detail views for editions and copies.
 
 Create a Work + Edition + Copy in one form, without barcode or ISBN lookup.
 
-- [ ] Client: "Add Manually" button in grid header
-- [ ] Multi-step or single-page form:
+- [x] Client: "Add Manually" button in grid header
+- [x] Multi-step or single-page form:
   - Title* (required), subtitle
   - Author(s)* — dropdown of existing authors + "create new" with name input
   - Edition fields: ISBN (optional), publisher, publish_date, page_count, format, language, contributors
   - Copy fields: condition, acquisition_date, acquisition_source, price_amount, price_currency, location, cover_image
-- [ ] Server: `POST /api/quick-add` (manual mode — no ISBN lookup)
+- [x] Server: `POST /api/quick-add` (manual mode — no ISBN lookup)
   - Creates Author(s) if new
   - Creates Work, Edition, Copy
   - Returns `{ workSlug }`
-- [ ] Redirect to new Work Detail on success
+- [x] Redirect to new Work Detail on success
 
 ---
 
