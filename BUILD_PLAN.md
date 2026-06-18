@@ -212,14 +212,14 @@ Create a Work + Edition + Copy in one form, without barcode or ISBN lookup.
 
 Given an ISBN, return structured book metadata from open APIs.
 
-- [ ] `lookupISBN(isbn)` function:
+- [x] `lookupISBN(isbn)` function:
   - Primary: Open Library API (`openlibrary.org/isbn/{isbn}.json`)
   - Fallback: Google Books API
   - Returns: title, subtitle, authors[], publisher, publish_date, page_count, format, language, genres, description, cover_url, contributors[] (when available)
-- [ ] Download cover image to `attachments/{slug}-cover.jpg`
-- [ ] Cache results in `.booktracker/cache/{isbn}.json`
-- [ ] Handle failures: return error with message "Couldn't find this ISBN"
-- [ ] Rate limiting: track request count, respect API limits
+  - [x] Download cover image to `attachments/{slug}-cover.jpg`
+- [x] Cache results in `.booktracker/cache/{isbn}.json`
+- [x] Handle failures: return error with message "Couldn't find this ISBN"
+- [x] Rate limiting: track request count, respect API limits
 
 ---
 
