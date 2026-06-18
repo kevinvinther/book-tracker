@@ -61,8 +61,8 @@ export function writeCache(isbn: string, data: LookupResult, libraryPath: string
 
 // ---- Fetch helpers ----
 
-async function fetchWithTimeout(url: string, timeoutMs = 20000): Promise<Response> {
-  return fetch(url, { signal: AbortSignal.timeout(timeoutMs) });
+async function fetchWithTimeout(url: string, timeoutMs = 20000, headers?: Record<string, string>): Promise<Response> {
+  return fetch(url, { signal: AbortSignal.timeout(timeoutMs), headers });
 }
 
 // ---- Open Library ----
@@ -239,9 +239,14 @@ export async function fetchGoogleBooks(isbn: string): Promise<GBVolumeInfo | nul
   const apiKey = (process.env.GOOGLE_BOOKS_API_KEY || "").trim();
   if (!apiKey) return null;
 
+  const url = `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&key=***`;
+  console.log(`[lookup] Google Books URL: ${url}`);
+
   try {
     const resp = await fetchWithTimeout(
-      `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&key=${apiKey}`
+      `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&key=${apiKey}`,
+      20000,
+      { "User-Agent": "book-tracker/1.0" }
     );
     if (!resp.ok) {
       const body = await resp.text().catch(() => "(unreadable)");
