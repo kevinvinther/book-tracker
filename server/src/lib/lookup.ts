@@ -95,12 +95,12 @@ export async function fetchOpenLibrary(isbn: string): Promise<OLEditionResponse 
   try {
     const resp = await fetchWithTimeout(`https://openlibrary.org/isbn/${isbn}.json`);
     if (!resp.ok) {
-      console.error(`[lookup] Open Library returned ${resp.status} for ISBN ${isbn}`);
+      console.warn(`[lookup] Open Library returned ${resp.status} for ISBN ${isbn}`);
       return null;
     }
     const data: OLEditionResponse = await resp.json();
     if (!data || !data.title) {
-      console.error(`[lookup] Open Library returned no title for ISBN ${isbn}`);
+      console.warn(`[lookup] Open Library returned no title for ISBN ${isbn}`);
       return null;
     }
     return data;
@@ -227,17 +227,17 @@ export async function fetchGoogleBooks(isbn: string): Promise<GBVolumeInfo | nul
       `https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&key=${apiKey}`
     );
     if (!resp.ok) {
-      console.error(`[lookup] Google Books returned ${resp.status} for ISBN ${isbn}`);
+      console.warn(`[lookup] Google Books returned ${resp.status} for ISBN ${isbn}`);
       return null;
     }
     const data: GBSearchResponse = await resp.json();
     if (!data.items || data.items.length === 0) {
-      console.error(`[lookup] Google Books returned no items for ISBN ${isbn}`);
+      console.warn(`[lookup] Google Books returned no items for ISBN ${isbn}`);
       return null;
     }
     const volumeInfo = data.items[0].volumeInfo;
     if (!volumeInfo || !volumeInfo.title) {
-      console.error(`[lookup] Google Books returned no title for ISBN ${isbn}`);
+      console.warn(`[lookup] Google Books returned no title for ISBN ${isbn}`);
       return null;
     }
     return volumeInfo;
@@ -336,7 +336,7 @@ export async function lookupISBN(isbn: string, libraryPath: string): Promise<Loo
   }
 
   if (!data) {
-    console.error(`[lookup] All APIs failed for ISBN ${isbn}`);
+    console.warn(`[lookup] All APIs failed for ISBN ${isbn}`);
     return null;
   }
 
