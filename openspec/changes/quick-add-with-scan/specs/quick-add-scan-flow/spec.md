@@ -87,3 +87,47 @@ The `/add` page SHALL display a manual ISBN text input and "Lookup" button along
 #### Scenario: Manual ISBN entry triggers lookup
 - **WHEN** the user types "9780141036144" into the ISBN input and clicks "Lookup"
 - **THEN** the system calls `GET /api/lookup?isbn=9780141036144` and follows the same flow as a scan
+
+### Requirement: ISBN normalization before lookup
+Before calling the lookup API, the system SHALL strip all non-digit characters from the ISBN string. If the result is exactly 12 digits (UPC-A), the system SHALL prepend a "0" to convert to EAN-13. If the result is more than 13 digits and starts with "978" or "979" (barcode with price add-on), the system SHALL truncate to the first 13 digits.
+
+#### Scenario: Scanner returns UPC-A barcode
+- **WHEN** the scanner detects a 12-digit UPC-A barcode "978014103614"
+- **THEN** the system converts it to "0978014103614" before calling the lookup API
+
+#### Scenario: Scanner captures price add-on
+- **WHEN** the scanner captures "9780141036144 51295" (13-digit EAN-13 + 5-digit add-on)
+- **THEN** the system strips non-digits and truncates to "9780141036144"
+
+#### Scenario: User types ISBN with hyphens or spaces
+- **WHEN** the user types "978-0-14-103614-4" into the manual ISBN input
+- **THEN** the system sends "9780141036144" to the lookup API
+
+### Requirement: Publish date normalization for date input
+When a `publish_date` is received from the lookup API, the system SHALL normalize it to `YYYY-MM-DD` format before populating the date input field. Year-only values (e.g., "1965") SHALL be rendered as "1965-01-01". Full dates (e.g., "July 5, 2006") SHALL be parsed and formatted accordingly.
+
+#### Scenario: Year-only date from API
+- **WHEN** the lookup API returns `publish_date: "1965"`
+- **THEN** the date input displays "1965-01-01"
+
+#### Scenario: Full date from API
+- **WHEN** the lookup API returns `publish_date: "Mar 03, 2015"`
+- **THEN** the date input displays "2015-03-03"
+
+### Requirement: Error visibility and dismissal
+Error messages SHALL be displayed in a prominent callout box above the form, visible without scrolling. Any change to a form input field SHALL immediately dismiss the error. Starting a new scan or manual lookup SHALL also dismiss any previous error.
+
+#### Scenario: Error dismissed on input change
+- **WHEN** an error is displayed and the user types in any form field
+- **THEN** the error message is immediately removed
+
+#### Scenario: Error dismissed on new scan
+- **WHEN** an error is displayed and the user clicks "Scan Barcode"
+- **THEN** the error message is removed before the scanner opens
+
+### Requirement: Cache bypass for testing
+The `/add` page SHALL display a "Skip cache" checkbox near the manual ISBN input. When checked, the system SHALL append `&nocache=1` to the lookup URL so that the server bypasses the local cache and queries the APIs directly.
+
+#### Scenario: Cache bypass enabled
+- **WHEN** "Skip cache" is checked and the user triggers a lookup
+- **THEN** the system calls `GET /api/lookup?isbn=...&nocache=1`

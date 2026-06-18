@@ -37,3 +37,10 @@ Each author displayed in the preview SHALL be shown in a dropdown input that def
 #### Scenario: User corrects an author match via dropdown
 - **WHEN** the user opens an author dropdown and selects a different existing author
 - **THEN** the corrected author is used as the selected author for submission
+
+### Requirement: Add Book button on Work Grid
+The Work Grid page SHALL display an "Add Book" button in the header area that navigates to the `/add` page.
+
+#### Scenario: Clicking Add Book
+- **WHEN** the user clicks "+ Add Book" on the Work Grid
+- **THEN** the browser navigates to `/add`
