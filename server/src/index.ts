@@ -12,6 +12,7 @@ import { createEditionsRouter } from "./routes/editions.js";
 import { createCopiesRouter } from "./routes/copies.js";
 import { createSeriesRouter } from "./routes/series.js";
 import { createQuickAddRouter } from "./routes/quick-add.js";
+import { createLookupRouter } from "./routes/lookup.js";
 
 const app = express();
 const PORT = 3001;
@@ -39,6 +40,7 @@ app.use("/api/editions", createEditionsRouter(index, config.library_path));
 app.use("/api/copies", createCopiesRouter(index, config.library_path));
 app.use("/api/series", createSeriesRouter(index, config.library_path));
 app.use("/api/quick-add", createQuickAddRouter(index, config.library_path));
+app.use("/api/lookup", createLookupRouter(config.library_path));
 
 // File upload for cover images
 const upload = multer({
