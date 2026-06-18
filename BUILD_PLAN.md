@@ -258,17 +258,17 @@ Resolve author name strings from API to existing or new Author files.
 
 End-to-end: scan barcode → ISBN lookup → author matching → dedup → preview → create.
 
-- [ ] Quick Add page: "Scan" button + "Enter ISBN manually" input
-- [ ] On scan/ISBN entry: call `lookupISBN`, then `findOrCreateAuthors`, then check dedup
-- [ ] Dedup checks:
+- [x] Quick Add page: "Scan" button + "Enter ISBN manually" input
+- [x] On scan/ISBN entry: call `lookupISBN`, then `findOrCreateAuthors`, then check dedup
+- [x] Dedup checks:
   - ISBN exact match on Edition → "This edition exists. Add another copy?"
   - Title+author fuzzy match on Work → "This might be '[existing title]'. Attach to existing or create new?"
-- [ ] Preview screen: all fetched data displayed, author links shown (matched existing / new), cover image, all fields editable
-- [ ] User can correct author links via dropdown if API returned wrong match
-- [ ] Copy-specific fields: condition, source, location, price (optional, can skip)
-- [ ] Confirm → `POST /api/quick-add` (with ISBN data)
-- [ ] Server: same as S12 but enriched with API data. Attaching to existing Work never modifies Work's metadata.
-- [ ] Success → toast + navigate to Work Detail
+- [x] Preview screen: all fetched data displayed, author links shown (matched existing / new), cover image, all fields editable
+- [x] User can correct author links via dropdown if API returned wrong match
+- [x] Copy-specific fields: condition, source, location, price (optional, can skip)
+- [x] Confirm → `POST /api/quick-add` (with ISBN data)
+- [x] Server: same as S12 but enriched with API data. Attaching to existing Work never modifies Work's metadata.
+- [x] Success → toast + navigate to Work Detail
 
 ---
 
