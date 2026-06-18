@@ -7,23 +7,33 @@ interface CopyCardProps {
 }
 
 export function CopyCard({ copy, edition }: CopyCardProps) {
+  const leading = edition.format || (!edition.format && edition.publisher) || null;
+
   return (
     <div className="border-t border-rule px-1 py-3 first:border-t-0">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3 text-sm">
           {edition.format && <span className="text-foreground capitalize">{edition.format}</span>}
+          {!edition.format && edition.publisher && (
+            <span className="text-muted-foreground">{edition.publisher}</span>
+          )}
           {copy.condition && (
             <span className="text-muted-foreground">
-              {edition.format && <span className="mx-1.5 text-rule">·</span>}
+              {leading && <span className="mr-1.5 text-rule">·</span>}
               {copy.condition}
             </span>
           )}
           {copy.location && <span className="text-muted-foreground">— {copy.location}</span>}
+          {!leading && !copy.condition && !copy.location && (
+            <span className="text-muted-foreground">—</span>
+          )}
         </div>
         <StatusStamp status={copy.status} />
       </div>
-      {copy.acquisition_source && (
-        <p className="mt-1.5 text-xs text-muted-foreground">{copy.acquisition_source}</p>
+      {(copy.acquisition_source || copy.acquisition_date) && (
+        <p className="mt-1.5 text-xs text-muted-foreground">
+          {[copy.acquisition_source, copy.acquisition_date].filter(Boolean).join(" · ")}
+        </p>
       )}
     </div>
   );
