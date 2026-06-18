@@ -359,34 +359,9 @@ describe("lookupISBN", () => {
     expect(result).toBeNull();
   });
 
-  it("returns data from Open Library when Google Books not configured", async () => {
-    const editionData = {
-      title: "OL Book",
-      authors: [{ key: "/authors/OL19997A" }],
-      subjects: ["Fiction"],
-    };
-    const authorData = { name: "George Orwell" };
-
-    let callCount = 0;
-    vi.stubGlobal("fetch", vi.fn().mockImplementation(() => {
-      callCount++;
-      if (callCount === 1) {
-        return Promise.resolve({ ok: true, json: () => Promise.resolve(editionData) });
-      }
-      return Promise.resolve({ ok: true, json: () => Promise.resolve(authorData) });
-    }));
-
-    const result = await lookupISBN("9787777777777", tmpRoot);
-    expect(result).not.toBeNull();
-    expect(result!.title).toBe("OL Book");
-    expect(result!.authors).toEqual(["George Orwell"]);
-    expect(result!.source).toBe("openlibrary");
-  });
-
-  it("falls back to Google Books when Open Library fails", async () => {
+  it("returns data from Google Books when API key is set", async () => {
     process.env.GOOGLE_BOOKS_API_KEY = "test-key";
 
-    // First call (Open Library) fails
     const gbResponse = {
       items: [{
         volumeInfo: {
@@ -397,19 +372,45 @@ describe("lookupISBN", () => {
       }],
     };
 
-    let callCount = 0;
-    vi.stubGlobal("fetch", vi.fn().mockImplementation(() => {
-      callCount++;
-      if (callCount === 1) {
-        return Promise.resolve({ ok: false });
-      }
-      return Promise.resolve({ ok: true, json: () => Promise.resolve(gbResponse) });
+    // Google Books doesn't need a second fetch for author names
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve(gbResponse),
     }));
 
-    const result = await lookupISBN("9788888888888", tmpRoot);
+    const result = await lookupISBN("9787777777777", tmpRoot);
     expect(result).not.toBeNull();
     expect(result!.title).toBe("GB Book");
     expect(result!.authors).toEqual(["Google Author"]);
     expect(result!.source).toBe("google");
+  });
+
+  it("falls back to Open Library when Google Books fails", async () => {
+    // Clear the API key so Google Books returns null without calling fetch
+    delete process.env.GOOGLE_BOOKS_API_KEY;
+
+    const editionData = {
+      title: "OL Book",
+      authors: [{ key: "/authors/OL19997A" }],
+      subjects: ["Fiction"],
+    };
+    const authorData = { name: "George Orwell" };
+
+    // Google Books is first. Mock it to fail (no API key → null, or fetch error).
+    // Open Library will be the fallback and needs two fetches: edition + author.
+    let callCount = 0;
+    vi.stubGlobal("fetch", vi.fn().mockImplementation(() => {
+      callCount++;
+      if (callCount === 1) {
+        return Promise.resolve({ ok: true, json: () => Promise.resolve(editionData) });
+      }
+      return Promise.resolve({ ok: true, json: () => Promise.resolve(authorData) });
+    }));
+
+    const result = await lookupISBN("9788888888888", tmpRoot);
+    expect(result).not.toBeNull();
+    expect(result!.title).toBe("OL Book");
+    expect(result!.authors).toEqual(["George Orwell"]);
+    expect(result!.source).toBe("openlibrary");
   });
 });

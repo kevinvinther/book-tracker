@@ -331,25 +331,27 @@ export async function downloadCover(coverUrl: string, libraryPath: string): Prom
 export async function lookupISBN(isbn: string, libraryPath: string): Promise<LookupResult | null> {
   const cached = readCache(isbn, libraryPath);
   if (cached) {
-    console.error(`[lookup] Cache hit for ISBN ${isbn}`);
+    console.log(`[lookup] Cache hit for ISBN ${isbn}`);
     return cached;
   }
 
-  console.error(`[lookup] Cache miss, querying APIs for ISBN ${isbn}`);
+  console.log(`[lookup] Cache miss, querying APIs for ISBN ${isbn}`);
 
   let data: Omit<LookupResult, "source"> | null = null;
-  let source: "openlibrary" | "google" = "openlibrary";
+  let source: "openlibrary" | "google" = "google";
 
-  data = await lookupOpenLibrary(isbn);
+  // Try Google Books first (cleaner data, less noise in publishers),
+  // fall back to Open Library (no API key needed, larger catalog).
+  data = await lookupGoogleBooks(isbn);
   if (data) {
-    source = "openlibrary";
-    console.error(`[lookup] Open Library OK for ISBN ${isbn}: "${data.title}"`);
+    source = "google";
+    console.log(`[lookup] Google Books OK for ISBN ${isbn}: "${data.title}"`);
   } else {
-    console.error(`[lookup] Open Library failed, trying Google Books for ISBN ${isbn}`);
-    data = await lookupGoogleBooks(isbn);
+    console.log(`[lookup] Google Books failed, trying Open Library for ISBN ${isbn}`);
+    data = await lookupOpenLibrary(isbn);
     if (data) {
-      source = "google";
-      console.error(`[lookup] Google Books OK for ISBN ${isbn}: "${data.title}"`);
+      source = "openlibrary";
+      console.log(`[lookup] Open Library OK for ISBN ${isbn}: "${data.title}"`);
     }
   }
 
