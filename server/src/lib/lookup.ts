@@ -328,11 +328,13 @@ export async function downloadCover(coverUrl: string, libraryPath: string): Prom
 
 // ---- Core Lookup ----
 
-export async function lookupISBN(isbn: string, libraryPath: string): Promise<LookupResult | null> {
-  const cached = readCache(isbn, libraryPath);
-  if (cached) {
-    console.log(`[lookup] Cache hit for ISBN ${isbn}`);
-    return cached;
+export async function lookupISBN(isbn: string, libraryPath: string, skipCache = false): Promise<LookupResult | null> {
+  if (!skipCache) {
+    const cached = readCache(isbn, libraryPath);
+    if (cached) {
+      console.log(`[lookup] Cache hit for ISBN ${isbn}`);
+      return cached;
+    }
   }
 
   console.log(`[lookup] Cache miss, querying APIs for ISBN ${isbn}`);

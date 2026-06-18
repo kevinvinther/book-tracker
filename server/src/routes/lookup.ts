@@ -6,6 +6,7 @@ export function createLookupRouter(libraryPath: string): Router {
 
   router.get("/", async (req, res) => {
     const isbn = req.query.isbn;
+    const nocache = req.query.nocache === "1" || req.query.nocache === "true";
 
     if (!isbn || typeof isbn !== "string" || isbn.trim() === "") {
       res.status(400).json({ error: "ISBN parameter is required" });
@@ -13,7 +14,7 @@ export function createLookupRouter(libraryPath: string): Router {
     }
 
     try {
-      const result = await lookupISBN(isbn.trim(), libraryPath);
+      const result = await lookupISBN(isbn.trim(), libraryPath, nocache);
 
       if (!result) {
         res.status(404).json({ error: "Couldn't find this ISBN" });
