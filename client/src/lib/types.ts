@@ -130,3 +130,26 @@ export interface Series {
   created_at: string;
   works: EnrichedWorkInSeries[];
 }
+
+export interface QuickAddPayload {
+  title: string;
+  subtitle?: string;
+  authorNames: string[];
+  isbn?: string;
+  publisher?: string;
+  publish_date?: string;
+  page_count?: string;
+  format?: string;
+  language?: string;
+  condition?: string;
+  acquisition_date?: string;
+  acquisition_source?: string;
+  price_amount?: string;
+  price_currency?: string;
+  location?: string;
+  cover_image?: string;
+}
+
+export interface QuickAddResponse {
+  workSlug: string;
+}
