@@ -1,8 +1,9 @@
 import { Router } from "express";
 import { Index } from "../lib/index.js";
-import { Author, Edition, Copy, Work } from "../lib/types.js";
+import { Edition, Copy, Work } from "../lib/types.js";
 import { writeFile, resolveLibraryPath } from "../lib/io.js";
 import { generateSlug } from "../lib/slug.js";
+import { findOrCreateAuthors } from "../lib/authors.js";
 
 function getAllSlugs(index: Index): Set<string> {
   const slugs = new Set<string>();
@@ -13,35 +14,6 @@ function getAllSlugs(index: Index): Set<string> {
   for (const s of index.getAllSeries()) slugs.add(s.slug);
   for (const slug of index.getAllNoteSlugs()) slugs.add(slug);
   return slugs;
-}
-
-function findOrCreateAuthor(name: string, index: Index, libraryPath: string): string {
-  const trimmed = name.trim();
-  const normalized = trimmed.toLowerCase().replace(/\s+/g, " ");
-
-  for (const author of index.getAllAuthors()) {
-    const authorNorm = author.name.toLowerCase().replace(/\s+/g, " ");
-    if (authorNorm === normalized) return author.slug;
-
-    if (author.aliases) {
-      for (const alias of author.aliases) {
-        if (alias.toLowerCase().replace(/\s+/g, " ") === normalized) return author.slug;
-      }
-    }
-  }
-
-  const slug = generateSlug(trimmed, getAllSlugs(index));
-  const author: Author = {
-    type: "author",
-    slug,
-    name: trimmed,
-    created_at: new Date().toISOString(),
-    _schema: 1,
-  };
-
-  writeFile(resolveLibraryPath(`authors/${slug}.md`, libraryPath), author as unknown as Record<string, unknown>, `# ${author.name}`);
-  index.upsert("author", author);
-  return slug;
 }
 
 export function createQuickAddRouter(index: Index, libraryPath: string): Router {
@@ -61,7 +33,8 @@ export function createQuickAddRouter(index: Index, libraryPath: string): Router 
       return;
     }
 
-    const authorSlugs = authorNames.map((name: string) => findOrCreateAuthor(name, index, libraryPath));
+    const authorResults = findOrCreateAuthors(authorNames, index, libraryPath);
+    const authorSlugs = authorResults.map((r) => r.slug);
 
     const workSlug = generateSlug(title.trim(), getAllSlugs(index));
     const work: Work = {
