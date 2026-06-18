@@ -135,10 +135,14 @@ async function resolveAuthorNames(rawAuthors: OLAuthorRaw[]): Promise<string[]> 
         if (!key) return null;
         try {
           const resp = await fetchWithTimeout(`https://openlibrary.org/authors/${key}.json`);
-          if (!resp.ok) return null;
+          if (!resp.ok) {
+            console.warn(`[lookup] Author key ${key} returned ${resp.status}`);
+            return null;
+          }
           const data = await resp.json() as { name?: string };
           return data.name || null;
-        } catch {
+        } catch (err) {
+          console.warn(`[lookup] Author key ${key} fetch failed:`, (err as Error).message);
           return null;
         }
       }
@@ -150,6 +154,8 @@ async function resolveAuthorNames(rawAuthors: OLAuthorRaw[]): Promise<string[]> 
 }
 
 function normalizeOpenLibraryData(data: OLEditionResponse, authorNames: string[]): Omit<LookupResult, "source"> {
+  const authorNamesLower = new Set(authorNames.map((n) => n.toLowerCase()));
+
   const result: Omit<LookupResult, "source"> = {
     title: data.title!,
     authors: authorNames,
@@ -157,7 +163,16 @@ function normalizeOpenLibraryData(data: OLEditionResponse, authorNames: string[]
   };
 
   if (data.subtitle) result.subtitle = data.subtitle;
-  if (data.publishers && data.publishers.length > 0) result.publisher = data.publishers[0];
+  if (data.publishers && data.publishers.length > 0) {
+    // Open Library sometimes includes author names in the publishers list.
+    // Pick the first non-author publisher.
+    const actualPublisher = data.publishers.find((p) => !authorNamesLower.has(p.toLowerCase()));
+    if (actualPublisher) {
+      result.publisher = actualPublisher;
+    } else {
+      console.log(`[lookup] no non-author publisher found in:`, data.publishers);
+    }
+  }
   if (data.publish_date) result.publish_date = data.publish_date;
   if (data.number_of_pages) result.page_count = data.number_of_pages;
 
@@ -190,7 +205,9 @@ export async function lookupOpenLibrary(isbn: string): Promise<Omit<LookupResult
   if (!data) return null;
 
   const rawAuthors = getAuthorEntries(data);
+  console.log(`[lookup] OL raw authors for ISBN ${isbn}:`, JSON.stringify(rawAuthors).slice(0, 200));
   const authorNames = rawAuthors.length > 0 ? await resolveAuthorNames(rawAuthors) : [];
+  console.log(`[lookup] OL resolved authors for ISBN ${isbn}:`, authorNames);
 
   return normalizeOpenLibraryData(data, authorNames);
 }
