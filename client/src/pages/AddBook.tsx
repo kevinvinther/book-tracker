@@ -185,13 +185,31 @@ export default function AddBook() {
         // Check dedup
         const firstAuthor = data.authors[0] || "";
         const dedupUrl = `/api/quick-add/check-dedup?isbn=${encodeURIComponent(isbnString)}&title=${encodeURIComponent(data.title)}&author=${encodeURIComponent(firstAuthor)}`;
-        const dedupPromise = fetch(dedupUrl).then((r) => r.json()).catch(() => null);
+
+        console.log("[lookup] got data:", data.title, "| authors:", data.authors, "| date:", data.publish_date);
+
+        const dedupPromise = fetch(dedupUrl)
+          .then((r) => {
+            if (!r.ok) throw new Error(`dedup returned ${r.status}`);
+            return r.json();
+          })
+          .catch((e) => {
+            console.warn("[lookup] dedup check failed:", e.message);
+            return null;
+          });
 
         // Wait for both async operations before showing preview
         Promise.all([authorPromise, dedupPromise])
           .then(([, dedup]) => {
+            console.log("[lookup] all done — showing preview");
             setDedupResult(dedup);
             setPageState("preview");
+          })
+          .catch((e) => {
+            console.error("[lookup] Promise.all failed:", e);
+            setError("Something went wrong after lookup.");
+            setPageState("idle");
+            setStatusMessage("");
           });
       })
       .catch((err) => {
@@ -221,10 +239,15 @@ export default function AddBook() {
 
   function populateAuthorsFromLookup(authorNames: string[]): Promise<void> {
     setStatusMessage("Resolving authors…");
+    console.log("[lookup] resolving authors:", authorNames);
 
     return fetch("/api/authors")
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error(`authors endpoint returned ${r.status}`);
+        return r.json();
+      })
       .then((allAuthors: AuthorMeta[]) => {
+        console.log("[lookup] got", allAuthors.length, "authors from index");
         const resolved: AuthorMeta[] = [];
         for (const name of authorNames) {
           const normalized = name.trim().toLowerCase();
@@ -237,10 +260,12 @@ export default function AddBook() {
             resolved.push({ slug: "", name: name.trim() });
           }
         }
+        console.log("[lookup] resolved authors:", resolved);
         setAuthors(resolved);
         setStatusMessage("");
       })
-      .catch(() => {
+      .catch((e) => {
+        console.warn("[lookup] author resolution failed:", e.message);
         // Fallback: mark all as new authors
         setAuthors(authorNames.map((n) => ({ slug: "", name: n.trim() })));
         setStatusMessage("");
