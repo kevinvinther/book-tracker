@@ -74,6 +74,7 @@ export default function AddBook() {
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [skipCache, setSkipCache] = useState(false);
 
   function clearError() {
     setError("");
@@ -148,7 +149,8 @@ export default function AddBook() {
   }
 
   function doLookup(isbnString: string) {
-    fetch(`/api/lookup?isbn=${encodeURIComponent(isbnString)}`)
+    const nocache = skipCache ? "&nocache=1" : "";
+    fetch(`/api/lookup?isbn=${encodeURIComponent(isbnString)}${nocache}`)
       .then((res) => {
         if (!res.ok) {
           if (res.status === 404) {
@@ -374,6 +376,15 @@ export default function AddBook() {
             Lookup
           </Button>
         </div>
+        <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <input
+            type="checkbox"
+            checked={skipCache}
+            onChange={(e) => setSkipCache(e.target.checked)}
+            className="size-3 accent-primary"
+          />
+          Skip cache
+        </label>
       </div>
     );
   }
