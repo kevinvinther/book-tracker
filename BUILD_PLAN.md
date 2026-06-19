@@ -301,7 +301,7 @@ Read-through state machine: start, log pages, finish, DNF, pause, re-read, corre
 
 Display and interact with read-throughs on Copy Detail and Work Grid.
 
-- [ ] Copy Detail — Read-through History section:
+- [x] Copy Detail — Read-through History section:
   - Each read-through: status badge, started/finished dates, rating if finished
   - Page log table: date, page, %, Δ pages, Δ days (newest first)
   - "Start new read-through" button
@@ -309,7 +309,7 @@ Display and interact with read-throughs on Copy Detail and Work Grid.
   - "Finish" / "DNF" / "Pause" / "Resume" actions
   - Edit/delete individual page log entries (inline or modal)
   - "Undo last entry" shortcut button
-- [ ] Copy card on Work Detail: shows current read-through status + page progress
+- [x] Copy card on Work Detail: shows current read-through status + page progress
 
 ---
 
