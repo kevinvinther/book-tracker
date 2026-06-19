@@ -4,6 +4,7 @@ import { useWork } from "@/hooks/useWork";
 import { useEditionsByWork } from "@/hooks/useEditionsByWork";
 import { useCopiesByWork } from "@/hooks/useCopiesByWork";
 import { CopyCard } from "@/components/CopyCard";
+import { NoteTimeline } from "@/components/NoteTimeline";
 import { EditWorkModal } from "@/components/EditWorkModal";
 import { Button } from "@/components/ui/button";
 
@@ -131,6 +132,10 @@ export default function WorkDetail() {
             );
           })}
         </div>
+      </div>
+
+      <div className="mt-12">
+        <NoteTimeline entityType="work" entitySlug={work.slug} />
       </div>
 
       <EditWorkModal work={work} open={editOpen} onOpenChange={setEditOpen} onSaved={refetch} />

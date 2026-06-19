@@ -102,9 +102,9 @@ export interface Note {
   slug: string;
   date: string;
   modified: string;
-  copy: string;
-  edition: string;
-  work: string;
+  work?: string;
+  edition?: string;
+  copy?: string;
   read_through?: string;
   context_page?: number;
   tags?: string[];

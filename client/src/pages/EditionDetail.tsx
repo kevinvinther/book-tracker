@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { useEdition } from "@/hooks/useEdition";
 import { useCopiesByEdition } from "@/hooks/useCopiesByEdition";
 import { CopyCard } from "@/components/CopyCard";
+import { NoteTimeline } from "@/components/NoteTimeline";
 import { EditEditionModal } from "@/components/EditEditionModal";
 import { AddCopyModal } from "@/components/AddCopyModal";
 import { Button } from "@/components/ui/button";
@@ -117,6 +118,10 @@ export default function EditionDetail() {
             ))}
           </div>
         )}
+      </div>
+
+      <div className="mt-12">
+        <NoteTimeline entityType="edition" entitySlug={edition.slug} />
       </div>
 
       <EditEditionModal edition={edition} open={editOpen} onOpenChange={setEditOpen} onSaved={refetch} />

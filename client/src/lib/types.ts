@@ -145,6 +145,49 @@ export interface Series {
   works: EnrichedWorkInSeries[];
 }
 
+export interface NoteCopyMeta {
+  slug: string;
+  condition?: string;
+  location?: string;
+}
+
+export interface NoteEditionMeta {
+  slug: string;
+  publisher?: string;
+  format?: string;
+  page_count?: number;
+}
+
+export interface NoteWorkMeta {
+  slug: string;
+  title: string;
+  authors: string[];
+}
+
+export interface NoteReadThroughMeta {
+  started_date: string;
+  status: string;
+  rating?: number;
+}
+
+export interface Note {
+  type: "note";
+  slug: string;
+  date: string;
+  modified: string;
+  work?: string;
+  edition?: string;
+  copy?: string;
+  read_through?: string;
+  context_page?: number;
+  tags?: string[];
+  body: string;
+  copy_meta: NoteCopyMeta | null;
+  edition_meta: NoteEditionMeta | null;
+  work_meta: NoteWorkMeta | null;
+  read_through_meta: NoteReadThroughMeta | null;
+}
+
 export interface QuickAddPayload {
   title: string;
   subtitle?: string;

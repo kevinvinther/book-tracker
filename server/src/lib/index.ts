@@ -105,6 +105,10 @@ export class Index {
     return Array.from(this.notes.keys());
   }
 
+  getAllNotes(): Note[] {
+    return Array.from(this.notes.values());
+  }
+
   getWorksByAuthor(authorSlug: string): Work[] {
     const wikilink = `[[authors/${authorSlug}]]`;
     return this.getAllWorks().filter((w) => w.authors.includes(wikilink));

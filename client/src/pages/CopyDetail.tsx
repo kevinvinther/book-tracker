@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { useCopy } from "@/hooks/useCopy";
 import { EditCopyModal } from "@/components/EditCopyModal";
 import { ReadThroughList } from "@/components/ReadThroughList";
+import { NoteTimeline } from "@/components/NoteTimeline";
 import { StatusStamp } from "@/components/StatusStamp";
 import { Button } from "@/components/ui/button";
 import type { ReadThrough } from "@/lib/types";
@@ -127,7 +128,7 @@ export default function CopyDetail() {
         </div>
       </div>
 
-      <div className="mt-12 space-y-8">
+      <div className="mt-12 grid grid-cols-1 gap-8 lg:grid-cols-2">
         <ReadThroughList
           readThroughs={copy.read_throughs}
           copySlug={copy.slug}
@@ -135,16 +136,17 @@ export default function CopyDetail() {
           copyStatus={copy.status}
           onUpdate={handleRTUpdate}
         />
-        <section>
-          <h2 className="text-sm font-semibold text-foreground">Loan History</h2>
-          <p className="mt-2 text-sm text-muted-foreground">No loans yet.</p>
-        </section>
-
-        <section>
-          <h2 className="text-sm font-semibold text-foreground">Notes</h2>
-          <p className="mt-2 text-sm text-muted-foreground">No notes yet.</p>
-        </section>
+        <NoteTimeline
+          entityType="copy"
+          entitySlug={copy.slug}
+          readThroughs={copy.read_throughs}
+        />
       </div>
+
+      <section className="mt-8">
+        <h2 className="text-sm font-semibold text-foreground">Loan History</h2>
+        <p className="mt-2 text-sm text-muted-foreground">No loans yet.</p>
+      </section>
 
       <EditCopyModal copy={copy} open={editOpen} onOpenChange={setEditOpen} onSaved={refetch} />
     </div>
