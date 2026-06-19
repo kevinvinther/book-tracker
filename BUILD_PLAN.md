@@ -340,17 +340,17 @@ Full CRUD for freeform markdown notes attached to copies, with timeline display.
 
 Lend books, track who has them, see history.
 
-- [ ] `POST /api/copies/:slug/loans` — create a loan
+- [x] `POST /api/copies/:slug/loans` — create a loan
   - Sets `borrower_name`, `lent_date`, `expected_return_date` (optional)
   - If active read-through: auto-pause it
   - Sets copy `status: lent`
-- [ ] `PATCH /api/copies/:slug/loans/:lentDate/return` — mark returned
+- [x] `PATCH /api/copies/:slug/loans/:lentDate/return` — mark returned
   - Sets `returned_date`, copy `status: owned`
   - Read-through stays paused (user resumes manually)
-- [ ] Copy Detail — Loan History table: Borrower, Lent, Expected, Returned
-- [ ] Copy card on Work Detail: red "Lent" badge + borrower name
-- [ ] Overdue highlight if `expected_return_date` passed and not returned
-- [ ] Block new read-throughs on lent copies (validation in S17)
+- [x] Copy Detail — Loan History table: Borrower, Lent, Expected, Returned
+- [x] Copy card on Work Detail: red "Lent" badge + borrower name
+- [x] Overdue highlight if `expected_return_date` passed and not returned
+- [x] Block new read-throughs on lent copies (validation in S17)
 
 ---
 

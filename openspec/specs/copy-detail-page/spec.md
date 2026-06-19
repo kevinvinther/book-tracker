@@ -44,12 +44,16 @@ The Copy Detail page SHALL have a "Read-through History" section. When the copy 
 - **WHEN** a user navigates to a copy detail page and the copy has no read-throughs
 - **THEN** the "Read-through History" section displays "No read-throughs yet."
 
-### Requirement: Copy Detail page shows loan history section with empty state
-The Copy Detail page SHALL have a "Loan History" section. Since the loan backend is not yet built, this section SHALL display "No loans yet."
+### Requirement: Copy Detail page shows loan history section
+The Copy Detail page SHALL have a "Loan History" section displaying a table of all loans. Each loan row SHALL display Borrower name, Lent date, Expected return date (or "—"), and Returned date (or "—"). Outstanding loans SHALL be listed first, followed by returned loans in reverse chronological order. Overdue loans (expected_return_date in the past, unreturned) SHALL display the expected return date in red/orange text. When the copy has no loans, the section SHALL display "No loans yet." The section SHALL include a "Lend this copy" button (disabled when already lent or status is not `owned`). Outstanding loans SHALL show a "Mark as returned" button. Each loan SHALL have edit and delete actions.
 
-#### Scenario: Loan history section displayed
-- **WHEN** a user navigates to any copy detail page
-- **THEN** the "Loan History" section is present with the empty state message
+#### Scenario: Copy with loans
+- **WHEN** a user navigates to a copy detail page and the copy has loans
+- **THEN** the "Loan History" section renders the loan table with all loan data and actions as specified in `loan-frontend`
+
+#### Scenario: Copy with no loans
+- **WHEN** a copy has no loans
+- **THEN** the "Loan History" section displays "No loans yet." with a "Lend this copy" button
 
 ### Requirement: Copy Detail page shows notes section with empty state
 The Copy Detail page SHALL have a "Notes" section using the `NoteTimeline` component. When the copy has one or more notes, the section SHALL display them in reverse-chronological order with an "Add Note" button. When the copy has no notes, the section SHALL display "No notes yet." with an "Add Note" button. The "Add Note" button SHALL open the `NoteEditorModal` in create mode, pre-targeting the current copy. If the copy has an active read-through (status: "reading"), the read-through SHALL be auto-selected in the editor.
@@ -67,11 +71,16 @@ The Copy Detail page SHALL have a "Notes" section using the `NoteTimeline` compo
 - **THEN** the "Notes" section displays "No notes yet." with an "Add Note" button
 
 ### Requirement: Copy Detail page has an Edit Copy button
-The Copy Detail page SHALL display an "Edit Copy" button that opens a modal with fields for condition, location, cover_image, status, acquisition_date, acquisition_source, price_amount, and price_currency. Submitting SHALL send `PATCH /api/copies/:slug` and refresh the page.
+The Copy Detail page SHALL display an "Edit Copy" button that opens a modal with fields for condition, location, cover_image, status, acquisition_date, acquisition_source, price_amount, and price_currency. The status dropdown SHALL exclude `lent`. The `owned` option SHALL be disabled when the copy has outstanding loans. Submitting SHALL send `PATCH /api/copies/:slug` and refresh the page.
 
 #### Scenario: Editing copy metadata
 - **WHEN** the user clicks "Edit Copy", changes the condition, and submits
 - **THEN** the copy is updated via `PATCH /api/copies/:slug` and the page refreshes
+
+#### Scenario: Status dropdown restrictions
+- **WHEN** the user opens the Edit Copy modal on a copy with an outstanding loan
+- **THEN** the `lent` status option is absent from the dropdown
+- **AND** the `owned` status option is disabled with an explanatory indication
 
 ### Requirement: Copy does not exist
 When a copy slug does not match any existing copy, the page SHALL display a not-found message with a link home.
