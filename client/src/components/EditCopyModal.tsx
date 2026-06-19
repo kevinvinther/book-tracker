@@ -3,13 +3,17 @@ import { Dialog } from "@base-ui/react/dialog";
 import { Button } from "@/components/ui/button";
 import type { CopyFull } from "@/lib/types";
 
-const STATUSES = ["owned", "lent", "lost", "given-away", "sold"] as const;
+const STATUSES = ["owned", "lost", "given-away", "sold"] as const;
 
 interface EditCopyModalProps {
   copy: CopyFull;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSaved: () => void;
+}
+
+function hasOutstandingLoans(copy: CopyFull): boolean {
+  return (copy.loans ?? []).some((l) => !l.returned_date);
 }
 
 export function EditCopyModal({ copy, open, onOpenChange, onSaved }: EditCopyModalProps) {
@@ -23,6 +27,8 @@ export function EditCopyModal({ copy, open, onOpenChange, onSaved }: EditCopyMod
   const [priceCurrency, setPriceCurrency] = useState(copy.price_currency ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+
+  const outstanding = hasOutstandingLoans(copy);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -79,9 +85,14 @@ export function EditCopyModal({ copy, open, onOpenChange, onSaved }: EditCopyMod
               <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Status</span>
               <select value={status} onChange={(e) => setStatus(e.target.value)} className="mt-1 block w-full rounded-sm border border-rule bg-background px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                 {STATUSES.map((s) => (
-                  <option key={s} value={s}>{s.replace("-", " ")}</option>
+                  <option key={s} value={s} disabled={s === "owned" && outstanding}>
+                    {s.replace("-", " ")}{s === "owned" && outstanding ? " (outstanding loans)" : ""}
+                  </option>
                 ))}
               </select>
+              {outstanding && status === "owned" && (
+                <p className="mt-0.5 text-xs text-muted-foreground">Owned cannot be selected while there are outstanding loans.</p>
+              )}
             </label>
             <div className="grid grid-cols-2 gap-3">
               <label className="block">

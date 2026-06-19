@@ -71,6 +71,13 @@ export interface ReadThrough {
   page_log: PageLog[];
 }
 
+export interface Loan {
+  borrower_name: string;
+  lent_date: string;
+  expected_return_date?: string;
+  returned_date?: string | null;
+}
+
 export interface Copy {
   type: "copy";
   slug: string;
@@ -86,6 +93,7 @@ export interface Copy {
   location?: string;
   status: "owned" | "lent" | "lost" | "given-away" | "sold";
   read_throughs?: ReadThrough[];
+  loans?: Loan[];
   created_at: string;
 }
 

@@ -1,5 +1,10 @@
 import { StatusStamp } from "@/components/StatusStamp";
-import type { Copy, Edition, ReadThrough } from "@/lib/types";
+import type { Copy, Edition, Loan, ReadThrough } from "@/lib/types";
+
+function getOutstandingLoans(loans: Loan[] | undefined): Loan[] {
+  if (!loans) return [];
+  return loans.filter((l) => !l.returned_date);
+}
 
 function getMostRecentReadThrough(readThroughs: ReadThrough[] | undefined): ReadThrough | null {
   if (!readThroughs || readThroughs.length === 0) return null;
@@ -37,6 +42,8 @@ interface CopyCardProps {
 export function CopyCard({ copy, edition }: CopyCardProps) {
   const leading = edition.format || (!edition.format && edition.publisher) || null;
   const mostRecent = getMostRecentReadThrough(copy.read_throughs);
+  const outstandingLoans = getOutstandingLoans(copy.loans);
+  const loanNames = outstandingLoans.map((l) => l.borrower_name);
 
   return (
     <div className="border-t border-rule px-1 py-3 first:border-t-0">
@@ -53,7 +60,7 @@ export function CopyCard({ copy, edition }: CopyCardProps) {
             </span>
           )}
           {copy.location && <span className="text-muted-foreground">— {copy.location}</span>}
-          {!leading && !copy.condition && !copy.location && !mostRecent && (
+          {!leading && !copy.condition && !copy.location && !mostRecent && !loanNames.length && (
             <span className="text-muted-foreground">—</span>
           )}
         </div>
@@ -62,6 +69,11 @@ export function CopyCard({ copy, edition }: CopyCardProps) {
       {mostRecent && (
         <p className="mt-1.5 text-xs text-muted-foreground">
           {formatReadThroughStatus(mostRecent, edition.page_count)}
+        </p>
+      )}
+      {loanNames.length > 0 && (
+        <p className="mt-1.5 text-xs text-stamp-foreground font-medium">
+          Lent to {loanNames.join(", ")}
         </p>
       )}
       {(copy.acquisition_source || copy.acquisition_date) && (

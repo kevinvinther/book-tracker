@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { Index } from "../lib/index.js";
-import { Copy, ReadThrough, PageLog } from "../lib/types.js";
+import { Copy, Loan, ReadThrough, PageLog } from "../lib/types.js";
 import { readFile, writeFile, deleteFile, resolveLibraryPath } from "../lib/io.js";
 import { generateSlug } from "../lib/slug.js";
 
@@ -75,6 +75,12 @@ function readAndWriteCopy(
     copy.read_throughs = [];
   }
 
+  if (existing.loans && existing.loans.length > 0) {
+    copy.loans = existing.loans;
+  } else if (!copy.loans) {
+    copy.loans = [];
+  }
+
   mutate(copy);
 
   writeFile(filePath, copy as unknown as Record<string, unknown>, "");
@@ -113,6 +119,36 @@ function autoPauseActive(copy: Copy): string | null {
     return toDatePart(active.started_date);
   }
   return null;
+}
+
+function findLoan(copy: Copy, lentDate: string): { index: number; loan: Loan } | null {
+  if (!copy.loans) return null;
+
+  // Try exact lent_date match first (full ISO string)
+  for (let i = 0; i < copy.loans.length; i++) {
+    if (copy.loans[i].lent_date === lentDate) {
+      return { index: i, loan: copy.loans[i] };
+    }
+  }
+
+  // Fall back to date-part matching
+  const matches: { index: number; loan: Loan }[] = [];
+  for (let i = 0; i < copy.loans.length; i++) {
+    if (toDatePart(copy.loans[i].lent_date) === lentDate) {
+      matches.push({ index: i, loan: copy.loans[i] });
+    }
+  }
+  if (matches.length === 0) return null;
+
+  return matches[matches.length - 1];
+}
+
+function recalcCopyStatus(copy: Copy): void {
+  if (copy.loans && copy.loans.some((l) => !l.returned_date)) {
+    copy.status = "lent";
+  } else {
+    copy.status = "owned";
+  }
 }
 
 export function createCopiesRouter(index: Index, libraryPath: string): Router {
@@ -222,6 +258,27 @@ export function createCopiesRouter(index: Index, libraryPath: string): Router {
       if (req.body[field] !== undefined) {
         frontmatter[field] = req.body[field];
       }
+    }
+
+    // Preserve index arrays to avoid losing data on filesystems with
+    // delayed write visibility (Docker overlay2).
+    if (existing.read_throughs && existing.read_throughs.length > 0) {
+      frontmatter.read_throughs = existing.read_throughs;
+    }
+    if (existing.loans && existing.loans.length > 0) {
+      frontmatter.loans = existing.loans;
+    }
+
+    // Validate status against loan state
+    const requestedStatus = frontmatter.status;
+    const loans = (frontmatter.loans as Loan[] | undefined) || [];
+    if (requestedStatus === "lent") {
+      res.status(400).json({ error: "Cannot set status to 'lent' manually; use the loan flow instead" });
+      return;
+    }
+    if (requestedStatus === "owned" && loans.some((l: Loan) => !l.returned_date)) {
+      res.status(400).json({ error: "Cannot set status to 'owned' while there are outstanding loans" });
+      return;
     }
 
     frontmatter.slug = existing.slug;
@@ -559,6 +616,168 @@ export function createCopiesRouter(index: Index, libraryPath: string): Router {
       }
     }
   });
-
+ 
+  // ── Loan routes ─────────────────────────────────────────────────
+ 
+  router.post("/:slug/loans", (req, res) => {
+    const { borrower_name, lent_date, expected_return_date } = req.body;
+ 
+    if (!borrower_name || typeof borrower_name !== "string" || !borrower_name.trim()) {
+      res.status(400).json({ error: "borrower_name is required" });
+      return;
+    }
+ 
+    const trimmedBorrower = borrower_name.trim();
+ 
+    if (expected_return_date !== undefined && typeof expected_return_date !== "string") {
+      res.status(400).json({ error: "expected_return_date must be a date string" });
+      return;
+    }
+ 
+    try {
+      const copy = readAndWriteCopy(req.params.slug, index, libraryPath, (c) => {
+        if (c.status !== "owned") {
+          throw { status: 400, message: `Cannot lend a copy with status '${c.status}'` };
+        }
+ 
+        if (c.loans && c.loans.some((l) => !l.returned_date)) {
+          throw { status: 400, message: "This copy already has an outstanding loan" };
+        }
+ 
+        const today = new Date().toISOString();
+        const desiredDate = lent_date ? dateParamToISO(lent_date) : today;
+ 
+        let lentDate = desiredDate;
+        let suffix = 1;
+        while (c.loans!.some((l) => l.lent_date === lentDate)) {
+          lentDate = new Date(Date.parse(desiredDate) + suffix * 1000).toISOString();
+          suffix++;
+        }
+ 
+        const responseObj: Record<string, unknown> = {};
+ 
+        const paused = autoPauseActive(c);
+        if (paused) {
+          responseObj.warning = `Paused existing active read-through started on ${paused}`;
+        }
+ 
+        if (expected_return_date && expected_return_date < toDatePart(lentDate)) {
+          throw { status: 400, message: "expected_return_date must be on or after lent_date" };
+        }
+ 
+        const loan: Loan = {
+          borrower_name: trimmedBorrower,
+          lent_date: lentDate,
+        };
+        if (expected_return_date) loan.expected_return_date = expected_return_date;
+ 
+        c.loans!.push(loan);
+        c.status = "lent";
+ 
+        (c as unknown as Record<string, unknown>)._response = responseObj;
+      });
+ 
+      const responseObj = (copy as unknown as Record<string, unknown>)._response as Record<string, unknown> | undefined;
+      delete (copy as unknown as Record<string, unknown>)._response;
+ 
+      if (responseObj && Object.keys(responseObj).length > 0) {
+        res.status(201).json({ ...copy, ...responseObj });
+      } else {
+        res.status(201).json(copy);
+      }
+    } catch (err: unknown) {
+      if (err && typeof err === "object" && "status" in err) {
+        const e = err as { status: number; message: string };
+        res.status(e.status).json({ error: e.message });
+      } else {
+        res.status(404).json({ error: "Copy not found" });
+      }
+    }
+  });
+ 
+  router.patch("/:slug/loans/:lentDate", (req, res) => {
+    const lentDate = req.params.lentDate;
+    const { borrower_name, lent_date, expected_return_date, returned_date } = req.body;
+ 
+    try {
+      const copy = readAndWriteCopy(req.params.slug, index, libraryPath, (c) => {
+        const found = findLoan(c, lentDate);
+        if (!found) {
+          throw { status: 404, message: `No loan found for lent_date ${lentDate}` };
+        }
+ 
+        const { loan } = found;
+ 
+        if (borrower_name !== undefined) {
+          if (!borrower_name || typeof borrower_name !== "string" || !borrower_name.trim()) {
+            throw { status: 400, message: "borrower_name must be a non-empty string" };
+          }
+          loan.borrower_name = borrower_name.trim();
+        }
+ 
+        if (lent_date !== undefined) {
+          const newLentDate = dateParamToISO(lent_date);
+          if (c.loans!.some((l, i) => i !== found.index && l.lent_date === newLentDate)) {
+            throw { status: 400, message: "A loan with this lent_date already exists on this copy" };
+          }
+          loan.lent_date = newLentDate;
+        }
+ 
+        if (expected_return_date !== undefined) {
+          const effectiveLentDate = toDatePart(loan.lent_date);
+          if (expected_return_date < effectiveLentDate) {
+            throw { status: 400, message: "expected_return_date must be on or after lent_date" };
+          }
+          loan.expected_return_date = expected_return_date;
+        } else if (expected_return_date === null) {
+          delete loan.expected_return_date;
+        }
+ 
+        if (returned_date !== undefined) {
+          if (returned_date === null) {
+            loan.returned_date = null;
+          } else {
+            loan.returned_date = dateParamToISO(returned_date);
+          }
+        }
+ 
+        recalcCopyStatus(c);
+      });
+ 
+      res.json(copy);
+    } catch (err: unknown) {
+      if (err && typeof err === "object" && "status" in err) {
+        const e = err as { status: number; message: string };
+        res.status(e.status).json({ error: e.message });
+      } else {
+        res.status(404).json({ error: "Copy not found" });
+      }
+    }
+  });
+ 
+  router.delete("/:slug/loans/:lentDate", (req, res) => {
+    const lentDate = req.params.lentDate;
+ 
+    try {
+      const copy = readAndWriteCopy(req.params.slug, index, libraryPath, (c) => {
+        const found = findLoan(c, lentDate);
+        if (!found) {
+          throw { status: 404, message: `No loan found for lent_date ${lentDate}` };
+        }
+        c.loans!.splice(found.index, 1);
+        recalcCopyStatus(c);
+      });
+ 
+      res.json(copy);
+    } catch (err: unknown) {
+      if (err && typeof err === "object" && "status" in err) {
+        const e = err as { status: number; message: string };
+        res.status(e.status).json({ error: e.message });
+      } else {
+        res.status(404).json({ error: "Copy not found" });
+      }
+    }
+  });
+ 
   return router;
 }

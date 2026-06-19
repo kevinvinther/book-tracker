@@ -4,6 +4,7 @@ import { useCopy } from "@/hooks/useCopy";
 import { EditCopyModal } from "@/components/EditCopyModal";
 import { ReadThroughList } from "@/components/ReadThroughList";
 import { NoteTimeline } from "@/components/NoteTimeline";
+import { LoanHistory } from "@/components/LoanHistory";
 import { StatusStamp } from "@/components/StatusStamp";
 import { Button } from "@/components/ui/button";
 import type { ReadThrough } from "@/lib/types";
@@ -143,10 +144,12 @@ export default function CopyDetail() {
         />
       </div>
 
-      <section className="mt-8">
-        <h2 className="text-sm font-semibold text-foreground">Loan History</h2>
-        <p className="mt-2 text-sm text-muted-foreground">No loans yet.</p>
-      </section>
+      <LoanHistory
+        copySlug={copy.slug}
+        loans={copy.loans}
+        copyStatus={copy.status}
+        onSaved={refetch}
+      />
 
       <EditCopyModal copy={copy} open={editOpen} onOpenChange={setEditOpen} onSaved={refetch} />
     </div>
