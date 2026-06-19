@@ -1,13 +1,23 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useCopy } from "@/hooks/useCopy";
 import { EditCopyModal } from "@/components/EditCopyModal";
+import { ReadThroughList } from "@/components/ReadThroughList";
 import { StatusStamp } from "@/components/StatusStamp";
 import { Button } from "@/components/ui/button";
+import type { ReadThrough } from "@/lib/types";
 
 export default function CopyDetail() {
   const { slug = "" } = useParams();
-  const { copy, loading, notFound, refetch } = useCopy(slug);
+  const { copy, loading, notFound, refetch, updateCopy } = useCopy(slug);
+
+  const handleRTUpdate = useCallback((rts?: ReadThrough[]) => {
+    if (rts) {
+      updateCopy((prev) => ({ ...prev, read_throughs: rts }));
+    } else {
+      refetch();
+    }
+  }, [updateCopy, refetch]);
   const [editOpen, setEditOpen] = useState(false);
 
   if (notFound) {
@@ -118,11 +128,13 @@ export default function CopyDetail() {
       </div>
 
       <div className="mt-12 space-y-8">
-        <section>
-          <h2 className="text-sm font-semibold text-foreground">Read-through History</h2>
-          <p className="mt-2 text-sm text-muted-foreground">No read-throughs yet.</p>
-        </section>
-
+        <ReadThroughList
+          readThroughs={copy.read_throughs}
+          copySlug={copy.slug}
+          pageCount={copy.edition_meta?.page_count}
+          copyStatus={copy.status}
+          onUpdate={handleRTUpdate}
+        />
         <section>
           <h2 className="text-sm font-semibold text-foreground">Loan History</h2>
           <p className="mt-2 text-sm text-muted-foreground">No loans yet.</p>

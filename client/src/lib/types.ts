@@ -58,6 +58,19 @@ export interface EditionFull extends Edition {
   work_meta: EditionWorkMeta | null;
 }
 
+export interface PageLog {
+  date: string;
+  page: number;
+}
+
+export interface ReadThrough {
+  started_date: string;
+  finished_date?: string | null;
+  status: "reading" | "finished" | "dnf" | "paused";
+  rating?: number;
+  page_log: PageLog[];
+}
+
 export interface Copy {
   type: "copy";
   slug: string;
@@ -72,6 +85,7 @@ export interface Copy {
   price_currency?: string;
   location?: string;
   status: "owned" | "lent" | "lost" | "given-away" | "sold";
+  read_throughs?: ReadThrough[];
   created_at: string;
 }
 

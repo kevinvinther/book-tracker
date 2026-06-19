@@ -271,7 +271,7 @@ describe("Read-through API", () => {
       expect(rt.finished_date).toBeDefined();
     });
 
-    it("blocks finish when page != page_count", async () => {
+    it("auto-logs page_count when finishing with incomplete page log", async () => {
       await api("/api/copies/dune-pb/read-throughs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -288,7 +288,12 @@ describe("Read-through API", () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "finished" }),
       });
-      expect(res.status).toBe(400);
+      expect(res.status).toBe(200);
+      const copy = await res.json();
+      const rt = copy.read_throughs.find((r: { started_date: string }) => r.started_date.startsWith("2025-09-01"));
+      expect(rt.status).toBe("finished");
+      const lastEntry = rt.page_log[rt.page_log.length - 1];
+      expect(lastEntry.page).toBe(604);
     });
 
     it("finishes when edition has no page_count", async () => {

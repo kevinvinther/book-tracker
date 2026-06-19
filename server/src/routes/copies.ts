@@ -60,11 +60,20 @@ function readAndWriteCopy(
   if (!existing) throw { status: 404, message: "Copy not found" };
 
   const filePath = resolveLibraryPath(`copies/${existing.slug}.md`, libraryPath);
-  const { frontmatter } = readFile(filePath);
 
+  // Read the canonical file from disk (Obsidian is the alternate editor — §7.4).
+  const { frontmatter } = readFile(filePath);
   const copy = frontmatter as unknown as Copy;
 
-  if (!copy.read_throughs) copy.read_throughs = [];
+  // On some filesystems (Docker overlay2, some network mounts) writes may not be
+  // immediately visible to a subsequent readFileSync. The index is always coherent
+  // because we update it after every write. For fields managed by this route
+  // (read_throughs, loans), prefer the index version to avoid losing our mutations.
+  if (existing.read_throughs && existing.read_throughs.length > 0) {
+    copy.read_throughs = existing.read_throughs;
+  } else if (!copy.read_throughs) {
+    copy.read_throughs = [];
+  }
 
   mutate(copy);
 
@@ -74,11 +83,26 @@ function readAndWriteCopy(
   return copy;
 }
 
-function findReadThrough(copy: Copy, startedDate: string): { index: number; rt: ReadThrough } | null {
+function findReadThrough(copy: Copy, startedDate: string, preferStatus?: string): { index: number; rt: ReadThrough } | null {
   if (!copy.read_throughs) return null;
-  const idx = copy.read_throughs.findIndex((rt) => toDatePart(rt.started_date) === startedDate);
-  if (idx === -1) return null;
-  return { index: idx, rt: copy.read_throughs[idx] };
+
+  // Find all matching entries (same date part)
+  const matches: { index: number; rt: ReadThrough }[] = [];
+  for (let i = 0; i < copy.read_throughs.length; i++) {
+    if (toDatePart(copy.read_throughs[i].started_date) === startedDate) {
+      matches.push({ index: i, rt: copy.read_throughs[i] });
+    }
+  }
+  if (matches.length === 0) return null;
+
+  // If a preferred status is specified, try that first
+  if (preferStatus) {
+    const preferred = matches.find((m) => m.rt.status === preferStatus);
+    if (preferred) return preferred;
+  }
+
+  // Otherwise return the most recent (last) match
+  return matches[matches.length - 1];
 }
 
 function autoPauseActive(copy: Copy): string | null {
@@ -238,7 +262,17 @@ export function createCopiesRouter(index: Index, libraryPath: string): Router {
 
         const today = new Date().toISOString();
         const startedDateParam = req.body.started_date || stripTime(today);
-        const startedDate = dateParamToISO(startedDateParam);
+        const desiredDate = dateParamToISO(startedDateParam);
+
+        // Ensure unique started_date per copy — the API identifies read-throughs by
+        // started_date in the URL path, so duplicates would cause findReadThrough
+        // to pick the wrong one.
+        let startedDate = desiredDate;
+        let suffix = 1;
+        while (c.read_throughs!.some((rt) => rt.started_date === startedDate)) {
+          startedDate = new Date(Date.parse(desiredDate) + suffix * 1000).toISOString();
+          suffix++;
+        }
 
         const responseObj: Record<string, unknown> = {};
 
@@ -287,7 +321,7 @@ export function createCopiesRouter(index: Index, libraryPath: string): Router {
       }
 
       const copy = readAndWriteCopy(req.params.slug, index, libraryPath, (c) => {
-        const found = findReadThrough(c, startedDate);
+        const found = findReadThrough(c, startedDate, "reading");
         if (!found) {
           throw { status: 404, message: `No read-through found for started_date ${startedDate}` };
         }
@@ -353,8 +387,10 @@ export function createCopiesRouter(index: Index, libraryPath: string): Router {
         return;
       }
 
+      const preferStatus = status === "resumed" ? "paused" : "reading";
+
       const copy = readAndWriteCopy(req.params.slug, index, libraryPath, (c) => {
-        const found = findReadThrough(c, startedDate);
+        const found = findReadThrough(c, startedDate, preferStatus);
         if (!found) {
           throw { status: 404, message: `No read-through found for started_date ${startedDate}` };
         }
@@ -368,10 +404,10 @@ export function createCopiesRouter(index: Index, libraryPath: string): Router {
 
         switch (status) {
           case "finished": {
-            if (edition?.page_count !== undefined) {
+            if (rt.status !== "finished" && edition?.page_count !== undefined) {
               const lastPage = rt.page_log[rt.page_log.length - 1]?.page;
               if (lastPage !== edition.page_count) {
-                throw { status: 400, message: `Cannot mark as finished: last logged page is ${lastPage}, edition has ${edition.page_count} pages` };
+                rt.page_log.push({ date: finishedDate, page: edition.page_count });
               }
             }
             rt.status = "finished";
@@ -424,7 +460,7 @@ export function createCopiesRouter(index: Index, libraryPath: string): Router {
       const entryDate = req.params.date;
 
       const copy = readAndWriteCopy(req.params.slug, index, libraryPath, (c) => {
-        const found = findReadThrough(c, startedDate);
+        const found = findReadThrough(c, startedDate, "reading");
         if (!found) {
           throw { status: 404, message: `No read-through found for started_date ${startedDate}` };
         }
@@ -467,7 +503,7 @@ export function createCopiesRouter(index: Index, libraryPath: string): Router {
       const entryDate = req.params.date;
 
       const copy = readAndWriteCopy(req.params.slug, index, libraryPath, (c) => {
-        const found = findReadThrough(c, startedDate);
+        const found = findReadThrough(c, startedDate, "reading");
         if (!found) {
           throw { status: 404, message: `No read-through found for started_date ${startedDate}` };
         }
@@ -506,11 +542,11 @@ export function createCopiesRouter(index: Index, libraryPath: string): Router {
       const startedDate = req.params.startedDate;
 
       const copy = readAndWriteCopy(req.params.slug, index, libraryPath, (c) => {
-        const idx = c.read_throughs!.findIndex((rt) => toDatePart(rt.started_date) === startedDate);
-        if (idx === -1) {
+        const found = findReadThrough(c, startedDate);
+        if (!found) {
           throw { status: 404, message: `No read-through found for started_date ${startedDate}` };
         }
-        c.read_throughs!.splice(idx, 1);
+        c.read_throughs!.splice(found.index, 1);
       });
 
       res.json(copy);

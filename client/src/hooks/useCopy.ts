@@ -7,6 +7,7 @@ interface UseCopyResult {
   notFound: boolean;
   error: string | null;
   refetch: () => void;
+  updateCopy: (data: CopyFull | ((prev: CopyFull) => CopyFull)) => void;
 }
 
 export function useCopy(slug: string): UseCopyResult {
@@ -49,5 +50,17 @@ export function useCopy(slug: string): UseCopyResult {
     return fetchCopy();
   }, [fetchCopy]);
 
-  return { copy, loading, notFound, error, refetch: fetchCopy };
+  const updateCopy = useCallback((data: CopyFull | ((prev: CopyFull) => CopyFull)) => {
+    setCopy((prev) => {
+      if (typeof data === "function") {
+        return prev ? (data as (prev: CopyFull) => CopyFull)(prev) : null;
+      }
+      return data;
+    });
+    setLoading(false);
+    setError(null);
+    setNotFound(false);
+  }, []);
+
+  return { copy, loading, notFound, error, refetch: fetchCopy, updateCopy };
 }
