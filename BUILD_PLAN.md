@@ -319,18 +319,18 @@ Display and interact with read-throughs on Copy Detail and Work Grid.
 
 Full CRUD for freeform markdown notes attached to copies, with timeline display.
 
-- [ ] `POST /api/notes` — create Note file
+- [x] `POST /api/notes` — create Note file
   - Filename: `YYYY-MM-DD-HHMMSS.md`
   - Frontmatter: date, modified, copy, edition, work, read_through (optional started_date), context_page (optional), tags
   - Body: user's markdown
-- [ ] `GET /api/notes/:filename` — single note
-- [ ] `PATCH /api/notes/:filename` — update content, set modified
-- [ ] `DELETE /api/notes/:filename` — confirmation, hard delete
-- [ ] Index: load note body text for search (already built in S3, verify it works)
-- [ ] Client: Note editor with markdown preview toggle
-- [ ] Copy Detail — Notes timeline: newest first, each note shows date, read-through context, excerpt, tags
-- [ ] Work Detail — Recent Notes: aggregated across all copies, newest first
-- [ ] Note creation: "Add Note" button on Copy Detail or Work Detail (auto-links to active copy/read-through)
+- [x] `GET /api/notes/:filename` — single note
+- [x] `PATCH /api/notes/:filename` — update content, set modified
+- [x] `DELETE /api/notes/:filename` — confirmation, hard delete
+- [x] Index: load note body text for search (already built in S3, verify it works)
+- [x] Client: Note editor with markdown preview toggle
+- [x] Copy Detail — Notes timeline: newest first, each note shows date, read-through context, excerpt, tags
+- [x] Work Detail — Recent Notes: aggregated across all copies, newest first
+- [x] Note creation: "Add Note" button on Copy Detail or Work Detail (auto-links to active copy/read-through)
 
 ---
 

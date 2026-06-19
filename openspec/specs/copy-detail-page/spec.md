@@ -2,9 +2,7 @@
 
 ## Purpose
 Client page that displays a single Copy's full ownership metadata, links to its parent work and edition, and provides placeholder sections for future read-through, loan, and notes features, plus an edit action.
-
 ## Requirements
-
 ### Requirement: Copy Detail page renders copy metadata
 The Copy Detail page at `/copies/:slug` SHALL display all ownership metadata from the copy: cover image (or placeholder), format, condition, status, location, acquisition date, acquisition source, price, and links to the parent work and edition.
 
@@ -54,11 +52,19 @@ The Copy Detail page SHALL have a "Loan History" section. Since the loan backend
 - **THEN** the "Loan History" section is present with the empty state message
 
 ### Requirement: Copy Detail page shows notes section with empty state
-The Copy Detail page SHALL have a "Notes" section. Since the notes backend is not yet built, this section SHALL display "No notes yet."
+The Copy Detail page SHALL have a "Notes" section using the `NoteTimeline` component. When the copy has one or more notes, the section SHALL display them in reverse-chronological order with an "Add Note" button. When the copy has no notes, the section SHALL display "No notes yet." with an "Add Note" button. The "Add Note" button SHALL open the `NoteEditorModal` in create mode, pre-targeting the current copy. If the copy has an active read-through (status: "reading"), the read-through SHALL be auto-selected in the editor.
 
-#### Scenario: Notes section displayed
-- **WHEN** a user navigates to any copy detail page
-- **THEN** the "Notes" section is present with the empty state message
+#### Scenario: Copy with notes
+- **WHEN** a user navigates to a copy detail page and the copy has notes
+- **THEN** the "Notes" section renders all notes in reverse-chronological order via the `NoteTimeline` component
+
+#### Scenario: Add note from copy detail
+- **WHEN** the user clicks "Add Note" in the notes section
+- **THEN** the `NoteEditorModal` opens in create mode with the copy pre-targeted and the active read-through auto-selected (if one exists)
+
+#### Scenario: Copy with no notes
+- **WHEN** a copy has no notes
+- **THEN** the "Notes" section displays "No notes yet." with an "Add Note" button
 
 ### Requirement: Copy Detail page has an Edit Copy button
 The Copy Detail page SHALL display an "Edit Copy" button that opens a modal with fields for condition, location, cover_image, status, acquisition_date, acquisition_source, price_amount, and price_currency. Submitting SHALL send `PATCH /api/copies/:slug` and refresh the page.
@@ -73,3 +79,4 @@ When a copy slug does not match any existing copy, the page SHALL display a not-
 #### Scenario: Non-existent copy
 - **WHEN** a user navigates to `/copies/nonexistent`
 - **THEN** the page displays "No such copy" with a link back to the home page
+

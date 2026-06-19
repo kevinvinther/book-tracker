@@ -2,9 +2,7 @@
 
 ## Purpose
 Client page that displays a single Work's full metadata, its editions, and the copies owned of each edition, with an entry point for editing the work.
-
 ## Requirements
-
 ### Requirement: Work Detail route and data loading
 The system SHALL render a Work Detail page at `/works/:slug`, fetching the work via `GET /api/works/:slug`, its editions via `GET /api/editions?work=:slug`, and all of its copies via `GET /api/copies?work=:slug`.
 
@@ -66,3 +64,19 @@ The page SHALL provide an "Edit Work" action that opens a modal form for editing
 #### Scenario: Editing a work's title
 - **WHEN** the user opens the edit modal, changes the title, and saves
 - **THEN** a `PATCH /api/works/:slug` request is sent with the new title and the page reflects the update on success
+
+### Requirement: Work Detail recent notes
+The Work Detail page SHALL display a "Recent Notes" section using the `NoteTimeline` component. The section SHALL fetch and display all notes referencing the current work (both notes targeting the work directly and notes on any copies of the work). Notes SHALL appear in reverse-chronological order with an "Add Note" button. The "Add Note" button SHALL open the `NoteEditorModal` in create mode, pre-targeting the current work. When no notes exist, the section SHALL display "No notes yet."
+
+#### Scenario: Work with notes across copies
+- **WHEN** the user visits `/works/dune` and notes exist targeting the work and its copies
+- **THEN** the "Recent Notes" section displays all matching notes via `NoteTimeline`
+
+#### Scenario: Add note from work detail
+- **WHEN** the user clicks "Add Note" in the Recent Notes section
+- **THEN** the `NoteEditorModal` opens in create mode with the work pre-targeted
+
+#### Scenario: Work with no notes
+- **WHEN** the work has no notes
+- **THEN** the "Recent Notes" section displays "No notes yet." with an "Add Note" button
+
