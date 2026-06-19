@@ -375,12 +375,12 @@ Compute all library and reading statistics from the index.
 
 Dashboard page with library and reading stats.
 
-- [ ] New page: `/stats`
-- [ ] Time range selector: This Year / Last Year / All Time / Custom
-- [ ] Library snapshot section: summary cards (total works, copies) + breakdown sections (by format, status, condition, genre, language)
-- [ ] Reading stats section: finished books, currently reading, total pages, pages/day, avg rating
-- [ ] Note stats section: total notes, per-month, most-annotated works
-- [ ] Navigation: add to bottom nav bar on mobile, header on desktop
+- [x] New page: `/stats`
+- [x] Time range selector: This Year / Last Year / All Time / Custom
+- [x] Library snapshot section: summary cards (total works, copies) + breakdown sections (by format, status, condition, genre, language)
+- [x] Reading stats section: finished books, currently reading, total pages, pages/day, avg rating
+- [x] Note stats section: total notes, per-month, most-annotated works
+- [x] Navigation: add to bottom nav bar on mobile, header on desktop
 
 ---
 
