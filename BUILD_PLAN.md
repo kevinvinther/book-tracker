@@ -360,12 +360,12 @@ Lend books, track who has them, see history.
 
 Compute all library and reading statistics from the index.
 
-- [ ] `GET /api/stats?year=2025` — compute stats
+- [x] `GET /api/stats?year=2025` — compute stats
   - Library snapshot: total works, editions, copies; by format, status, condition, genre, language
   - Reading: read-throughs finished this year, currently reading, total pages read (max(page_log) per read-through, includes DNF + in-progress), average pages/day, average rating per work/author, copies acquired this year
   - Notes: total notes, notes/month, most-annotated works
-- [ ] Support `?year=all` and custom date ranges
-- [ ] All calculations run against the in-memory index (no disk reads)
+- [x] Support `?year=all` and custom date ranges
+- [x] All calculations run against the in-memory index (no disk reads)
 
 ---
 
