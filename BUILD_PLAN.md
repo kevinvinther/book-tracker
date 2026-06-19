@@ -278,20 +278,20 @@ End-to-end: scan barcode → ISBN lookup → author matching → dedup → previ
 
 Read-through state machine: start, log pages, finish, DNF, pause, re-read, correct mistakes.
 
-- [ ] `POST /api/copies/:slug/read-throughs` — start new read-through
+- [x] `POST /api/copies/:slug/read-throughs` — start new read-through
   - Validates: only one `status: reading` at a time
   - Sets `started_date`, `status: reading`
-- [ ] `POST /api/copies/:slug/read-throughs/:startedDate/log` — log a page
+- [x] `POST /api/copies/:slug/read-throughs/:startedDate/log` — log a page
   - Validates: page ≥ last entry, ≤ edition's page_count
   - If page == page_count → returns `{ finished: true }` for frontend prompt
-- [ ] `PATCH /api/copies/:slug/read-throughs/:startedDate` — change status
+- [x] `PATCH /api/copies/:slug/read-throughs/:startedDate` — change status
   - `finish`: sets `finished_date`, optional `rating`
   - `dnf`: sets `finished_date`
   - `pause`: sets `status: paused` (manual only)
   - `resume`: sets `status: reading`
-- [ ] `PATCH /api/copies/:slug/read-throughs/:startedDate/entries/:date` — edit a page log entry
-- [ ] `DELETE /api/copies/:slug/read-throughs/:startedDate/entries/:date` — delete entry; recheck monotonicity
-- [ ] `DELETE /api/copies/:slug/read-throughs/:startedDate` — delete entire read-through
+- [x] `PATCH /api/copies/:slug/read-throughs/:startedDate/entries/:date` — edit a page log entry
+- [x] `DELETE /api/copies/:slug/read-throughs/:startedDate/entries/:date` — delete entry; recheck monotonicity
+- [x] `DELETE /api/copies/:slug/read-throughs/:startedDate` — delete entire read-through
 
 ---
 
