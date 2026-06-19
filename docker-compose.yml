@@ -9,9 +9,9 @@ services:
       - server-node-modules:/app/node_modules
       - ./data:/app/data:z
       - ./.env:/app/.env:ro
+      - ~/book-tracker-data/:/root/book-tracker-data
     environment:
       - NODE_ENV=development
-      - BOOKTRACKER_LIBRARY_PATH=/app/data
 
   client:
     build:
@@ -26,6 +26,7 @@ services:
       - ./client/vite.config.ts:/app/vite.config.ts
       - ./client/tsconfig.json:/app/tsconfig.json
       - ./client/components.json:/app/components.json
+      - ./client/.certs:/app/certs:ro
       - client-node-modules:/app/node_modules
     environment:
       - NODE_ENV=development

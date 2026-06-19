@@ -12,3 +12,6 @@ dist/
 # Test data 
 data/
 .booktracker/
+
+# Dev certificates
+client/.certs/

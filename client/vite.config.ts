@@ -6,13 +6,24 @@ import tailwindcss from "@tailwindcss/vite";
 import basicSsl from "@vitejs/plugin-basic-ssl";
 
 const useHttps = process.env.HTTPS === "true";
-const certDir = "/app/certs";
-const dockerKey = `${certDir}/localhost.key`;
-const dockerCert = `${certDir}/localhost.crt`;
-const hasDockerCerts = existsSync(dockerKey) && existsSync(dockerCert);
+
+function findMkcertCerts(): { key: string; cert: string } | null {
+  const dirs = [".certs", "/app/certs"];
+  for (const dir of dirs) {
+    const key = `${dir}/localhost-key.pem`;
+    const cert = `${dir}/localhost.pem`;
+    if (existsSync(key) && existsSync(cert)) {
+      return { key, cert };
+    }
+  }
+  return null;
+}
+
+const mkcertCerts = findMkcertCerts();
 
 const plugins: Plugin[] = [react(), tailwindcss()];
-if (useHttps && !hasDockerCerts) {
+if (useHttps && !mkcertCerts) {
+  console.warn("HTTPS: mkcert certs not found. Run `make certs` to avoid browser warnings.");
   plugins.push(basicSsl());
 }
 
@@ -28,8 +39,8 @@ export default defineConfig({
     proxy: {
       "/api": process.env.BACKEND_URL || "http://localhost:3001",
     },
-    ...(hasDockerCerts
-      ? { https: { key: readFileSync(dockerKey), cert: readFileSync(dockerCert) } }
+    ...(mkcertCerts
+      ? { https: { key: readFileSync(mkcertCerts.key), cert: readFileSync(mkcertCerts.cert) } }
       : useHttps
         ? { https: true }
         : {}),

@@ -19,14 +19,8 @@ RUN npm install
 
 COPY . .
 
-# Generate a self-signed cert for local HTTPS (needed for camera on mobile).
-# The cert lives at /app/certs/ so Vite can serve it.
-RUN apk add --no-cache openssl && \
-    mkdir -p /app/certs && \
-    openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-      -keyout /app/certs/localhost.key \
-      -out /app/certs/localhost.crt \
-      -subj "/CN=localhost" \
-      -addext "subjectAltName=IP:0.0.0.0"
+# Certs are volume-mounted from the host at /app/certs/.
+# Run `make certs` on the host before starting Docker.
+RUN mkdir -p /app/certs
 
 CMD ["npm", "run", "dev:https"]
