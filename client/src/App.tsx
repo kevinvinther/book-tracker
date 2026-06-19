@@ -7,6 +7,7 @@ import EditionDetail from "./pages/EditionDetail";
 import CopyDetail from "./pages/CopyDetail";
 import AddBook from "./pages/AddBook";
 import Settings from "./pages/Settings";
+import Stats from "./pages/Stats";
 
 export default function App() {
   return (
@@ -15,6 +16,9 @@ export default function App() {
         <nav className="flex items-center gap-6 text-sm">
           <Link to="/" className="font-display text-base text-foreground hover:text-primary">
             Book Tracker
+          </Link>
+          <Link to="/stats" className="text-muted-foreground hover:text-foreground">
+            Stats
           </Link>
           <Link to="/settings" className="text-muted-foreground hover:text-foreground">
             Settings
@@ -30,6 +34,7 @@ export default function App() {
           <Route path="/editions/:slug" element={<EditionDetail />} />
           <Route path="/copies/:slug" element={<CopyDetail />} />
           <Route path="/add" element={<AddBook />} />
+          <Route path="/stats" element={<Stats />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>
       </main>

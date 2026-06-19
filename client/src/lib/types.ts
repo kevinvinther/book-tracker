@@ -218,3 +218,69 @@ export interface QuickAddPayload {
 export interface QuickAddResponse {
   workSlug: string;
 }
+
+export interface StatRange {
+  from: string;
+  to: string;
+}
+
+export interface LibraryStats {
+  total_works: number;
+  total_editions: number;
+  total_copies: number;
+  copies_by_format: Record<string, number>;
+  copies_by_status: Record<string, number>;
+  copies_by_condition: Record<string, number>;
+  copies_by_language: Record<string, number>;
+  works_by_genre: Record<string, number>;
+  works_by_language: Record<string, number>;
+  works_by_series: Record<string, number>;
+}
+
+export interface RatingByWork {
+  slug: string;
+  title: string;
+  avg_rating: number;
+  read_through_count: number;
+}
+
+export interface RatingByAuthor {
+  slug: string;
+  name: string;
+  avg_rating: number;
+  read_through_count: number;
+}
+
+export interface ReadingStats {
+  finished_count: number;
+  currently_reading_count: number;
+  total_pages_read: number;
+  avg_pages_per_day: number;
+  avg_rating_by_work: RatingByWork[];
+  avg_rating_by_author: RatingByAuthor[];
+  copies_acquired: number;
+}
+
+export interface AnnotatedWork {
+  slug: string;
+  title: string;
+  note_count: number;
+}
+
+export interface NoteStats {
+  total_notes: number;
+  notes_per_month: Record<string, number>;
+  most_annotated_works: AnnotatedWork[];
+}
+
+export interface StatsResponse {
+  library: LibraryStats;
+  reading: ReadingStats;
+  notes: NoteStats;
+  range?: StatRange;
+}
+
+export interface ResolvedStats extends StatsResponse {
+  seriesNames: Record<string, string>;
+  languageLabels: Record<string, string>;
+}

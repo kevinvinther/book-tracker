@@ -64,21 +64,21 @@ beforeAll(async () => {
   writeFile(join(tmpRoot, "editions/fellowship-hc.md"), {
     type: "edition", slug: "fellowship-hc",
     work: "[[works/the-fellowship]]",
-    publisher: "HarperCollins", format: "hardcover", page_count: 423,
+    publisher: "HarperCollins", format: "hardcover", page_count: 423, language: "en",
     created_at: "2024-01-01T00:00:00.000Z", _schema: 1,
   }, "");
 
   writeFile(join(tmpRoot, "editions/fellowship-pb.md"), {
     type: "edition", slug: "fellowship-pb",
     work: "[[works/the-fellowship]]",
-    publisher: "HarperCollins", format: "paperback", page_count: 423,
+    publisher: "HarperCollins", format: "paperback", page_count: 423, language: "en",
     created_at: "2024-01-01T00:00:00.000Z", _schema: 1,
   }, "");
 
   writeFile(join(tmpRoot, "editions/towers-hc.md"), {
     type: "edition", slug: "towers-hc",
     work: "[[works/the-two-towers]]",
-    publisher: "HarperCollins", format: "hardcover", page_count: 352,
+    publisher: "HarperCollins", format: "hardcover", page_count: 352, language: "de",
     created_at: "2024-01-01T00:00:00.000Z", _schema: 1,
   }, "");
 
@@ -88,7 +88,6 @@ beforeAll(async () => {
     type: "copy", slug: "fellowship-hc-1",
     edition: "[[editions/fellowship-hc]]",
     work: "[[works/the-fellowship]]",
-    format: "hardcover",
     status: "owned",
     condition: "good",
     acquisition_date: "2025-03-15T00:00:00.000Z",
@@ -113,7 +112,6 @@ beforeAll(async () => {
     type: "copy", slug: "fellowship-pb-1",
     edition: "[[editions/fellowship-pb]]",
     work: "[[works/the-fellowship]]",
-    format: "paperback",
     status: "owned",
     condition: "worn",
     acquisition_date: "2024-06-01T00:00:00.000Z",
@@ -136,7 +134,6 @@ beforeAll(async () => {
     type: "copy", slug: "towers-hc-1",
     edition: "[[editions/towers-hc]]",
     work: "[[works/the-two-towers]]",
-    format: "hardcover",
     status: "owned",
     condition: "good",
     acquisition_date: "2024-12-01T00:00:00.000Z",
@@ -160,7 +157,6 @@ beforeAll(async () => {
     type: "copy", slug: "towers-hc-2",
     edition: "[[editions/towers-hc]]",
     work: "[[works/the-two-towers]]",
-    format: "hardcover",
     status: "owned",
     condition: "good",
     read_throughs: [{
@@ -180,7 +176,6 @@ beforeAll(async () => {
     type: "copy", slug: "no-series-pb",
     edition: "[[editions/fellowship-pb]]",
     work: "[[works/no-series-work]]",
-    format: "paperback",
     status: "owned",
     condition: "worn",
     acquisition_date: "2025-04-01T00:00:00.000Z",
@@ -301,8 +296,17 @@ describe("Statistics API", () => {
       const res = await api("/api/stats?year=all");
       const body = await res.json();
       expect(body.library.copies_by_format).toEqual({
-        hardcover: 3,
+        hardcover: 4,
         paperback: 2,
+      });
+    });
+
+    it("computes copies by language from edition", async () => {
+      const res = await api("/api/stats?year=all");
+      const body = await res.json();
+      expect(body.library.copies_by_language).toEqual({
+        en: 4,
+        de: 2,
       });
     });
 
@@ -576,6 +580,7 @@ describe("Statistics API", () => {
       expect(body.library.total_editions).toBe(0);
       expect(body.library.total_copies).toBe(0);
       expect(body.library.copies_by_format).toEqual({});
+      expect(body.library.copies_by_language).toEqual({});
       expect(body.library.copies_by_status).toEqual({});
       expect(body.reading.finished_count).toBe(0);
       expect(body.reading.currently_reading_count).toBe(0);

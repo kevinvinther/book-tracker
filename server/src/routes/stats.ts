@@ -116,10 +116,18 @@ export function createStatsRouter(index: Index, _libraryPath: string): Router {
       const copies_by_format: Record<string, number> = {};
       const copies_by_status: Record<string, number> = {};
       const copies_by_condition: Record<string, number> = {};
+      const copies_by_language: Record<string, number> = {};
 
       for (const copy of index.getAllCopies()) {
-        if (copy.format) {
-          copies_by_format[copy.format] = (copies_by_format[copy.format] || 0) + 1;
+        const editionSlug = extractSlug(copy.edition, "editions");
+        if (editionSlug) {
+          const edition = index.getEdition(editionSlug);
+          if (edition?.format) {
+            copies_by_format[edition.format] = (copies_by_format[edition.format] || 0) + 1;
+          }
+          if (edition?.language) {
+            copies_by_language[edition.language] = (copies_by_language[edition.language] || 0) + 1;
+          }
         }
         copies_by_status[copy.status] = (copies_by_status[copy.status] || 0) + 1;
         if (copy.condition) {
@@ -293,6 +301,7 @@ export function createStatsRouter(index: Index, _libraryPath: string): Router {
           copies_by_format,
           copies_by_status,
           copies_by_condition,
+          copies_by_language,
           works_by_genre,
           works_by_language,
           works_by_series,

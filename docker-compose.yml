@@ -1,6 +1,7 @@
 services:
   server:
     build: ./server
+    dns_search: ""
     ports:
       - "3001:3001"
     volumes:
@@ -16,6 +17,7 @@ services:
     build:
       context: ./client
       target: dev-https
+    dns_search: ""
     ports:
       - "5173:5173"
     volumes:

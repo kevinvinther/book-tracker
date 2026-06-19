@@ -24,6 +24,7 @@ export function EditWorkModal({ work, open, onOpenChange, onSaved }: EditWorkMod
   const [seriesSlug, setSeriesSlug] = useState(work.series ? slugFromWikilink(work.series) : "");
   const [seriesPosition, setSeriesPosition] = useState(work.series_position?.toString() ?? "");
   const [primaryCover, setPrimaryCover] = useState(work.primary_cover ?? "");
+  const [originalLanguage, setOriginalLanguage] = useState(work.original_language ?? "");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -57,6 +58,7 @@ export function EditWorkModal({ work, open, onOpenChange, onSaved }: EditWorkMod
       series: seriesSlug.trim() ? `[[series/${seriesSlug.trim()}]]` : null,
       series_position: seriesPosition ? Number(seriesPosition) : null,
       primary_cover: primaryCover.trim() || null,
+      original_language: originalLanguage.trim() || null,
     };
 
     fetch(`/api/works/${work.slug}`, {
@@ -125,6 +127,17 @@ export function EditWorkModal({ work, open, onOpenChange, onSaved }: EditWorkMod
                 className="mt-1 block w-full rounded-sm border border-rule bg-background px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
             </label>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block">
+                <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Original Language (ISO code)</span>
+                <input
+                  value={originalLanguage}
+                  onChange={(e) => setOriginalLanguage(e.target.value)}
+                  placeholder="en, fr, ru..."
+                  className="mt-1 block w-full rounded-sm border border-rule bg-background px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                />
+              </label>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <label className="block">
                 <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Series slug</span>
