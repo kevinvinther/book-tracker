@@ -410,14 +410,14 @@ Full-text search across all entity types.
 
 Render markdown bodies from frontmatter + related file data. In-memory on open, written to disk on save.
 
-- [ ] `renderWorkBody(work, index)` — metadata block + editions list (reads Edition files for publisher/year/translator/pages)
-- [ ] `renderEditionBody(edition, index)` — metadata + copies list
-- [ ] `renderCopyBody(copy, index)` — metadata + read-through tables + loan table + notes list (scans notes directory for backlinks)
-- [ ] `renderAuthorBody(author, index)` — works list
-- [ ] `renderSeriesBody(series, index)` — ordered works list with read status
-- [ ] Client display: bodies regenerated in memory on every detail page load (no disk write)
-- [ ] `renderBody(entity, index)` — dispatcher function that picks the right renderer
-- [ ] Test: create a work with two editions, render the body, verify markdown output matches spec examples
+- [x] `renderWorkBody(work, index)` — metadata block + editions list (reads Edition files for publisher/year/translator/pages)
+- [x] `renderEditionBody(edition, index)` — metadata + copies list
+- [x] `renderCopyBody(copy, index)` — metadata + read-through tables + loan table + notes list (scans notes directory for backlinks)
+- [x] `renderAuthorBody(author, index)` — works list
+- [x] `renderSeriesBody(series, index)` — ordered works list with read status
+- [x] Client display: bodies regenerated in memory on every detail page load (no disk write)
+- [x] `renderBody(entity, index)` — dispatcher function that picks the right renderer
+- [x] Test: create a work with two editions, render the body, verify markdown output matches spec examples
 
 ---
 

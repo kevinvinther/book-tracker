@@ -30,10 +30,10 @@
 ## 4. Client — Markdown Preview Sections
 
 - [x] 4.1 Add collapsible `<details>` "Markdown Preview" section to `WorkDetail.tsx` using `react-markdown` to render `work.body`
-- [ ] 4.2 Add collapsible `<details>` "Markdown Preview" section to `EditionDetail.tsx` using `react-markdown` to render `edition.body`
-- [ ] 4.3 Add collapsible `<details>` "Markdown Preview" section to `CopyDetail.tsx` using `react-markdown` to render `copy.body`
-- [ ] 4.4 Add collapsible `<details>` "Markdown Preview" section to `AuthorDetail.tsx` using `react-markdown` to render `author.body`
-- [ ] 4.5 Add collapsible `<details>` "Markdown Preview" section to `SeriesDetail.tsx` using `react-markdown` to render `series.body`
+- [x] 4.2 Add collapsible `<details>` "Markdown Preview" section to `EditionDetail.tsx` using `react-markdown` to render `edition.body`
+- [x] 4.3 Add collapsible `<details>` "Markdown Preview" section to `CopyDetail.tsx` using `react-markdown` to render `copy.body`
+- [x] 4.4 Add collapsible `<details>` "Markdown Preview" section to `AuthorDetail.tsx` using `react-markdown` to render `author.body`
+- [x] 4.5 Add collapsible `<details>` "Markdown Preview" section to `SeriesDetail.tsx` using `react-markdown` to render `series.body`
 
 ## 5. Client — Type Updates
 
