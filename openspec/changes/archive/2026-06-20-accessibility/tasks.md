@@ -90,7 +90,7 @@
 ## 15. Final verification
 
 - [x] 15.1 Run `npm run lint` — ESLint passes with zero errors
-- [ ] 15.2 Manually test keyboard-only navigation through core flows: browse grid → open work detail → open copy detail → log a page → add a note → lend a book → add a book manually → search globally → view stats
-- [ ] 15.3 Manual screen reader test (VoiceOver or NVDA) on core flows: verify error announcements, form labels, dialog navigation, and dynamic content updates
-- [ ] 15.4 Verify dark mode does not regress accessibility (contrast in dark theme, focus indicators visible)
-- [ ] 15.5 Verify `prefers-reduced-motion` users are not affected (existing media query already handles animations)
+- [x] 15.2 Manually test keyboard-only navigation through core flows: browse grid → open work detail → open copy detail → log a page → add a note → lend a book → add a book manually → search globally → view stats
+- [x] 15.3 Manual screen reader test (VoiceOver or NVDA) on core flows: verify error announcements, form labels, dialog navigation, and dynamic content updates
+- [x] 15.4 Verify dark mode does not regress accessibility (contrast in dark theme, focus indicators visible)
+- [x] 15.5 Verify `prefers-reduced-motion` users are not affected (existing media query already handles animations)

@@ -510,12 +510,12 @@ Standard dark mode support.
 
 WCAG AA compliance for core flows.
 
-- [ ] Semantic HTML audit: headings (h1–h4), landmarks (nav, main, aside), lists, tables
-- [ ] Keyboard navigation: Tab through all interactive elements, Enter to activate, Escape to close modals, arrow keys in grid
-- [ ] Focus indicators: visible on all interactive elements
-- [ ] Color contrast: verify with automated tool, fix failures
-- [ ] Screen reader: labels on all inputs, buttons, links; alt text on covers
-- [ ] shadcn/ui components are accessible by default — verify each one used passes
+- [x] Semantic HTML audit: headings (h1–h4), landmarks (nav, main, aside), lists, tables
+- [x] Keyboard navigation: Tab through all interactive elements, Enter to activate, Escape to close modals, arrow keys in grid
+- [x] Focus indicators: visible on all interactive elements
+- [x] Color contrast: verify with automated tool, fix failures
+- [x] Screen reader: labels on all inputs, buttons, links; alt text on covers
+- [x] shadcn/ui components are accessible by default — verify each one used passes
 
 ---
 
