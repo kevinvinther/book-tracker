@@ -427,15 +427,15 @@ Render markdown bodies from frontmatter + related file data. In-memory on open, 
 
 Bodies are written to disk on every save operation.
 
-- [ ] Every PATCH/POST endpoint that modifies frontmatter calls `renderBody()` and writes the result to the `.md` file
-- [ ] Work saves → regenerate Work body
-- [ ] Edition saves → regenerate Edition body
-- [ ] Copy saves → regenerate Copy body
-- [ ] Author saves → regenerate Author body
-- [ ] Series saves → regenerate Series body
-- [ ] Note create/edit → regenerate linked Copy body (notes list section)
-- [ ] Read-through changes → regenerate linked Copy body (reading history section)
-- [ ] Loan changes → regenerate linked Copy body (loan history section)
+- [x] Every PATCH/POST endpoint that modifies frontmatter calls `renderBody()` and writes the result to the `.md` file
+- [x] Work saves → regenerate Work body
+- [x] Edition saves → regenerate Edition body
+- [x] Copy saves → regenerate Copy body
+- [x] Author saves → regenerate Author body
+- [x] Series saves → regenerate Series body
+- [x] Note create/edit → regenerate linked Copy body (notes list section)
+- [x] Read-through changes → regenerate linked Copy body (reading history section)
+- [x] Loan changes → regenerate linked Copy body (loan history section)
 
 ---
 

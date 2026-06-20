@@ -26,4 +26,4 @@
 
 - [x] 5.1 Run existing `render-body.test.ts` to confirm no regressions in render output
 - [x] 5.2 Run existing route tests (if any) and the full test suite
-- [ ] 5.3 Manually verify: create/edit each entity type, inspect the `.md` file body on disk to confirm it's the full rendered markdown
+- [x] 5.3 Manually verify: create/edit each entity type, inspect the `.md` file body on disk to confirm it's the full rendered markdown
