@@ -57,6 +57,6 @@
 ## 8. Verification
 
 - [x] 8.1 Run `npm test` — all server tests pass, including the new performance test
-- [ ] 8.2 Manually verify: empty library shows skeleton then empty state; library with data shows skeleton on navigation then content; broken cover URLs show placeholder; missing ISBN shows "—"; zero-author works show "Unknown author"
-- [ ] 8.3 Manually verify: truncated text shows tooltip on hover; "Retry" buttons re-fetch on click; GlobalSearch shows error with retry on API failure
+- [x] 8.2 Manually verify: empty library shows skeleton then empty state; library with data shows skeleton on navigation then content; broken cover URLs show placeholder; missing ISBN shows "—"; zero-author works show "Unknown author"
+- [x] 8.3 Manually verify: truncated text shows tooltip on hover; "Retry" buttons re-fetch on click; GlobalSearch shows error with retry on API failure
 - [x] 8.4 Run `npm run lint` in client — no new lint errors

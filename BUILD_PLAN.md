@@ -538,14 +538,14 @@ Live index update when files change externally (e.g., Obsidian edit).
 
 Handle unusual but real situations gracefully.
 
-- [ ] Empty library: "No books yet. [Add your first book]" + scan/add buttons
-- [ ] Loading states: skeleton cards/spinners while data loads
-- [ ] Error states: API failures show error message + retry button
-- [ ] Long titles/authors: truncation with tooltip on hover
-- [ ] Missing cover images: placeholder thumbnail
-- [ ] No-ISBN editions: display "ISBN: —"
-- [ ] Zero-author Works (after Author cascade-delete): display gracefully, prompt to add author
-- [ ] Very large library test: generate 1000+ test files, verify index load <2s, grid filter <100ms
+- [x] Empty library: "No books yet. [Add your first book]" + scan/add buttons
+- [x] Loading states: skeleton cards/spinners while data loads
+- [x] Error states: API failures show error message + retry button
+- [x] Long titles/authors: truncation with tooltip on hover
+- [x] Missing cover images: placeholder thumbnail
+- [x] No-ISBN editions: display "ISBN: —"
+- [x] Zero-author Works (after Author cascade-delete): display gracefully, prompt to add author
+- [x] Very large library test: generate 1000+ test files, verify index load <2s, grid filter <100ms
 
 ---
 
