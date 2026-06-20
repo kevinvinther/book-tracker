@@ -463,12 +463,12 @@ Open the library as an Obsidian vault and verify everything works.
 
 Consistent genre values across the library.
 
-- [ ] Genre input component: autocomplete from existing genres
-- [ ] `genres.yaml` in `.booktracker/` populated from all existing genres on startup
-- [ ] Normalization on write: lowercase, trim, spaces → hyphens
-- [ ] Autocomplete suggests existing genres as user types
-- [ ] User can add new genres (free text, normalized on save)
-- [ ] `genres.yaml` is user-editable for bulk curation
+- [x] Genre input component: autocomplete from existing genres
+- [x] `genres.yaml` in `.booktracker/` populated from all existing genres on startup
+- [x] Normalization on write: lowercase, trim, spaces → hyphens
+- [x] Autocomplete suggests existing genres as user types
+- [x] User can add new genres (free text, normalized on save)
+- [x] `genres.yaml` is user-editable for bulk curation
 
 ---
 

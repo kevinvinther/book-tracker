@@ -26,7 +26,7 @@ A Work entity SHALL be stored as a markdown file at `works/{slug}.md` with YAML 
   followed by an auto-generated markdown body (placeholder for now)
 
 ### Requirement: Create a work
-The system SHALL expose `POST /api/works` that accepts a JSON body with at least a `title` field, generates a slug via `generateSlug`, creates a Work markdown file in `works/{slug}.md`, inserts it into the in-memory index, and returns the created work with HTTP 201. The `created_at` field SHALL be set to the current ISO 8601 datetime and never modified thereafter. The optional `aliases` field, when provided as an array of strings, SHALL be written to the work's frontmatter.
+The system SHALL expose `POST /api/works` that accepts a JSON body with at least a `title` field, generates a slug via `generateSlug`, creates a Work markdown file in `works/{slug}.md`, inserts it into the in-memory index, and returns the created work with HTTP 201. The `created_at` field SHALL be set to the current ISO 8601 datetime and never modified thereafter. The optional `aliases` field, when provided as an array of strings, SHALL be written to the work's frontmatter. When `genres` is provided, each genre SHALL be normalized via `normalizeGenre` (lowercase, ASCII-folded, kebab-case via `limax`) before being written to the frontmatter.
 
 #### Scenario: Successful creation with title only
 - **WHEN** a POST request is made to `/api/works` with `{ "title": "The Brothers Karamazov" }`
@@ -39,6 +39,11 @@ The system SHALL expose `POST /api/works` that accepts a JSON body with at least
 #### Scenario: Creation with all fields
 - **WHEN** a POST request is made to `/api/works` with `{ "title": "Dune", "subtitle": "Book One", "authors": ["[[authors/frank-herbert]]"], "genres": ["fiction", "science-fiction"], "description": "A sci-fi classic", "original_language": "en", "original_publish_year": 1965, "aliases": ["Dune 1965"] }`
 - **THEN** the response has status 201 and the work file on disk contains all provided fields plus the generated slug, type, created_at, and _schema
+
+#### Scenario: Creation with unnormalized genres
+- **WHEN** a POST request is made to `/api/works` with `{ "title": "Dune", "genres": ["Science Fiction", "  FANTASY  "] }`
+- **THEN** the work file on disk contains `genres: ["fantasy", "science-fiction"]` (normalized)
+- **AND** the response returns the normalized genre values
 
 #### Scenario: Creation with missing title
 - **WHEN** a POST request is made to `/api/works` with `{}` or `{ "subtitle": "no title" }`
@@ -91,7 +96,7 @@ The system SHALL expose `GET /api/works/:slug` that returns the full work entity
 - **THEN** the response has status 404 with an error message
 
 ### Requirement: Update a work
-The system SHALL expose `PATCH /api/works/:slug` that accepts a JSON body with any subset of mutable work fields (title, subtitle, authors, original_language, original_publish_year, genres, description, series, series_position, primary_cover, aliases). The handler SHALL re-read the file from disk before writing, merge the incoming fields into the existing frontmatter, write atomically, and update the index. The `slug`, `type`, `created_at`, and `_schema` fields SHALL never be modified.
+The system SHALL expose `PATCH /api/works/:slug` that accepts a JSON body with any subset of mutable work fields (title, subtitle, authors, original_language, original_publish_year, genres, description, series, series_position, primary_cover, aliases). The handler SHALL re-read the file from disk before writing, merge the incoming fields into the existing frontmatter, write atomically, and update the index. When `genres` is provided, each genre SHALL be normalized via `normalizeGenre` before being written. The `slug`, `type`, `created_at`, and `_schema` fields SHALL never be modified.
 
 #### Scenario: Update title only
 - **WHEN** a PATCH request is made to `/api/works/the-brothers-karamazov` with `{ "title": "The Brothers Karamazov (Revised)" }`
@@ -105,6 +110,10 @@ The system SHALL expose `PATCH /api/works/:slug` that accepts a JSON body with a
 #### Scenario: Omit aliases in PATCH
 - **WHEN** a PATCH request is made without an `aliases` field
 - **THEN** existing aliases on disk are preserved (not cleared)
+
+#### Scenario: Update genres with normalization
+- **WHEN** a PATCH request is made with `{ "genres": ["Science Fiction", "Adventure"] }`
+- **THEN** the work file on disk contains `genres: ["adventure", "science-fiction"]`
 
 #### Scenario: Attempt to change slug
 - **WHEN** a PATCH request is made to `/api/works/the-brothers-karamazov` with `{ "slug": "new-slug" }`

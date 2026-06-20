@@ -50,7 +50,7 @@ The system SHALL accept three mutually-exclusive scoping patterns: `?year=2025` 
 
 ### Requirement: Library snapshot statistics
 
-The system SHALL compute and return library-level counts: total works, total editions, total copies, copies broken down by format, copies broken down by status, copies broken down by condition, works broken down by genre, works broken down by original language, and works broken down by series.
+The system SHALL compute and return library-level counts: total works, total editions, total copies, copies broken down by format, copies broken down by status, copies broken down by condition, works broken down by genre, works broken down by original language, and works broken down by series. When computing `works_by_genre`, each genre from every Work SHALL be normalized via `normalizeGenre` before being counted, so that pre-existing non-normalized genres (e.g., "Science Fiction") are merged with their normalized form (e.g., "science-fiction").
 
 #### Scenario: Total counts reflect all entities
 
@@ -71,6 +71,16 @@ The system SHALL compute and return library-level counts: total works, total edi
 
 - **WHEN** a work has genres `["fiction", "classic"]`
 - **THEN** that work contributes 1 to both `fiction` and `classic` in `works_by_genre`
+
+#### Scenario: Works by genre normalizes on read
+
+- **WHEN** one work has genres `["Science Fiction"]` and another has `["science-fiction"]`
+- **THEN** `works_by_genre` contains `"science-fiction": 2` (not two separate entries)
+
+#### Scenario: Works by genre handles mixed formats
+
+- **WHEN** one work has genres `["Fiction"]`, another has `["fiction"]`, and a third has `["  science fiction  "]`
+- **THEN** `works_by_genre` contains `"fiction": 2` and `"science-fiction": 1` after normalization
 
 #### Scenario: Works by series only counts works with a series link
 
