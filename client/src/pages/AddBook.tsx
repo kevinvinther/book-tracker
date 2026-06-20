@@ -74,6 +74,7 @@ export default function AddBook() {
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [genres, setGenres] = useState<string[]>([]);
   const [skipCache, setSkipCache] = useState(false);
 
   function clearError() {
@@ -164,6 +165,7 @@ export default function AddBook() {
       })
       .then((data: LookupData) => {
         setLookupData(data);
+        setGenres(data.genres ?? []);
 
         // Pre-fill form fields from lookup
         setTitle(data.title || "");
@@ -316,6 +318,7 @@ export default function AddBook() {
       price_currency: priceCurrency.trim() || undefined,
       location: location.trim() || undefined,
       cover_image: coverImage.trim() || undefined,
+      genres: genres.length > 0 ? genres : undefined,
     };
 
     if (attachToWorkSlug) {

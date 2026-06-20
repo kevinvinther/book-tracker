@@ -4,6 +4,7 @@ import { Work } from "../lib/types.js";
 import { readFile, writeFile, deleteFile, resolveLibraryPath } from "../lib/io.js";
 import { generateSlug } from "../lib/slug.js";
 import { renderBody } from "../lib/render-body.js";
+import { normalizeGenre } from "../lib/genres.js";
 
 const MUTABLE_FIELDS = [
   "title", "subtitle", "authors", "original_language", "original_publish_year",
@@ -71,7 +72,7 @@ export function createWorksRouter(index: Index, libraryPath: string): Router {
     if (req.body.subtitle) work.subtitle = req.body.subtitle;
     if (req.body.original_language) work.original_language = req.body.original_language;
     if (req.body.original_publish_year != null) work.original_publish_year = req.body.original_publish_year;
-    if (req.body.genres) work.genres = req.body.genres;
+    if (req.body.genres) work.genres = req.body.genres.map(normalizeGenre);
     if (req.body.description) work.description = req.body.description;
     if (req.body.series) work.series = req.body.series;
     if (req.body.series_position != null) work.series_position = req.body.series_position;
@@ -156,7 +157,11 @@ export function createWorksRouter(index: Index, libraryPath: string): Router {
       if (req.body[field] === null) {
         delete frontmatter[field];
       } else if (req.body[field] !== undefined) {
-        frontmatter[field] = req.body[field];
+        if (field === "genres" && Array.isArray(req.body[field])) {
+          frontmatter[field] = req.body[field].map(normalizeGenre);
+        } else {
+          frontmatter[field] = req.body[field];
+        }
       }
     }
 

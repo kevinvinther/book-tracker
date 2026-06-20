@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Dialog } from "@base-ui/react/dialog";
 import { Button } from "@/components/ui/button";
+import { GenreSelector } from "@/components/GenreSelector";
 import type { Work } from "@/lib/types";
 
 interface EditWorkModalProps {
@@ -19,7 +20,7 @@ export function EditWorkModal({ work, open, onOpenChange, onSaved }: EditWorkMod
   const [title, setTitle] = useState(work.title);
   const [subtitle, setSubtitle] = useState(work.subtitle ?? "");
   const [authorSlugs, setAuthorSlugs] = useState(work.authors.map(slugFromWikilink).join(", "));
-  const [genres, setGenres] = useState((work.genres ?? []).join(", "));
+  const [genres, setGenres] = useState<string[]>(work.genres ?? []);
   const [description, setDescription] = useState(work.description ?? "");
   const [seriesSlug, setSeriesSlug] = useState(work.series ? slugFromWikilink(work.series) : "");
   const [seriesPosition, setSeriesPosition] = useState(work.series_position?.toString() ?? "");
@@ -50,10 +51,7 @@ export function EditWorkModal({ work, open, onOpenChange, onSaved }: EditWorkMod
       title: title.trim(),
       subtitle: subtitle.trim() || null,
       authors,
-      genres: genres
-        .split(",")
-        .map((g) => g.trim())
-        .filter(Boolean),
+      genres,
       description: description.trim() || null,
       series: seriesSlug.trim() ? `[[series/${seriesSlug.trim()}]]` : null,
       series_position: seriesPosition ? Number(seriesPosition) : null,
@@ -109,14 +107,10 @@ export function EditWorkModal({ work, open, onOpenChange, onSaved }: EditWorkMod
               />
             </label>
             <label className="block">
-              <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                Genres (comma-separated)
-              </span>
-              <input
-                value={genres}
-                onChange={(e) => setGenres(e.target.value)}
-                className="mt-1 block w-full rounded-sm border border-rule bg-background px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              />
+              <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Genres</span>
+              <div className="mt-1">
+                <GenreSelector selected={genres} onChange={setGenres} />
+              </div>
             </label>
             <label className="block">
               <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Description</span>

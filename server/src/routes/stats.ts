@@ -1,6 +1,7 @@
 import { Router, Request } from "express";
 import { Index } from "../lib/index.js";
 import { ReadThrough, PageLog, Copy, Work, Author, Note } from "../lib/types.js";
+import { normalizeGenre } from "../lib/genres.js";
 
 interface DateRange {
   from: string;
@@ -142,7 +143,10 @@ export function createStatsRouter(index: Index, _libraryPath: string): Router {
       for (const work of index.getAllWorks()) {
         if (work.genres) {
           for (const genre of work.genres) {
-            works_by_genre[genre] = (works_by_genre[genre] || 0) + 1;
+            const normalized = normalizeGenre(genre);
+            if (normalized) {
+              works_by_genre[normalized] = (works_by_genre[normalized] || 0) + 1;
+            }
           }
         }
         if (work.original_language) {

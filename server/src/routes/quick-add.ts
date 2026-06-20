@@ -5,6 +5,7 @@ import { writeFile, resolveLibraryPath } from "../lib/io.js";
 import { generateSlug } from "../lib/slug.js";
 import { findOrCreateAuthors } from "../lib/authors.js";
 import { renderBody } from "../lib/render-body.js";
+import { normalizeGenre } from "../lib/genres.js";
 
 function getAllSlugs(index: Index): Set<string> {
   const slugs = new Set<string>();
@@ -97,6 +98,9 @@ export function createQuickAddRouter(index: Index, libraryPath: string): Router 
 
       if (subtitle && typeof subtitle === "string" && subtitle.trim()) {
         work.subtitle = subtitle.trim();
+      }
+      if (Array.isArray(req.body.genres) && req.body.genres.length > 0) {
+        work.genres = req.body.genres.map(normalizeGenre);
       }
       if (req.body.cover_image && typeof req.body.cover_image === "string" && req.body.cover_image.trim()) {
         work.primary_cover = req.body.cover_image.trim();

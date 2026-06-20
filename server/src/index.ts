@@ -6,6 +6,7 @@ import { extname } from "path";
 import { readConfig, ensureLibraryDirectories } from "./config.js";
 import { resolveLibraryPath } from "./lib/io.js";
 import { Index } from "./lib/index.js";
+import { seedGenresYaml } from "./lib/genres.js";
 import { createWorksRouter } from "./routes/works.js";
 import { createAuthorsRouter } from "./routes/authors.js";
 import { createEditionsRouter } from "./routes/editions.js";
@@ -16,6 +17,7 @@ import { createLookupRouter } from "./routes/lookup.js";
 import { createNotesRouter } from "./routes/notes.js";
 import { createSearchRouter } from "./routes/search.js";
 import { createStatsRouter } from "./routes/stats.js";
+import { createGenresRouter } from "./routes/genres.js";
 
 const app = express();
 const PORT = 3001;
@@ -37,6 +39,7 @@ ensureLibraryDirectories(config.library_path);
 
 const index = new Index(config.library_path);
 index.load();
+seedGenresYaml(index, config.library_path);
 app.locals.index = index;
 
 app.get("/api/health", (_req, res) => {
@@ -57,6 +60,7 @@ app.use("/api/lookup", createLookupRouter(config.library_path));
 app.use("/api/notes", createNotesRouter(index, config.library_path));
 app.use("/api/search", createSearchRouter(index));
 app.use("/api/stats", createStatsRouter(index, config.library_path));
+app.use("/api/genres", createGenresRouter(index, config.library_path));
 
 // File upload for cover images
 const upload = multer({
