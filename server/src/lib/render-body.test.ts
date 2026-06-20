@@ -175,6 +175,32 @@ describe("renderWorkBody", () => {
     expect(result).toContain("Some Publisher");
     expect(result).not.toContain("pages");
   });
+
+  it("renders subtitle as italic beneath heading", () => {
+    const index = makeIndex();
+    const work: Work = {
+      type: "work",
+      slug: "dune",
+      title: "Dune",
+      subtitle: "Book One",
+      authors: [],
+      created_at: "2024-01-01T00:00:00.000Z",
+      _schema: 1,
+    };
+    insert(index, work);
+
+    const result = renderWorkBody(work, index);
+    expect(result).toContain("# Dune\n\n*Book One*");
+  });
+
+  it("omits subtitle line when not set", () => {
+    const index = makeIndex();
+    const work = makeWork("simple", "Simple Book", []);
+    insert(index, work);
+
+    const result = renderWorkBody(work, index);
+    expect(result).not.toContain("**");
+  });
 });
 
 // ============================================================
@@ -360,7 +386,7 @@ describe("renderCopyBody", () => {
 
     // Metadata block
     expect(result).toContain("**Edition:**");
-    expect(result).toContain("[[editions/katz-translation|katz-translation]]");
+    expect(result).toContain("[[editions/katz-translation|Michael R. Katz Translation]]");
     expect(result).toContain("Liveright, 2019");
     expect(result).toContain("**Author:**");
     expect(result).toContain("[[authors/fyodor-dostoevsky|Fyodor Dostoevsky]]");
@@ -506,6 +532,83 @@ describe("renderCopyBody", () => {
     const resultBare = renderCopyBody(cpBare, index);
     expect(resultBare).toContain("# Test Book");
   });
+
+  it("edition wikilink uses translator name as display text", () => {
+    const index = makeIndex();
+    const work = makeWork("test", "Test Book", []);
+    insert(index, work);
+
+    const edition = makeEdition("ed-trn", "test", {
+      contributors: [{ name: "Jane Smith", role: "translator" }],
+    });
+    insert(index, edition);
+
+    const copy = makeCopy("cp-trn", "ed-trn", "test");
+    insert(index, copy);
+
+    const result = renderCopyBody(copy, index);
+    expect(result).toContain("[[editions/ed-trn|Jane Smith Translation]]");
+  });
+
+  it("edition wikilink uses publisher as display text when no translator", () => {
+    const index = makeIndex();
+    const work = makeWork("test", "Test Book", []);
+    insert(index, work);
+
+    const edition = makeEdition("ed-pub", "test", { publisher: "Ace Books" });
+    insert(index, edition);
+
+    const copy = makeCopy("cp-pub", "ed-pub", "test");
+    insert(index, copy);
+
+    const result = renderCopyBody(copy, index);
+    expect(result).toContain("[[editions/ed-pub|Ace Books]]");
+  });
+
+  it("edition wikilink uses format as display text when no translator or publisher", () => {
+    const index = makeIndex();
+    const work = makeWork("test", "Test Book", []);
+    insert(index, work);
+
+    const edition = makeEdition("ed-fmt", "test", { format: "hardcover" });
+    insert(index, edition);
+
+    const copy = makeCopy("cp-fmt2", "ed-fmt", "test");
+    insert(index, copy);
+
+    const result = renderCopyBody(copy, index);
+    expect(result).toContain("[[editions/ed-fmt|hardcover]]");
+  });
+
+  it("edition wikilink uses page_count as display text when no other fields", () => {
+    const index = makeIndex();
+    const work = makeWork("test", "Test Book", []);
+    insert(index, work);
+
+    const edition = makeEdition("ed-pg", "test", { page_count: 350 });
+    insert(index, edition);
+
+    const copy = makeCopy("cp-pg2", "ed-pg", "test");
+    insert(index, copy);
+
+    const result = renderCopyBody(copy, index);
+    expect(result).toContain("[[editions/ed-pg|350 pages]]");
+  });
+
+  it("edition wikilink falls back to slug when no distinguishing fields", () => {
+    const index = makeIndex();
+    const work = makeWork("test", "Test Book", []);
+    insert(index, work);
+
+    const edition = makeEdition("ed-bare", "test", {});
+    insert(index, edition);
+
+    const copy = makeCopy("cp-bare2", "ed-bare", "test");
+    insert(index, copy);
+
+    const result = renderCopyBody(copy, index);
+    expect(result).toContain("[[editions/ed-bare|ed-bare]]");
+  });
 });
 
 // ============================================================
@@ -635,6 +738,109 @@ describe("renderSeriesBody", () => {
 
     const result = renderSeriesBody(series, index);
     expect(result).toContain("# Empty Series");
+    expect(result).not.toContain("## Books in Series");
+  });
+
+  it("renders placeholders when total_works exceeds linked works", () => {
+    const index = makeIndex();
+    const series: Series = {
+      type: "series",
+      slug: "dark-tower",
+      name: "The Dark Tower",
+      total_works: 5,
+      created_at: "2024-01-01T00:00:00.000Z",
+      _schema: 1,
+    };
+    insert(index, series);
+
+    const work1: Work = {
+      type: "work",
+      slug: "gunslinger",
+      title: "The Gunslinger",
+      authors: [],
+      series: "[[series/dark-tower]]",
+      series_position: 1,
+      created_at: "2024-01-01T00:00:00.000Z",
+      _schema: 1,
+    };
+    const work2: Work = {
+      type: "work",
+      slug: "drawing-of-three",
+      title: "The Drawing of the Three",
+      authors: [],
+      series: "[[series/dark-tower]]",
+      series_position: 2,
+      created_at: "2024-01-01T00:00:00.000Z",
+      _schema: 1,
+    };
+    insert(index, work1);
+    insert(index, work2);
+
+    const result = renderSeriesBody(series, index);
+    expect(result).toContain("1. [[works/gunslinger]]");
+    expect(result).toContain("2. [[works/drawing-of-three]]");
+    expect(result).toContain("3. — (not in library)");
+    expect(result).toContain("4. — (not in library)");
+    expect(result).toContain("5. — (not in library)");
+  });
+
+  it("shows no placeholders when total_works equals linked works", () => {
+    const index = makeIndex();
+    const series: Series = {
+      type: "series",
+      slug: "trilogy",
+      name: "A Trilogy",
+      total_works: 3,
+      created_at: "2024-01-01T00:00:00.000Z",
+      _schema: 1,
+    };
+    insert(index, series);
+
+    for (let i = 1; i <= 3; i++) {
+      const work: Work = {
+        type: "work",
+        slug: `book-${i}`,
+        title: `Book ${i}`,
+        authors: [],
+        series: "[[series/trilogy]]",
+        series_position: i,
+        created_at: "2024-01-01T00:00:00.000Z",
+        _schema: 1,
+      };
+      insert(index, work);
+    }
+
+    const result = renderSeriesBody(series, index);
+    expect(result).not.toContain("not in library");
+  });
+
+  it("renders all placeholders when no works but total_works set", () => {
+    const index = makeIndex();
+    const series: Series = {
+      type: "series",
+      slug: "planned",
+      name: "Planned Series",
+      total_works: 4,
+      created_at: "2024-01-01T00:00:00.000Z",
+      _schema: 1,
+    };
+    insert(index, series);
+
+    const result = renderSeriesBody(series, index);
+    expect(result).toContain("## Books in Series");
+    expect(result).toContain("1. — (not in library)");
+    expect(result).toContain("2. — (not in library)");
+    expect(result).toContain("3. — (not in library)");
+    expect(result).toContain("4. — (not in library)");
+  });
+
+  it("omits section when no works and no total_works", () => {
+    const index = makeIndex();
+    const series = makeSeries("bare", "Bare Series");
+    insert(index, series);
+
+    const result = renderSeriesBody(series, index);
+    expect(result).toContain("# Bare Series");
     expect(result).not.toContain("## Books in Series");
   });
 });

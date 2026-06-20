@@ -50,33 +50,38 @@ function resolveWorkTitle(workWikilink: string, index: Index): string {
   return work?.title ?? "Unknown Work";
 }
 
+function editionDisplayLabel(edition: Edition): string {
+  const translators = edition.contributors?.filter(
+    (c) => c.role === "translator",
+  );
+  if (translators && translators.length > 0) {
+    return `${translators[0].name} Translation`;
+  }
+
+  if (edition.publisher) {
+    return edition.publisher;
+  }
+
+  if (edition.format) {
+    return edition.format;
+  }
+
+  if (edition.page_count != null) {
+    return `${edition.page_count} pages`;
+  }
+
+  return edition.slug;
+}
+
 function headingSuffix(
   workWikilink: string,
   edition: Edition,
   index: Index,
 ): string {
   const workTitle = resolveWorkTitle(workWikilink, index);
-
-  const translators = edition.contributors?.filter(
-    (c) => c.role === "translator",
-  );
-  if (translators && translators.length > 0) {
-    return `${workTitle} — ${translators[0].name} Translation`;
-  }
-
-  if (edition.publisher) {
-    return `${workTitle} — ${edition.publisher}`;
-  }
-
-  if (edition.format) {
-    return `${workTitle} — ${edition.format}`;
-  }
-
-  if (edition.page_count != null) {
-    return `${workTitle} — ${edition.page_count} pages`;
-  }
-
-  return workTitle;
+  const label = editionDisplayLabel(edition);
+  if (label === edition.slug) return workTitle;
+  return `${workTitle} — ${label}`;
 }
 
 function renderReadThroughs(
@@ -201,6 +206,10 @@ function renderEditionNotesList(
 
 export function renderWorkBody(work: Work, index: Index): string {
   let body = `# ${work.title}\n\n`;
+
+  if (work.subtitle) {
+    body += `*${work.subtitle}*\n\n`;
+  }
 
   const authorLinks: string[] = [];
   if (work.authors && work.authors.length > 0) {
@@ -383,7 +392,7 @@ export function renderCopyBody(copy: Copy, index: Index): string {
         ? ` · ${editionParts.join(", ")}`
         : "";
     metaLines.push(
-      `**Edition:** [[editions/${edition.slug}|${edition.slug}]]${detail}`,
+      `**Edition:** [[editions/${edition.slug}|${editionDisplayLabel(edition)}]]${detail}`,
     );
   }
 
@@ -493,22 +502,33 @@ export function renderSeriesBody(
   let body = `# ${series.name}\n\n`;
 
   const works = index.getWorksBySeries(series.slug);
-  if (works.length > 0) {
-    const sorted = [...works].sort((a, b) => {
-      const posA = a.series_position;
-      const posB = b.series_position;
-      if (posA != null && posB != null) return posA - posB;
-      if (posA != null) return -1;
-      if (posB != null) return 1;
-      return 0;
-    });
 
+  if (works.length > 0 || (series.total_works != null && series.total_works > 0)) {
     body += "## Books in Series\n\n";
-    let i = 1;
-    for (const work of sorted) {
-      body += `${i}. [[works/${work.slug}]]\n`;
-      i++;
+
+    if (works.length > 0) {
+      const sorted = [...works].sort((a, b) => {
+        const posA = a.series_position;
+        const posB = b.series_position;
+        if (posA != null && posB != null) return posA - posB;
+        if (posA != null) return -1;
+        if (posB != null) return 1;
+        return 0;
+      });
+
+      let i = 1;
+      for (const work of sorted) {
+        body += `${i}. [[works/${work.slug}]]\n`;
+        i++;
+      }
     }
+
+    if (series.total_works != null && series.total_works > works.length) {
+      for (let i = works.length + 1; i <= series.total_works; i++) {
+        body += `${i}. — (not in library)\n`;
+      }
+    }
+
     body += "\n";
   }
 

@@ -8,6 +8,7 @@ import { renderBody } from "../lib/render-body.js";
 const MUTABLE_FIELDS = [
   "title", "subtitle", "authors", "original_language", "original_publish_year",
   "genres", "description", "series", "series_position", "primary_cover",
+  "aliases",
 ] as const;
 
 function extractFirstAuthorName(authors?: string[]): string | undefined {
@@ -75,6 +76,7 @@ export function createWorksRouter(index: Index, libraryPath: string): Router {
     if (req.body.series) work.series = req.body.series;
     if (req.body.series_position != null) work.series_position = req.body.series_position;
     if (req.body.primary_cover) work.primary_cover = req.body.primary_cover;
+    if (Array.isArray(req.body.aliases)) work.aliases = req.body.aliases;
 
     const filePath = resolveLibraryPath(`works/${slug}.md`, libraryPath);
     const body = renderBody(work, index);

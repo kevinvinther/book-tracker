@@ -45,6 +45,7 @@ export interface Edition {
   format?: string;
   language?: string;
   contributors?: Contributor[];
+  aliases?: string[];
   created_at: string;
   copy_count?: number;
 }
@@ -94,6 +95,7 @@ export interface Copy {
   price_currency?: string;
   location?: string;
   status: "owned" | "lent" | "lost" | "given-away" | "sold";
+  aliases?: string[];
   read_throughs?: ReadThrough[];
   loans?: Loan[];
   created_at: string;

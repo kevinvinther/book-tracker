@@ -100,6 +100,7 @@ describe("Copy API", () => {
           price_amount: 14.99,
           price_currency: "USD",
           status: "owned",
+          aliases: ["Dune PB", "My Dune"],
         }),
       });
       expect(res.status).toBe(201);
@@ -107,6 +108,7 @@ describe("Copy API", () => {
       expect(copy.condition).toBe("very good");
       expect(copy.location).toBe("living room shelf");
       expect(copy.price_amount).toBe(14.99);
+      expect(copy.aliases).toEqual(["Dune PB", "My Dune"]);
     });
 
     it("returns 400 when edition is missing", async () => {
@@ -236,6 +238,17 @@ describe("Copy API", () => {
       expect(copy.edition).toBe("[[editions/dune-ace-1990]]");
       expect(copy.work).toBe("[[works/dune]]");
       expect(copy.slug).toBe("dune-ace-1990");
+    });
+
+    it("updates aliases via PATCH", async () => {
+      const res = await api("/api/copies/dune-ace-1990", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ aliases: ["Updated Dune"] }),
+      });
+      expect(res.status).toBe(200);
+      const copy = await res.json();
+      expect(copy.aliases).toEqual(["Updated Dune"]);
     });
 
     it("returns 404 for non-existent copy", async () => {

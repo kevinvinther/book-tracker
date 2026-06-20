@@ -85,6 +85,7 @@ describe("Edition API", () => {
           isbn: "978-0441013593",
           page_count: 604,
           language: "en",
+          aliases: ["Ace Dune"],
         }),
       });
       expect(res.status).toBe(201);
@@ -96,6 +97,7 @@ describe("Edition API", () => {
       expect(edition.isbn).toBe("978-0441013593");
       expect(edition.page_count).toBe(604);
       expect(edition.slug).toBeTruthy();
+      expect(edition.aliases).toEqual(["Ace Dune"]);
     });
 
     it("creates an edition with only work field", async () => {
@@ -199,6 +201,17 @@ describe("Edition API", () => {
       const edition = await res.json();
       expect(edition.work).toBe("[[works/dune]]");
       expect(edition.slug).toBe("dune-chilton-1965");
+    });
+
+    it("updates aliases via PATCH", async () => {
+      const res = await api("/api/editions/dune-chilton-1965", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ aliases: ["Chilton Dune", "First Edition"] }),
+      });
+      expect(res.status).toBe(200);
+      const edition = await res.json();
+      expect(edition.aliases).toEqual(["Chilton Dune", "First Edition"]);
     });
 
     it("returns 404 for non-existent edition", async () => {

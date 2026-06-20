@@ -8,6 +8,7 @@ import { renderBody } from "../lib/render-body.js";
 const MUTABLE_FIELDS = [
   "condition", "location", "cover_image", "release_date",
   "acquisition_date", "acquisition_source", "price_amount", "price_currency", "status",
+  "aliases",
 ] as const;
 
 const VALID_STATUSES = new Set(["owned", "lent", "lost", "given-away", "sold"]);
@@ -203,6 +204,7 @@ export function createCopiesRouter(index: Index, libraryPath: string): Router {
     if (req.body.price_amount !== undefined) copy.price_amount = Number(req.body.price_amount);
     if (req.body.price_currency !== undefined) copy.price_currency = req.body.price_currency;
     if (req.body.location !== undefined) copy.location = req.body.location;
+    if (Array.isArray(req.body.aliases)) copy.aliases = req.body.aliases;
 
     const filePath = resolveLibraryPath(`copies/${slug}.md`, libraryPath);
     writeFile(filePath, copy as unknown as Record<string, unknown>, renderBody(copy, index));

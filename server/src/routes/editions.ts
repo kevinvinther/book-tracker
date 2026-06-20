@@ -7,6 +7,7 @@ import { renderBody } from "../lib/render-body.js";
 
 const MUTABLE_FIELDS = [
   "isbn", "publisher", "publish_date", "page_count", "format", "language", "contributors",
+  "aliases",
 ] as const;
 
 function getAllSlugs(index: Index): Set<string> {
@@ -56,6 +57,7 @@ export function createEditionsRouter(index: Index, libraryPath: string): Router 
     if (req.body.format !== undefined) edition.format = req.body.format;
     if (req.body.language !== undefined) edition.language = req.body.language;
     if (Array.isArray(req.body.contributors)) edition.contributors = req.body.contributors;
+    if (Array.isArray(req.body.aliases)) edition.aliases = req.body.aliases;
 
     const filePath = resolveLibraryPath(`editions/${slug}.md`, libraryPath);
     writeFile(filePath, edition as unknown as Record<string, unknown>, renderBody(edition, index));
