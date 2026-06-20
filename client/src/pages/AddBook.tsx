@@ -358,7 +358,7 @@ export default function AddBook() {
 
   function renderScanButton() {
     return (
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <Button
           type="button"
           variant="outline"
@@ -372,7 +372,7 @@ export default function AddBook() {
             ref={isbnInputRef}
             type="text"
             placeholder="Enter ISBN manually…"
-            className="w-44 rounded-sm border border-rule bg-background px-2.5 py-1 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="w-36 rounded-sm border border-rule bg-background px-2.5 py-1 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleManualLookup(); } }}
           />
           <Button type="button" variant="ghost" size="sm" onClick={handleManualLookup}>
@@ -479,7 +479,7 @@ export default function AddBook() {
 
         <section>
           <h2 className="text-sm font-semibold text-foreground">Edition</h2>
-          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 [&>*]:min-w-0">
             <label className="block">
               <span className="text-xs font-medium text-muted-foreground">ISBN</span>
               <input value={isbn} onChange={onChange(setIsbn)} className="mt-1 block w-full rounded-sm border border-rule bg-background px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
@@ -488,9 +488,11 @@ export default function AddBook() {
               <span className="text-xs font-medium text-muted-foreground">Publisher</span>
               <input value={publisher} onChange={onChange(setPublisher)} className="mt-1 block w-full rounded-sm border border-rule bg-background px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
             </label>
-            <label className="block">
+            <label className="block min-w-0">
               <span className="text-xs font-medium text-muted-foreground">Publish date</span>
-              <input type="date" value={publishDate} onChange={onChange(setPublishDate)} className="mt-1 block w-full rounded-sm border border-rule bg-background px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+              <span className="mt-1 flex min-w-0">
+                <input type="date" value={publishDate} onChange={onChange(setPublishDate)} className="min-w-0 flex-1 rounded-sm border border-rule bg-background px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+              </span>
             </label>
             <label className="block">
               <span className="text-xs font-medium text-muted-foreground">Pages</span>
@@ -509,7 +511,7 @@ export default function AddBook() {
 
         <section>
           <h2 className="text-sm font-semibold text-foreground">Copy</h2>
-          <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 [&>*]:min-w-0">
             <label className="block">
               <span className="text-xs font-medium text-muted-foreground">Condition</span>
               <input value={condition} onChange={onChange(setCondition)} placeholder="fine, good, fair" className="mt-1 block w-full rounded-sm border border-rule bg-background px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
@@ -518,9 +520,11 @@ export default function AddBook() {
               <span className="text-xs font-medium text-muted-foreground">Location</span>
               <input value={location} onChange={onChange(setLocation)} placeholder="Living Room" className="mt-1 block w-full rounded-sm border border-rule bg-background px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
             </label>
-            <label className="block">
+            <label className="block min-w-0">
               <span className="text-xs font-medium text-muted-foreground">Acquired</span>
-              <input type="date" value={acquisitionDate} onChange={onChange(setAcquisitionDate)} className="mt-1 block w-full rounded-sm border border-rule bg-background px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+              <span className="mt-1 flex min-w-0">
+                <input type="date" value={acquisitionDate} onChange={onChange(setAcquisitionDate)} className="min-w-0 flex-1 rounded-sm border border-rule bg-background px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+              </span>
             </label>
             <label className="block">
               <span className="text-xs font-medium text-muted-foreground">Source</span>
@@ -576,8 +580,8 @@ export default function AddBook() {
 
   if (pageState === "scanning") {
     return (
-      <div className="mx-auto max-w-2xl px-6 py-8">
-        <div className="mb-6 flex items-center justify-between">
+      <div className="mx-auto max-w-2xl px-4 py-8 md:px-6">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <button
             type="button"
             onClick={handleCancelScan}
@@ -593,7 +597,7 @@ export default function AddBook() {
 
   if (pageState === "loading") {
     return (
-      <div className="mx-auto max-w-2xl px-6 py-8">
+      <div className="mx-auto max-w-2xl px-4 py-8 md:px-6">
         <div className="flex flex-col items-center justify-center py-20">
           <span className="mb-4 size-8 animate-spin rounded-full border-2 border-stone-600 border-t-emerald-400" />
           <p className="text-sm text-muted-foreground">{statusMessage || "Loading…"}</p>
@@ -603,8 +607,8 @@ export default function AddBook() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-6 py-8">
-      <div className="mb-6 flex items-center justify-between">
+    <div className="mx-auto max-w-2xl px-4 py-8 md:px-6">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">
           ← Cancel
         </Link>

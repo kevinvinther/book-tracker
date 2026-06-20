@@ -149,6 +149,20 @@
   html {
     @apply font-sans;
     }
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+  select,
+  textarea {
+    min-height: 44px;
+    min-width: 0;
+  }
+  @media (width >= 48rem) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+    select,
+    textarea {
+      min-height: auto;
+      min-width: auto;
+    }
+  }
 }
 
 /* Paper-grain: a faint fixed noise layer suggesting the desk/drawer surface. */
@@ -189,4 +203,31 @@
   .card-reveal {
     animation: none;
   }
+  .animate-slide-up {
+    animation: none;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.scroll-shadow-x {
+  background:
+    linear-gradient(to right, var(--card) 30%, transparent),
+    linear-gradient(to right, transparent, var(--card) 70%) 100% 0,
+    radial-gradient(farthest-side at 0% 50%, rgba(0,0,0,0.08), transparent),
+    radial-gradient(farthest-side at 100% 50%, rgba(0,0,0,0.08), transparent) 100% 0;
+  background-repeat: no-repeat;
+  background-size: 40px 100%, 40px 100%, 14px 100%, 14px 100%;
+  background-attachment: local, local, scroll, scroll;
 }

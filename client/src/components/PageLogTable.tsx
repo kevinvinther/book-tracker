@@ -28,12 +28,12 @@ export function PageLogTable({ entries, pageCount, status, copySlug, startedDate
       <table className="w-full text-xs">
         <thead>
           <tr className="border-b border-rule">
-            <th className="px-1 py-1.5 text-left font-medium text-muted-foreground">Date</th>
-            <th className="px-1 py-1.5 text-right font-medium text-muted-foreground">Page</th>
-            <th className="px-1 py-1.5 text-right font-medium text-muted-foreground">%</th>
-            <th className="px-1 py-1.5 text-right font-medium text-muted-foreground">Δ pages</th>
-            <th className="px-1 py-1.5 text-right font-medium text-muted-foreground">Δ days</th>
-            <th className="w-6 px-1 py-1.5" />
+            <th className="px-1 py-2 md:py-1.5 text-left font-medium text-muted-foreground">Date</th>
+            <th className="px-1 py-2 md:py-1.5 text-right font-medium text-muted-foreground">Page</th>
+            <th className="px-1 py-2 md:py-1.5 text-right font-medium text-muted-foreground">%</th>
+            <th className="px-1 py-2 md:py-1.5 text-right font-medium text-muted-foreground">Δ pages</th>
+            <th className="px-1 py-2 md:py-1.5 text-right font-medium text-muted-foreground">Δ days</th>
+            <th className="w-6 px-1 py-2 md:py-1.5" />
           </tr>
         </thead>
         <tbody>
@@ -170,7 +170,7 @@ function PageLogRow({
   if (editing) {
     return (
       <tr className="border-b border-rule/50 bg-secondary/30">
-        <td className="px-1 py-1">
+        <td className="px-1 py-2 md:py-1">
           <input
             type="date"
             value={editDate}
@@ -179,7 +179,7 @@ function PageLogRow({
             className="w-full rounded-sm border border-rule bg-background px-1 py-0.5 text-xs focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
         </td>
-        <td className="px-1 py-1">
+        <td className="px-1 py-2 md:py-1">
           <input
             type="number"
             value={editPage}
@@ -188,20 +188,20 @@ function PageLogRow({
             className="w-20 rounded-sm border border-rule bg-background px-1 py-0.5 text-right text-xs focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
         </td>
-        <td className="px-1 py-1 text-right text-muted-foreground">{pct}</td>
-        <td className="px-1 py-1 text-right text-muted-foreground">{deltaPages}</td>
-        <td className="px-1 py-1 text-right text-muted-foreground">{deltaDays}</td>
-        <td className="px-1 py-1 text-right">
+        <td className="px-1 py-2 md:py-1 text-right text-muted-foreground">{pct}</td>
+        <td className="px-1 py-2 md:py-1 text-right text-muted-foreground">{deltaPages}</td>
+        <td className="px-1 py-2 md:py-1 text-right text-muted-foreground">{deltaDays}</td>
+        <td className="px-1 py-2 md:py-1 text-right">
           {error && <span className="mr-1 text-destructive">{error}</span>}
           <button
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="mr-1 text-xs text-primary hover:underline"
+            className="mr-1 text-xs text-primary hover:underline py-1 md:py-0"
           >
             {saving ? "…" : "Save"}
           </button>
-          <button type="button" onClick={handleCancel} className="text-xs text-muted-foreground hover:text-foreground">
+          <button type="button" onClick={handleCancel} className="text-xs text-muted-foreground hover:text-foreground py-1 md:py-0">
             Cancel
           </button>
         </td>
@@ -218,12 +218,12 @@ function PageLogRow({
         )}
         onClick={() => isActive && setEditing(true)}
       >
-        <td className="px-1 py-1 whitespace-nowrap">{formatDate(entry.date)}</td>
-        <td className="px-1 py-1 text-right tabular-nums">{entry.page}</td>
-        <td className="px-1 py-1 text-right tabular-nums text-muted-foreground">{pct}</td>
-        <td className="px-1 py-1 text-right tabular-nums text-muted-foreground">{deltaPages}</td>
-        <td className="px-1 py-1 text-right tabular-nums text-muted-foreground">{deltaDays}</td>
-        <td className="px-1 py-1 text-right">
+        <td className="px-1 py-2 md:py-1 whitespace-nowrap">{formatDate(entry.date)}</td>
+        <td className="px-1 py-2 md:py-1 text-right tabular-nums">{entry.page}</td>
+        <td className="px-1 py-2 md:py-1 text-right tabular-nums text-muted-foreground">{pct}</td>
+        <td className="px-1 py-2 md:py-1 text-right tabular-nums text-muted-foreground">{deltaPages}</td>
+        <td className="px-1 py-2 md:py-1 text-right tabular-nums text-muted-foreground">{deltaDays}</td>
+        <td className="px-1 py-2 md:py-1 text-right">
           {isActive && !isBaseline && (
             <button
               type="button"
@@ -231,7 +231,7 @@ function PageLogRow({
                 e.stopPropagation();
                 setDeleteOpen(true);
               }}
-              className="text-xs text-muted-foreground hover:text-destructive"
+              className="text-xs text-muted-foreground hover:text-destructive py-1 md:py-0"
             >
               Delete
             </button>

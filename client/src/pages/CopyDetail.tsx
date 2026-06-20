@@ -50,13 +50,13 @@ export default function CopyDetail() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-[minmax(200px,280px)_1fr] md:gap-12">
+      <div className="grid grid-cols-[100px_1fr] gap-4 md:grid-cols-[minmax(200px,280px)_1fr] md:gap-12">
         <div className="md:mr-[-1.5rem]">
           {copy.cover_image ? (
             <img
               src={`/api/attachments/${copy.cover_image}`}
               alt="Copy cover"
-              className="w-full rounded-sm border border-rule shadow-[0_20px_40px_-16px_oklch(0.2_0.02_50_/_0.45)]"
+              className="w-full rounded-sm border border-rule shadow-[0_4px_12px_-4px_oklch(0.2_0.02_50_/_0.35)] md:shadow-[0_20px_40px_-16px_oklch(0.2_0.02_50_/_0.45)]"
             />
           ) : (
             <div className="flex aspect-[2/3] w-full items-center justify-center rounded-sm border border-rule bg-muted">
@@ -65,8 +65,8 @@ export default function CopyDetail() {
           )}
         </div>
 
-        <div className="border-t border-stamp/40 pt-6 md:border-t-0 md:border-l-2 md:border-stamp/40 md:pt-0 md:pl-10">
-          <h1 className="font-display text-3xl text-foreground sm:text-4xl">
+        <div className="md:border-t-0 md:border-l-2 md:border-stamp/40 md:pt-0 md:pl-10">
+          <h1 className="font-display text-2xl text-foreground md:text-3xl lg:text-4xl">
             {copy.work_meta?.title ?? "Copy"}
           </h1>
 

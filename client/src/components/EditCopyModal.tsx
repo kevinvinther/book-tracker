@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Dialog } from "@base-ui/react/dialog";
 import { Button } from "@/components/ui/button";
+import { ResponsiveDialog } from "@/components/ResponsiveDialog";
 import type { CopyFull } from "@/lib/types";
 
 const STATUSES = ["owned", "lost", "given-away", "sold"] as const;
@@ -61,69 +62,63 @@ export function EditCopyModal({ copy, open, onOpenChange, onSaved }: EditCopyMod
   }
 
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <Dialog.Portal>
-        <Dialog.Backdrop className="fixed inset-0 z-40 bg-foreground/30" />
-        <Dialog.Popup className="fixed top-1/2 left-1/2 z-50 max-h-[85vh] w-[min(28rem,90vw)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-sm border border-rule bg-card p-6 shadow-xl">
-          <Dialog.Title className="font-display text-xl text-foreground">Edit Copy</Dialog.Title>
-          <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <label className="block">
-                <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Condition</span>
-                <input value={condition} onChange={(e) => setCondition(e.target.value)} className="mt-1 block w-full rounded-sm border border-rule bg-background px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
-              </label>
-              <label className="block">
-                <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Location</span>
-                <input value={location} onChange={(e) => setLocation(e.target.value)} className="mt-1 block w-full rounded-sm border border-rule bg-background px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
-              </label>
-            </div>
-            <label className="block">
-              <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Cover image filename</span>
-              <input value={coverImage} onChange={(e) => setCoverImage(e.target.value)} className="mt-1 block w-full rounded-sm border border-rule bg-background px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
-            </label>
-            <label className="block">
-              <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Status</span>
-              <select value={status} onChange={(e) => setStatus(e.target.value)} className="mt-1 block w-full rounded-sm border border-rule bg-background px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                {STATUSES.map((s) => (
-                  <option key={s} value={s} disabled={s === "owned" && outstanding}>
-                    {s.replace("-", " ")}{s === "owned" && outstanding ? " (outstanding loans)" : ""}
-                  </option>
-                ))}
-              </select>
-              {outstanding && status === "owned" && (
-                <p className="mt-0.5 text-xs text-muted-foreground">Owned cannot be selected while there are outstanding loans.</p>
-              )}
-            </label>
-            <div className="grid grid-cols-2 gap-3">
-              <label className="block">
-                <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Acquired</span>
-                <input type="date" value={acquisitionDate} onChange={(e) => setAcquisitionDate(e.target.value)} className="mt-1 block w-full rounded-sm border border-rule bg-background px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
-              </label>
-              <label className="block">
-                <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Source</span>
-                <input value={acquisitionSource} onChange={(e) => setAcquisitionSource(e.target.value)} className="mt-1 block w-full rounded-sm border border-rule bg-background px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
-              </label>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <label className="block">
-                <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Price</span>
-                <input type="number" step="0.01" value={priceAmount} onChange={(e) => setPriceAmount(e.target.value)} className="mt-1 block w-full rounded-sm border border-rule bg-background px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
-              </label>
-              <label className="block">
-                <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Currency</span>
-                <input value={priceCurrency} onChange={(e) => setPriceCurrency(e.target.value)} placeholder="USD" className="mt-1 block w-full rounded-sm border border-rule bg-background px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
-              </label>
-            </div>
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange} title="Edit Copy" className="md:w-[min(28rem,90vw)]">
+      <form onSubmit={handleSubmit} className="mt-4 space-y-4">
+        <div className="grid grid-cols-2 gap-3">
+          <label className="block">
+            <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Condition</span>
+            <input value={condition} onChange={(e) => setCondition(e.target.value)} className="mt-1 block w-full rounded-sm border border-rule bg-background px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+          </label>
+          <label className="block">
+            <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Location</span>
+            <input value={location} onChange={(e) => setLocation(e.target.value)} className="mt-1 block w-full rounded-sm border border-rule bg-background px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+          </label>
+        </div>
+        <label className="block">
+          <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Cover image filename</span>
+          <input value={coverImage} onChange={(e) => setCoverImage(e.target.value)} className="mt-1 block w-full rounded-sm border border-rule bg-background px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+        </label>
+        <label className="block">
+          <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Status</span>
+          <select value={status} onChange={(e) => setStatus(e.target.value)} className="mt-1 block w-full rounded-sm border border-rule bg-background px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            {STATUSES.map((s) => (
+              <option key={s} value={s} disabled={s === "owned" && outstanding}>
+                {s.replace("-", " ")}{s === "owned" && outstanding ? " (outstanding loans)" : ""}
+              </option>
+            ))}
+          </select>
+          {outstanding && status === "owned" && (
+            <p className="mt-0.5 text-xs text-muted-foreground">Owned cannot be selected while there are outstanding loans.</p>
+          )}
+        </label>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="block">
+            <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Acquired</span>
+            <input type="date" value={acquisitionDate} onChange={(e) => setAcquisitionDate(e.target.value)} className="mt-1 block w-full rounded-sm border border-rule bg-background px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+          </label>
+          <label className="block">
+            <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Source</span>
+            <input value={acquisitionSource} onChange={(e) => setAcquisitionSource(e.target.value)} className="mt-1 block w-full rounded-sm border border-rule bg-background px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+          </label>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="block">
+            <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Price</span>
+            <input type="number" step="0.01" value={priceAmount} onChange={(e) => setPriceAmount(e.target.value)} className="mt-1 block w-full rounded-sm border border-rule bg-background px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+          </label>
+          <label className="block">
+            <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Currency</span>
+            <input value={priceCurrency} onChange={(e) => setPriceCurrency(e.target.value)} placeholder="USD" className="mt-1 block w-full rounded-sm border border-rule bg-background px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+          </label>
+        </div>
 
-            {error && <p className="text-sm text-destructive">{error}</p>}
+        {error && <p className="text-sm text-destructive">{error}</p>}
 
-            <div className="flex justify-end gap-2 pt-2">
-              <Dialog.Close render={<Button type="button" variant="outline" />}>Cancel</Dialog.Close>
-              <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save changes"}</Button>
-            </div>
-          </form>
-        </Dialog.Popup>
-      </Dialog.Portal>
-    </Dialog.Root>
+        <div className="flex justify-end gap-2 pt-2">
+          <Dialog.Close render={<Button type="button" variant="outline" />}>Cancel</Dialog.Close>
+          <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Save changes"}</Button>
+        </div>
+      </form>
+    </ResponsiveDialog>
   );
 }

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useWorks } from "@/hooks/useWorks";
 import { WorkCard } from "@/components/WorkCard";
+import { ResponsiveDialog } from "@/components/ResponsiveDialog";
 import { cn } from "@/lib/utils";
 
 const SORT_OPTIONS = [
@@ -18,6 +19,7 @@ export default function WorkGrid() {
   const genre = searchParams.get("genre") ?? "";
 
   const [searchInput, setSearchInput] = useState(q);
+  const [filterOpen, setFilterOpen] = useState(false);
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -61,9 +63,14 @@ export default function WorkGrid() {
     });
   }
 
+  function handleGenreSelect(g: string) {
+    setGenre(g === genre ? "" : g);
+    setFilterOpen(false);
+  }
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">
-      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-6 md:mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sticky top-12 md:static z-10 bg-background md:bg-transparent -mx-6 px-6 py-3 md:py-0 md:mx-0 md:px-0">
         <div className="inline-flex items-center rounded-sm border border-rule bg-card px-3 py-1.5">
           <span className="mr-2 text-xs text-muted-foreground">Search</span>
           <input
@@ -71,17 +78,17 @@ export default function WorkGrid() {
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Title, author, or genre…"
-            className="w-48 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none sm:w-64"
+            className="w-40 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none sm:w-64"
           />
         </div>
 
         <div className="flex items-center gap-3">
           <label className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span>Sort</span>
+            <span className="hidden sm:inline">Sort</span>
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value)}
-              className="rounded-sm border border-rule bg-card px-2 py-1 text-sm text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="rounded-sm border border-rule bg-card px-2 py-1.5 md:py-1 text-sm text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               {SORT_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -90,6 +97,17 @@ export default function WorkGrid() {
               ))}
             </select>
           </label>
+          {genres.length > 0 && (
+            <button
+              onClick={() => setFilterOpen(true)}
+              className={cn(
+                "md:hidden rounded-sm border border-rule bg-card px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors",
+                genre && "border-primary text-primary",
+              )}
+            >
+              Filters{genre ? " · 1" : ""}
+            </button>
+          )}
           <Link
             to="/add"
             className="rounded-sm bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90"
@@ -100,7 +118,7 @@ export default function WorkGrid() {
       </div>
 
       {genres.length > 0 && (
-        <div className="mb-8 flex flex-wrap gap-1.5">
+        <div className="mb-8 hidden md:flex flex-wrap gap-1.5">
           <button
             onClick={() => setGenre("")}
             className={cn(
@@ -125,6 +143,32 @@ export default function WorkGrid() {
         </div>
       )}
 
+      <ResponsiveDialog open={filterOpen} onOpenChange={setFilterOpen} title="Filter by Genre">
+        <div className="mt-4 flex flex-wrap gap-2">
+          <button
+            onClick={() => handleGenreSelect("")}
+            className={cn(
+              "rounded-full px-4 py-2 md:py-1 text-sm font-medium transition-colors",
+              !genre ? "bg-stamp text-stamp-foreground" : "bg-secondary text-secondary-foreground hover:bg-muted",
+            )}
+          >
+            All
+          </button>
+          {genres.map((g) => (
+            <button
+              key={g}
+              onClick={() => handleGenreSelect(g === genre ? "" : g)}
+              className={cn(
+                "rounded-full px-4 py-2 md:py-1 text-sm font-medium transition-colors",
+                genre === g ? "bg-stamp text-stamp-foreground" : "bg-secondary text-secondary-foreground hover:bg-muted",
+              )}
+            >
+              {g}
+            </button>
+          ))}
+        </div>
+      </ResponsiveDialog>
+
       {error && <p className="text-sm text-destructive">{error}</p>}
 
       {!loading && visibleWorks.length === 0 && !q && !genre && (
@@ -138,7 +182,7 @@ export default function WorkGrid() {
         <p className="py-16 text-center text-sm text-muted-foreground">No works match your search.</p>
       )}
 
-      <div className="grid grid-cols-2 items-start gap-6 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 items-start gap-6">
         {visibleWorks.map((work, index) => (
           <WorkCard key={work.slug} work={work} revealIndex={index} />
         ))}

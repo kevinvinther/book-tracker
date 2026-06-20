@@ -11,7 +11,7 @@ export function useSearch(query: string): UseSearchResult {
   const [results, setResults] = useState<SearchResponse["results"] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
     if (debounceRef.current) {

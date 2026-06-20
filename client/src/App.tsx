@@ -9,25 +9,26 @@ import AddBook from "./pages/AddBook";
 import Settings from "./pages/Settings";
 import Stats from "./pages/Stats";
 import GlobalSearch from "./components/GlobalSearch";
+import { BottomNav } from "./components/BottomNav";
 
 export default function App() {
   return (
     <div className="paper-grain min-h-screen">
-      <header className="relative z-20 border-b border-rule px-6 py-4">
-        <nav className="flex items-center gap-6 text-sm">
-          <Link to="/" className="font-display text-base text-foreground hover:text-primary">
+      <header className="sticky top-0 z-20 border-b border-rule bg-background px-4 py-3 md:px-6 md:py-4">
+        <nav className="flex items-center gap-4 text-sm md:gap-6">
+          <Link to="/" className="font-display text-base text-foreground hover:text-primary shrink-0">
             Book Tracker
           </Link>
           <GlobalSearch />
-          <Link to="/stats" className="text-muted-foreground hover:text-foreground">
+          <Link to="/stats" className="hidden md:block text-muted-foreground hover:text-foreground">
             Stats
           </Link>
-          <Link to="/settings" className="text-muted-foreground hover:text-foreground">
+          <Link to="/settings" className="hidden md:block text-muted-foreground hover:text-foreground">
             Settings
           </Link>
         </nav>
       </header>
-      <main className="relative z-10">
+      <main className="relative z-10 pb-16 md:pb-0">
         <Routes>
           <Route path="/" element={<WorkGrid />} />
           <Route path="/works/:slug" element={<WorkDetail />} />
@@ -40,6 +41,7 @@ export default function App() {
           <Route path="/settings" element={<Settings />} />
         </Routes>
       </main>
+      <BottomNav />
     </div>
   );
 }

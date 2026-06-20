@@ -40,6 +40,7 @@ const GROUP_ORDER: SearchResult["type"][] = [
 export default function GlobalSearch() {
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const [recent, setRecent] = useState<string[]>(getRecent);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -48,7 +49,14 @@ export default function GlobalSearch() {
 
   const close = useCallback(() => {
     setOpen(false);
+    setExpanded(false);
     inputRef.current?.blur();
+  }, []);
+
+  const expand = useCallback(() => {
+    setExpanded(true);
+    setOpen(true);
+    setTimeout(() => inputRef.current?.focus(), 0);
   }, []);
 
   const handleSelect = useCallback(
@@ -87,6 +95,7 @@ export default function GlobalSearch() {
     function onKeyDown(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
+        setExpanded(true);
         inputRef.current?.focus();
         setOpen(true);
         return;
@@ -98,6 +107,7 @@ export default function GlobalSearch() {
           return;
         }
         e.preventDefault();
+        setExpanded(true);
         inputRef.current?.focus();
         setOpen(true);
       }
@@ -114,8 +124,9 @@ export default function GlobalSearch() {
     : false;
 
   return (
-    <div ref={containerRef} className="relative z-50 flex-1 max-w-md mx-4">
-      <div className="relative">
+    <div ref={containerRef} className="relative z-50 flex-1 max-w-md md:mx-4">
+      {/* Desktop: always show full input */}
+      <div className="relative hidden md:block">
         <svg
           className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
           xmlns="http://www.w3.org/2000/svg"
@@ -143,6 +154,71 @@ export default function GlobalSearch() {
             setOpen(true);
           }}
         />
+      </div>
+
+      {/* Mobile: compact icon button or expanded input */}
+      <div className="flex md:hidden justify-end">
+        {!expanded ? (
+          <button
+            onClick={expand}
+            className="flex items-center justify-center size-9 rounded-md border border-rule bg-sidebar text-muted-foreground hover:text-foreground transition-colors"
+            aria-label="Search"
+          >
+            <svg
+              className="h-4 w-4"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.3-4.3" />
+            </svg>
+          </button>
+        ) : (
+          <div className="relative w-full">
+            <svg
+              className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.3-4.3" />
+            </svg>
+            <input
+              ref={inputRef}
+              type="text"
+              value={query}
+              placeholder="Search..."
+              className="w-full pl-9 pr-8 py-1.5 text-sm bg-sidebar border border-rule rounded-md
+                         text-foreground placeholder:text-muted-foreground
+                         focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+              onFocus={() => setOpen(true)}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setOpen(true);
+              }}
+            />
+            <button
+              onClick={close}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              aria-label="Close search"
+            >
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+        )}
       </div>
 
       {open && (

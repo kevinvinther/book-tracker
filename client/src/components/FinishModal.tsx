@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Dialog } from "@base-ui/react/dialog";
 import { Button } from "@/components/ui/button";
+import { ResponsiveDialog } from "@/components/ResponsiveDialog";
 import { toDatePart } from "@/lib/dates";
 import type { ReadThrough } from "@/lib/types";
 
@@ -47,42 +48,36 @@ export function FinishModal({ open, onOpenChange, copySlug, startedDate, onUpdat
   }
 
   return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <Dialog.Portal>
-        <Dialog.Backdrop className="fixed inset-0 z-40 bg-foreground/30" />
-        <Dialog.Popup className="fixed top-1/2 left-1/2 z-50 w-[min(20rem,90vw)] -translate-x-1/2 -translate-y-1/2 rounded-sm border border-rule bg-card p-6 shadow-xl">
-          <Dialog.Title className="font-display text-lg text-foreground">Mark as Finished</Dialog.Title>
-          <form onSubmit={handleSubmit} className="mt-4 space-y-3">
-            <label className="block">
-              <span className="text-xs font-medium text-muted-foreground">Rating (0–10)</span>
-              <input
-                type="number"
-                step="0.1"
-                min="0"
-                max="10"
-                value={rating}
-                onChange={(e) => setRating(e.target.value)}
-                placeholder="Optional"
-                className="mt-1 block w-full rounded-sm border border-rule bg-background px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              />
-            </label>
-            <label className="block">
-              <span className="text-xs font-medium text-muted-foreground">Finished date</span>
-              <input
-                type="date"
-                value={finishedDate}
-                onChange={(e) => setFinishedDate(e.target.value)}
-                className="mt-1 block w-full rounded-sm border border-rule bg-background px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              />
-            </label>
-            {error && <p className="text-sm text-destructive">{error}</p>}
-            <div className="flex justify-end gap-2 pt-2">
-              <Dialog.Close render={<Button type="button" variant="outline" />}>Cancel</Dialog.Close>
-              <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Finish"}</Button>
-            </div>
-          </form>
-        </Dialog.Popup>
-      </Dialog.Portal>
-    </Dialog.Root>
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange} title="Mark as Finished" className="md:w-[min(20rem,90vw)]">
+      <form onSubmit={handleSubmit} className="mt-4 space-y-3">
+        <label className="block">
+          <span className="text-xs font-medium text-muted-foreground">Rating (0–10)</span>
+          <input
+            type="number"
+            step="0.1"
+            min="0"
+            max="10"
+            value={rating}
+            onChange={(e) => setRating(e.target.value)}
+            placeholder="Optional"
+            className="mt-1 block w-full rounded-sm border border-rule bg-background px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          />
+        </label>
+        <label className="block">
+          <span className="text-xs font-medium text-muted-foreground">Finished date</span>
+          <input
+            type="date"
+            value={finishedDate}
+            onChange={(e) => setFinishedDate(e.target.value)}
+            className="mt-1 block w-full rounded-sm border border-rule bg-background px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          />
+        </label>
+        {error && <p className="text-sm text-destructive">{error}</p>}
+        <div className="flex justify-end gap-2 pt-2">
+          <Dialog.Close render={<Button type="button" variant="outline" />}>Cancel</Dialog.Close>
+          <Button type="submit" disabled={saving}>{saving ? "Saving…" : "Finish"}</Button>
+        </div>
+      </form>
+    </ResponsiveDialog>
   );
 }

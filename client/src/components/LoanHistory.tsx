@@ -152,23 +152,23 @@ export function LoanHistory({ copySlug, loans, copyStatus, onSaved }: LoanHistor
 
     return (
       <tr key={lentKey} className={index === 0 ? "" : "border-t border-rule/30"}>
-        <td className="px-3 py-1.5 text-xs">{loan.borrower_name}</td>
-        <td className="px-3 py-1.5 text-xs text-muted-foreground tabular-nums">{formatDate(loan.lent_date)}</td>
-        <td className={`px-3 py-1.5 text-xs tabular-nums ${isOverdue(loan) ? "text-destructive" : "text-muted-foreground"}`}>
+        <td className="px-3 py-2 md:py-1.5 text-xs">{loan.borrower_name}</td>
+        <td className="px-3 py-2 md:py-1.5 text-xs text-muted-foreground tabular-nums">{formatDate(loan.lent_date)}</td>
+        <td className={`px-3 py-2 md:py-1.5 text-xs tabular-nums ${isOverdue(loan) ? "text-destructive" : "text-muted-foreground"}`}>
           {loan.expected_return_date ? formatDate(loan.expected_return_date) : "—"}
         </td>
-        <td className="px-3 py-1.5 text-xs text-muted-foreground tabular-nums">
+        <td className="px-3 py-2 md:py-1.5 text-xs text-muted-foreground tabular-nums">
           {loan.returned_date ? formatDate(loan.returned_date) : "—"}
         </td>
-        <td className="px-3 py-1.5 text-right">
+        <td className="px-3 py-2 md:py-1.5 text-right">
           <div className="flex items-center justify-end gap-1">
             {isOutstanding && (
               <Button size="xs" variant="outline" onClick={() => handleReturn(loan.lent_date)}>
                 Return
               </Button>
             )}
-            <button onClick={() => startEdit(loan)} className="text-xs text-muted-foreground hover:text-foreground">Edit</button>
-            <button onClick={() => handleDelete(loan.lent_date)} className="text-xs text-muted-foreground hover:text-destructive">Del</button>
+            <button onClick={() => startEdit(loan)} className="text-xs text-muted-foreground hover:text-foreground py-1 md:py-0">Edit</button>
+            <button onClick={() => handleDelete(loan.lent_date)} className="text-xs text-muted-foreground hover:text-destructive py-1 md:py-0">Del</button>
           </div>
         </td>
       </tr>
@@ -195,11 +195,11 @@ export function LoanHistory({ copySlug, loans, copyStatus, onSaved }: LoanHistor
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-rule">
-                <th className="px-3 py-1.5 text-xs font-medium text-muted-foreground">Borrower</th>
-                <th className="px-3 py-1.5 text-xs font-medium text-muted-foreground">Lent</th>
-                <th className="px-3 py-1.5 text-xs font-medium text-muted-foreground">Expected</th>
-                <th className="px-3 py-1.5 text-xs font-medium text-muted-foreground">Returned</th>
-                <th className="px-3 py-1.5 text-xs font-medium text-muted-foreground text-right">Actions</th>
+                <th className="px-3 py-2 md:py-1.5 text-xs font-medium text-muted-foreground">Borrower</th>
+                <th className="px-3 py-2 md:py-1.5 text-xs font-medium text-muted-foreground">Lent</th>
+                <th className="px-3 py-2 md:py-1.5 text-xs font-medium text-muted-foreground">Expected</th>
+                <th className="px-3 py-2 md:py-1.5 text-xs font-medium text-muted-foreground">Returned</th>
+                <th className="px-3 py-2 md:py-1.5 text-xs font-medium text-muted-foreground text-right">Actions</th>
               </tr>
             </thead>
             <tbody>
