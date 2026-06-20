@@ -1,6 +1,7 @@
 import { existsSync, readFileSync, writeFileSync, renameSync, mkdirSync } from "fs";
-import { join, basename } from "path";
+import { join } from "path";
 import { homedir } from "os";
+import { randomUUID } from "crypto";
 
 function expandHome(path: string): string {
   if (path.startsWith("~")) {
@@ -316,9 +317,9 @@ export async function downloadCover(coverUrl: string, libraryPath: string): Prom
       mkdirSync(attachmentsDir, { recursive: true });
     }
 
-    const urlFilename = basename(new URL(coverUrl).pathname);
-    const ext = urlFilename.includes(".") ? urlFilename.split(".").pop() || "jpg" : "jpg";
-    const filename = `${urlFilename.includes(".") ? urlFilename.slice(0, urlFilename.lastIndexOf(".")) : urlFilename}-cover.${ext}`;
+    const urlPath = new URL(coverUrl).pathname;
+    const ext = urlPath.includes(".") ? urlPath.split(".").pop() || "jpg" : "jpg";
+    const filename = `${randomUUID()}.${ext}`;
 
     const filePath = join(attachmentsDir, filename);
     const tmpPath = filePath + ".tmp";
