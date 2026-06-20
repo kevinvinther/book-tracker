@@ -8,15 +8,17 @@ import CopyDetail from "./pages/CopyDetail";
 import AddBook from "./pages/AddBook";
 import Settings from "./pages/Settings";
 import Stats from "./pages/Stats";
+import GlobalSearch from "./components/GlobalSearch";
 
 export default function App() {
   return (
     <div className="paper-grain min-h-screen">
-      <header className="relative z-10 border-b border-rule px-6 py-4">
+      <header className="relative z-20 border-b border-rule px-6 py-4">
         <nav className="flex items-center gap-6 text-sm">
           <Link to="/" className="font-display text-base text-foreground hover:text-primary">
             Book Tracker
           </Link>
+          <GlobalSearch />
           <Link to="/stats" className="text-muted-foreground hover:text-foreground">
             Stats
           </Link>

@@ -284,3 +284,25 @@ export interface ResolvedStats extends StatsResponse {
   seriesNames: Record<string, string>;
   languageLabels: Record<string, string>;
 }
+
+export interface SearchResult {
+  type: "work" | "author" | "series" | "edition" | "copy" | "note" | "loan";
+  slug: string;
+  title: string;
+  subtitle: string;
+  snippet?: string;
+  link: string;
+}
+
+export interface SearchResponse {
+  query: string;
+  results: {
+    work: SearchResult[];
+    author: SearchResult[];
+    series: SearchResult[];
+    edition: SearchResult[];
+    copy: SearchResult[];
+    note: SearchResult[];
+    loan: SearchResult[];
+  };
+}

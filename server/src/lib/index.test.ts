@@ -505,4 +505,298 @@ describe("Index", () => {
       expect(results).toHaveLength(5);
     });
   });
+
+  describe("searchAll", () => {
+    const searchAllDir = join(tmpRoot, "search-all");
+    let index: Index;
+
+    beforeAll(() => {
+      for (const d of ["authors", "series", "works", "editions", "copies", "notes"]) {
+        mkdirSync(join(searchAllDir, d), { recursive: true });
+      }
+
+      writeFile(join(searchAllDir, "authors/hera.md"), {
+        type: "author", slug: "hera", name: "Frank Herbert",
+        aliases: ["Frank P. Herbert"],
+        created_at: "2024-01-01T00:00:00", _schema: 1,
+      }, "# Frank Herbert");
+
+      writeFile(join(searchAllDir, "authors/asimov.md"), {
+        type: "author", slug: "asimov", name: "Isaac Asimov",
+        created_at: "2024-01-01T00:00:00", _schema: 1,
+      }, "# Isaac Asimov");
+
+      writeFile(join(searchAllDir, "series/dune-chronicles.md"), {
+        type: "series", slug: "dune-chronicles", name: "Dune Chronicles",
+        aliases: ["Dune Saga"],
+        created_at: "2024-01-01T00:00:00", _schema: 1,
+      }, "");
+
+      writeFile(join(searchAllDir, "works/dune.md"), {
+        type: "work", slug: "dune", title: "Dune",
+        authors: ["[[authors/hera]]"],
+        genres: ["science-fiction"],
+        description: "Set on the desert planet Arrakis",
+        aliases: ["Dune (1965)"],
+        created_at: "2024-01-01T00:00:00", _schema: 1,
+      }, "# Dune");
+
+      writeFile(join(searchAllDir, "works/foundation.md"), {
+        type: "work", slug: "foundation", title: "Foundation",
+        authors: ["[[authors/asimov]]"],
+        genres: ["science-fiction"],
+        created_at: "2024-01-01T00:00:00", _schema: 1,
+      }, "# Foundation");
+
+      writeFile(join(searchAllDir, "editions/dune-ace.md"), {
+        type: "edition", slug: "dune-ace",
+        work: "[[works/dune]]",
+        isbn: "978-0-441-17271-9",
+        publisher: "Ace Books",
+        created_at: "2024-01-01T00:00:00", _schema: 1,
+      }, "# Edition Dune Ace");
+
+      writeFile(join(searchAllDir, "editions/foundation-gnome.md"), {
+        type: "edition", slug: "foundation-gnome",
+        work: "[[works/foundation]]",
+        publisher: "Gnome Press",
+        created_at: "2024-01-01T00:00:00", _schema: 1,
+      }, "# Edition Foundation Gnome");
+
+      writeFile(join(searchAllDir, "copies/dune-hc.md"), {
+        type: "copy", slug: "dune-hc",
+        work: "[[works/dune]]",
+        edition: "[[editions/dune-ace]]",
+        status: "owned", condition: "good",
+        acquisition_source: "Bought at Powell's Books",
+        location: "Living room shelf",
+        loans: [
+          { borrower_name: "Sarah Connor", lent_date: "2024-05-10", expected_return_date: "2024-07-01" },
+        ],
+        created_at: "2024-01-01T00:00:00", _schema: 1,
+      }, "# Copy Dune HC");
+
+      writeFile(join(searchAllDir, "copies/foundation-pb.md"), {
+        type: "copy", slug: "foundation-pb",
+        work: "[[works/foundation]]",
+        edition: "[[editions/foundation-gnome]]",
+        status: "owned", condition: "worn",
+        location: "Bedroom stack",
+        created_at: "2024-01-01T00:00:00", _schema: 1,
+      }, "# Copy Foundation PB");
+
+      writeFile(join(searchAllDir, "notes/2024-01-15-143000.md"), {
+        type: "note", slug: "2024-01-15-143000",
+        date: "2024-01-15T14:30:00",
+        modified: "2024-01-15T14:30:00",
+        copy: "[[copies/dune-hc]]",
+        edition: "[[editions/dune-ace]]",
+        work: "[[works/dune]]",
+        _schema: 1,
+      }, "The spice must flow. This chapter about the desert is incredible.");
+
+      writeFile(join(searchAllDir, "notes/2024-02-01-000000.md"), {
+        type: "note", slug: "2024-02-01-000000",
+        date: "2024-02-01T00:00:00",
+        modified: "2024-02-01T00:00:00",
+        work: "[[works/foundation]]",
+        _schema: 1,
+      }, "Hari Seldon's psychohistory concept is brilliant.");
+
+      index = new Index(searchAllDir);
+      index.load();
+    });
+
+    it("returns empty arrays for empty query", () => {
+      const results = index.searchAll("");
+      expect(results.work).toEqual([]);
+      expect(results.author).toEqual([]);
+      expect(results.series).toEqual([]);
+      expect(results.edition).toEqual([]);
+      expect(results.copy).toEqual([]);
+      expect(results.note).toEqual([]);
+      expect(results.loan).toEqual([]);
+    });
+
+    it("returns empty arrays for no-match query", () => {
+      const results = index.searchAll("zzzzxxx");
+      expect(results.work).toEqual([]);
+      expect(results.author).toEqual([]);
+    });
+
+    it("searches works by title", () => {
+      const results = index.searchAll("dune");
+      expect(results.work).toHaveLength(1);
+      expect(results.work[0].type).toBe("work");
+      expect(results.work[0].slug).toBe("dune");
+      expect(results.work[0].link).toBe("/works/dune");
+    });
+
+    it("searches works by author name", () => {
+      const results = index.searchAll("herbert");
+      expect(results.work.some((w) => w.slug === "dune")).toBe(true);
+    });
+
+    it("searches works by genre", () => {
+      const results = index.searchAll("science-fiction");
+      expect(results.work).toHaveLength(2);
+    });
+
+    it("searches works by description", () => {
+      const results = index.searchAll("Arrakis");
+      expect(results.work.some((w) => w.slug === "dune")).toBe(true);
+    });
+
+    it("searches works by alias", () => {
+      const results = index.searchAll("1965");
+      expect(results.work.some((w) => w.slug === "dune")).toBe(true);
+    });
+
+    it("searches authors by name", () => {
+      const results = index.searchAll("Frank");
+      expect(results.author).toHaveLength(1);
+      expect(results.author[0].slug).toBe("hera");
+      expect(results.author[0].title).toBe("Frank Herbert");
+      expect(results.author[0].link).toBe("/authors/hera");
+    });
+
+    it("searches authors by alias", () => {
+      const results = index.searchAll("Frank P. Herbert");
+      expect(results.author).toHaveLength(1);
+      expect(results.author[0].slug).toBe("hera");
+    });
+
+    it("searches series by name", () => {
+      const results = index.searchAll("Dune Chronicles");
+      expect(results.series).toHaveLength(1);
+      expect(results.series[0].slug).toBe("dune-chronicles");
+      expect(results.series[0].link).toBe("/series/dune-chronicles");
+    });
+
+    it("searches series by alias", () => {
+      const results = index.searchAll("Dune Saga");
+      expect(results.series).toHaveLength(1);
+    });
+
+    it("searches editions by ISBN", () => {
+      const results = index.searchAll("978-0-441");
+      expect(results.edition).toHaveLength(1);
+      expect(results.edition[0].slug).toBe("dune-ace");
+      expect(results.edition[0].link).toBe("/editions/dune-ace");
+    });
+
+    it("searches editions by publisher", () => {
+      const results = index.searchAll("Gnome");
+      expect(results.edition).toHaveLength(1);
+      expect(results.edition[0].slug).toBe("foundation-gnome");
+    });
+
+    it("searches copies by acquisition_source", () => {
+      const results = index.searchAll("Powell");
+      expect(results.copy).toHaveLength(1);
+      expect(results.copy[0].slug).toBe("dune-hc");
+      expect(results.copy[0].link).toBe("/copies/dune-hc");
+    });
+
+    it("searches copies by location", () => {
+      const results = index.searchAll("Bedroom");
+      expect(results.copy.length).toBeGreaterThanOrEqual(1);
+      expect(results.copy.some((c) => c.slug === "foundation-pb")).toBe(true);
+    });
+
+    it("searches notes by body text", () => {
+      const results = index.searchAll("spice");
+      expect(results.note).toHaveLength(1);
+      expect(results.note[0].slug).toBe("2024-01-15-143000");
+    });
+
+    it("includes snippet for note matches", () => {
+      const results = index.searchAll("desert");
+      expect(results.note).toHaveLength(1);
+      expect(results.note[0].snippet).toBeDefined();
+      expect(results.note[0].snippet!.toLowerCase()).toContain("desert");
+    });
+
+    it("note link resolves to copy when copy is set", () => {
+      const results = index.searchAll("spice");
+      expect(results.note[0].link).toBe("/copies/dune-hc");
+    });
+
+    it("note link falls back to work when no copy is set", () => {
+      const results = index.searchAll("psychohistory");
+      expect(results.note[0].link).toBe("/works/foundation");
+    });
+
+    it("searches loans by borrower_name", () => {
+      const results = index.searchAll("Sarah");
+      expect(results.loan).toHaveLength(1);
+      expect(results.loan[0].title).toBe("Sarah Connor");
+      expect(results.loan[0].slug).toBe("dune-hc");
+      expect(results.loan[0].link).toBe("/copies/dune-hc");
+    });
+
+    it("does not match loans by copy title", () => {
+      // Searching for "Dune" should find the work, not the loan
+      const results = index.searchAll("dune");
+      expect(results.loan).toEqual([]);
+    });
+
+    it("caps each type at 5 results", () => {
+      // Create 6 more authors that all match "Smith"
+      for (let i = 1; i <= 6; i++) {
+        writeFile(join(searchAllDir, `authors/smith-${i}.md`), {
+          type: "author", slug: `smith-${i}`, name: `Smith ${i}`,
+          created_at: "2024-01-01T00:00:00", _schema: 1,
+        }, `# Smith ${i}`);
+      }
+      const freshIndex = new Index(searchAllDir);
+      freshIndex.load();
+      const results = freshIndex.searchAll("Smith");
+      expect(results.author).toHaveLength(5);
+    });
+
+    it("orders by relevance: exact match before prefix before substring", () => {
+      writeFile(join(searchAllDir, "works/the-dune-buggy.md"), {
+        type: "work", slug: "the-dune-buggy", title: "The Dune Buggy",
+        authors: ["[[authors/hera]]"],
+        created_at: "2024-01-01T00:00:00", _schema: 1,
+      }, "# The Dune Buggy");
+
+      const freshIndex = new Index(searchAllDir);
+      freshIndex.load();
+      const results = freshIndex.searchAll("Dune");
+      const duneWorks = results.work;
+      // First result should be an exact match for "Dune"
+      expect(duneWorks[0].title.toLowerCase()).toBe("dune");
+      // "The Dune Buggy" is a substring match, should appear after exact matches
+      const titles = duneWorks.map((w) => w.title.toLowerCase());
+      const exactIdx = titles.findIndex((t) => t === "dune");
+      const substringIdx = titles.findIndex((t) => t.includes("dune") && t !== "dune");
+      expect(exactIdx).toBeLessThan(substringIdx);
+    });
+
+    it("includes subtitle for work results from author name", () => {
+      const results = index.searchAll("Dune");
+      const duneWork = results.work.find((w) => w.slug === "dune");
+      expect(duneWork?.subtitle).toBe("Frank Herbert");
+    });
+
+    it("includes subtitle for edition results with ISBN", () => {
+      const results = index.searchAll("978");
+      expect(results.edition[0].subtitle).toContain("ISBN");
+    });
+
+    it("returns correct result shape for all types", () => {
+      const results = index.searchAll("dune");
+      for (const group of Object.values(results)) {
+        for (const result of group) {
+          expect(result).toHaveProperty("type");
+          expect(result).toHaveProperty("slug");
+          expect(result).toHaveProperty("title");
+          expect(result).toHaveProperty("subtitle");
+          expect(result).toHaveProperty("link");
+        }
+      }
+    });
+  });
 });

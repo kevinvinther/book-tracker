@@ -112,6 +112,25 @@ export interface Note {
   _schema: number;
 }
 
+export interface SearchResult {
+  type: "work" | "author" | "series" | "edition" | "copy" | "note" | "loan";
+  slug: string;
+  title: string;
+  subtitle: string;
+  snippet?: string;
+  link: string;
+}
+
+export interface SearchResults {
+  work: SearchResult[];
+  author: SearchResult[];
+  series: SearchResult[];
+  edition: SearchResult[];
+  copy: SearchResult[];
+  note: SearchResult[];
+  loan: SearchResult[];
+}
+
 export type EntityType = "author" | "series" | "work" | "edition" | "copy" | "note";
 
 export type Entity = Author | Series | Work | Edition | Copy | Note;
