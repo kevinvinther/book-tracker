@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+Ensure every entity create and update operation writes a fully rendered markdown body to disk, so library files remain human-readable and navigable in Obsidian.
+
+## Requirements
 
 ### Requirement: Entity save writes rendered body to disk
 

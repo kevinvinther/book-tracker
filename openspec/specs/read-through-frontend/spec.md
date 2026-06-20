@@ -4,7 +4,7 @@
 
 Display and interaction layer for read-throughs on Copy Detail and Work Detail pages. Replaces placeholder sections with full interactive UI: status badges, page log tables, start/log/status-change actions, inline entry editing, undo, and delete.
 
-## ADDED Requirements
+## Requirements
 
 ### Requirement: Read-through list on Copy Detail
 The Copy Detail page SHALL render each read-through in the copy's `read_throughs[]` array, ordered by `started_date` descending (most recent first). If `read_throughs` is empty or absent, the section SHALL display "No read-throughs yet."

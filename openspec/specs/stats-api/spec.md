@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+Define the REST API that computes categorized library, reading, and note statistics from the in-memory index.
+
+## Requirements
 
 ### Requirement: Endpoint returns categorized library, reading, and note statistics
 

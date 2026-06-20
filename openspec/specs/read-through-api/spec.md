@@ -1,3 +1,9 @@
+## Purpose
+
+Define the REST API for managing read-throughs (reading sessions) on a copy, including starting, page logging, status transitions, editing, and deletion.
+
+## Requirements
+
 ### Requirement: Start a new read-through
 
 The system SHALL create a new read-through entry on a copy via `POST /api/copies/:slug/read-throughs`. A read-through is identified by its `started_date` within the copy's `read_throughs[]` array.

@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+Define the read-only statistics dashboard UI at `/stats` that visualizes library composition, reading activity, and note statistics from the stats API.
+
+## Requirements
 
 ### Requirement: Stats dashboard page at /stats
 

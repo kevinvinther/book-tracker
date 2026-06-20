@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+Define keyboard, screen-reader, and structural accessibility requirements for the web app, including skip-to-content links, heading hierarchy, focus management, and ARIA semantics.
+
+## Requirements
 
 ### Requirement: Skip-to-content link
 

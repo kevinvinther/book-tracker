@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+Define how the system retrieves and normalizes book metadata by ISBN from external providers (Open Library and Google Books), including fallback and error handling.
+
+## Requirements
 
 ### Requirement: ISBN lookup from Open Library
 
