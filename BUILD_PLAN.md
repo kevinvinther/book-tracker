@@ -525,10 +525,10 @@ WCAG AA compliance for core flows.
 
 Live index update when files change externally (e.g., Obsidian edit).
 
-- [ ] `chokidar.watch(libraryPath)` — watch all `.md` files
-- [ ] On change: re-parse the file, update in-memory index
-- [ ] If client has a page open showing the changed entity, push update via WebSocket or polling
-- [ ] Documented constraint remains: simultaneous editing unsupported
+- [x] `chokidar.watch(libraryPath)` — watch all `.md` files
+- [x] On change: re-parse the file, update in-memory index
+- [x] If client has a page open showing the changed entity, push update via WebSocket or polling
+- [x] Documented constraint remains: simultaneous editing unsupported
 
 ---
 
