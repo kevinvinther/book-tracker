@@ -4,13 +4,16 @@ import {
   Bar,
   XAxis,
   YAxis,
-  Tooltip,
+  Tooltip as RechartsTooltip,
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
 import { useStats } from "@/hooks/useStats";
 import MetricCard from "@/components/MetricCard";
 import ChartContainer from "@/components/ChartContainer";
+import { Skeleton } from "@/components/Skeleton";
+import { Button } from "@/components/ui/button";
+import { Tooltip as UITooltip } from "@/components/Tooltip";
 import type { ResolvedStats } from "@/lib/types";
 
 type RangePreset = "this-year" | "last-year" | "all-time" | "custom";
@@ -163,7 +166,7 @@ function SimpleBarChart({
             tickLine={false}
             allowDecimals={false}
           />
-          <Tooltip
+          <RechartsTooltip
             contentStyle={{
               background: "var(--color-card)",
               border: "1px solid var(--color-rule)",
@@ -213,7 +216,7 @@ function HorizontalBarChart({
             tickLine={false}
             width={120}
           />
-          <Tooltip
+          <RechartsTooltip
             contentStyle={{
               background: "var(--color-card)",
               border: "1px solid var(--color-rule)",
@@ -377,7 +380,9 @@ function NotesSection({ data }: { data: ResolvedStats }) {
                 <span className="font-mono text-xs text-muted-foreground tabular-nums w-5 text-right">
                   #{i + 1}
                 </span>
-                <span className="flex-1 truncate text-foreground">{w.title}</span>
+                <UITooltip content={w.title}>
+                  <span className="flex-1 truncate text-foreground">{w.title}</span>
+                </UITooltip>
                 <span className="text-xs text-muted-foreground tabular-nums">{w.note_count} notes</span>
               </li>
             ))}
@@ -395,20 +400,31 @@ export default function Stats() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const params = rangeParams(preset, from, to);
-  const { data, loading, error } = useStats(params);
+  const { data, loading, error, refetch } = useStats(params);
 
   if (loading) {
     return (
       <div className="mx-auto max-w-5xl px-6 py-10">
-        <p aria-live="polite" className="text-center text-sm text-muted-foreground">Loading stats...</p>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
+        </div>
+        <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <Skeleton className="h-64 w-full" />
+          <Skeleton className="h-64 w-full" />
+        </div>
+        <Skeleton className="mt-8 h-48 w-full" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="mx-auto max-w-5xl px-6 py-10">
-        <p role="alert" className="text-center text-sm text-destructive">{error}</p>
+      <div className="mx-auto max-w-5xl px-6 py-10 text-center">
+        <p role="alert" className="text-sm text-destructive">{error}</p>
+        <Button variant="outline" size="sm" onClick={refetch} className="mt-4">Retry</Button>
       </div>
     );
   }

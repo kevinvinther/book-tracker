@@ -6,12 +6,13 @@ import { CopyCard } from "@/components/CopyCard";
 import { NoteTimeline } from "@/components/NoteTimeline";
 import { EditEditionModal } from "@/components/EditEditionModal";
 import { AddCopyModal } from "@/components/AddCopyModal";
+import { Skeleton } from "@/components/Skeleton";
 import { Button } from "@/components/ui/button";
 import Markdown from "react-markdown";
 
 export default function EditionDetail() {
   const { slug = "" } = useParams();
-  const { edition, loading, notFound, refetch } = useEdition(slug);
+  const { edition, loading, notFound, error, refetch } = useEdition(slug);
   const [editOpen, setEditOpen] = useState(false);
   const [addCopyOpen, setAddCopyOpen] = useState(false);
 
@@ -31,8 +32,35 @@ export default function EditionDetail() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="mx-auto max-w-2xl px-6 py-24 text-center">
+        <p role="alert" className="text-sm text-destructive">{error}</p>
+        <Button variant="outline" size="sm" onClick={refetch} className="mt-4">Retry</Button>
+      </div>
+    );
+  }
+
   if (loading || !edition) {
-    return <div className="mx-auto max-w-5xl px-6 py-24 text-center text-sm text-muted-foreground">Loading…</div>;
+    return (
+      <div className="mx-auto max-w-5xl px-6 py-8">
+        <Skeleton className="h-9 w-3/4" />
+        <Skeleton className="mt-2 h-4 w-1/2" />
+        <div className="mt-6 grid grid-cols-1 gap-x-8 gap-y-2 sm:grid-cols-2">
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+          <Skeleton className="h-12 w-full" />
+        </div>
+        <div className="mt-10">
+          <Skeleton className="h-5 w-16" />
+          <div className="mt-3 space-y-4">
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-24 w-full" />
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -69,10 +97,15 @@ export default function EditionDetail() {
       )}
 
       <div className="mt-6 grid grid-cols-1 gap-x-8 gap-y-2 sm:grid-cols-2">
-        {edition.isbn && (
+        {edition.isbn ? (
           <div>
             <span className="text-xs font-medium text-muted-foreground">ISBN</span>
             <p className="text-sm tabular-nums">{edition.isbn}</p>
+          </div>
+        ) : (
+          <div>
+            <span className="text-xs font-medium text-muted-foreground">ISBN</span>
+            <p className="text-sm text-muted-foreground">—</p>
           </div>
         )}
         {edition.page_count != null && (

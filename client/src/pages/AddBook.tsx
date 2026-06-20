@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { AuthorSelector } from "@/components/AuthorSelector";
 import { BarcodeScannerLazy } from "@/components/BarcodeScannerLazy";
 import { Button } from "@/components/ui/button";
+import { CoverImage } from "@/components/CoverImage";
 import type { AuthorMeta } from "@/lib/types";
 
 type PageState = "idle" | "scanning" | "loading" | "preview" | "submitting";
@@ -543,11 +544,14 @@ export default function AddBook() {
               <div className="mt-1">
                 {coverPreview ? (
                   <div className="relative mb-2 inline-block">
-                    <img
-                      src={coverPreview}
-                      alt={`Cover of ${title || "book"}`}
-                      className="h-40 rounded-sm border border-rule object-cover"
-                    />
+                    <div className="h-40 overflow-hidden rounded-sm border border-rule">
+                      <CoverImage
+                        src={coverPreview}
+                        alt={`Cover of ${title || "book"}`}
+                        variant="detail"
+                        className="h-40 object-cover"
+                      />
+                    </div>
                     <button
                       type="button"
                       onClick={() => { setCoverPreview(null); setCoverImage(""); }}

@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSearch } from "@/hooks/useSearch";
 import type { SearchResult } from "@/lib/types";
+import { Tooltip } from "@/components/Tooltip";
 
 const RECENT_KEY = "booktracker-recent-searches";
 const MAX_RECENT = 5;
@@ -45,7 +46,7 @@ export default function GlobalSearch() {
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const { results, isLoading } = useSearch(open ? query : "");
+  const { results, isLoading, error, refetch } = useSearch(open ? query : "");
 
   const close = useCallback(() => {
     setOpen(false);
@@ -236,13 +237,14 @@ export default function GlobalSearch() {
                 Recent
               </div>
               {recent.map((q) => (
-                <button
-                  key={q}
-                  className="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-accent truncate"
-                  onClick={() => handleRecentClick(q)}
-                >
-                  {q}
-                </button>
+                <Tooltip key={q} content={q}>
+                  <button
+                    className="w-full text-left px-2 py-1.5 text-sm rounded hover:bg-accent truncate"
+                    onClick={() => handleRecentClick(q)}
+                  >
+                    {q}
+                  </button>
+                </Tooltip>
               ))}
             </div>
           )}
@@ -253,7 +255,14 @@ export default function GlobalSearch() {
             </div>
           )}
 
-          {query.trim() !== "" && !isLoading && !hasResults && (
+          {query.trim() !== "" && !isLoading && error && (
+            <div className="flex items-center justify-center gap-2 p-3 text-sm text-destructive text-center">
+              <span>{error}</span>
+              <button type="button" onClick={refetch} className="underline-offset-2 hover:underline text-muted-foreground">Retry</button>
+            </div>
+          )}
+
+          {query.trim() !== "" && !isLoading && !error && !hasResults && (
             <div className="p-3 text-sm text-muted-foreground text-center">
               No results found
             </div>
@@ -275,14 +284,18 @@ export default function GlobalSearch() {
                         className="w-full text-left px-2 py-1.5 rounded hover:bg-accent"
                         onClick={() => handleSelect(result)}
                       >
+                        <Tooltip content={result.title}>
                         <div className="text-sm text-foreground truncate">
                           {result.title}
                         </div>
+                      </Tooltip>
+                        <Tooltip content={result.type === "note" && result.snippet ? result.snippet : (result.subtitle || "")}>
                         <div className="text-xs text-muted-foreground truncate">
                           {result.type === "note" && result.snippet
                             ? result.snippet
                             : result.subtitle}
                         </div>
+                      </Tooltip>
                       </button>
                     ))}
                   </div>

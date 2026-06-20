@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom";
 import { Home, BarChart3, Plus, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Tooltip } from "@/components/Tooltip";
 
 const TABS = [
   { to: "/", label: "Grid", icon: Home },
@@ -26,7 +27,9 @@ export function BottomNav() {
             }
           >
             <Icon className="size-5" aria-hidden="true" />
-            <span className="truncate">{label}</span>
+            <Tooltip content={label}>
+              <span className="truncate">{label}</span>
+            </Tooltip>
           </NavLink>
         ))}
       </div>

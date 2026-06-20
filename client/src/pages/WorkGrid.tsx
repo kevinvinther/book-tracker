@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useWorks } from "@/hooks/useWorks";
+import { Skeleton } from "@/components/Skeleton";
 import { WorkCard } from "@/components/WorkCard";
 import { ResponsiveDialog } from "@/components/ResponsiveDialog";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const SORT_OPTIONS = [
@@ -33,7 +35,7 @@ export default function WorkGrid() {
     return () => clearTimeout(timeout);
   }, [searchInput]);
 
-  const { works, loading, error } = useWorks({ q, sort, order: sort === "created_at" ? "desc" : "asc" });
+  const { works, loading, error, refetch } = useWorks({ q, sort, order: sort === "created_at" ? "desc" : "asc" });
 
   const genres = useMemo(() => {
     const set = new Set<string>();
@@ -174,7 +176,24 @@ export default function WorkGrid() {
         </div>
       </ResponsiveDialog>
 
-      {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+      {error && (
+        <div className="flex items-center gap-3" role="alert">
+          <p className="text-sm text-destructive">{error}</p>
+          <Button variant="outline" size="sm" onClick={() => refetch()}>Retry</Button>
+        </div>
+      )}
+
+      {loading && !error && (
+        <div aria-busy="true" aria-label="Loading books" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 items-start gap-6">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <div key={i}>
+              <Skeleton className="aspect-[2/3] w-full" />
+              <Skeleton className="mt-2.5 h-5 w-3/4" />
+              <Skeleton className="mt-1 h-3 w-1/2" />
+            </div>
+          ))}
+        </div>
+      )}
 
       {!loading && visibleWorks.length === 0 && !q && !genre && (
         <div aria-live="polite" className="flex flex-col items-center justify-center rounded-sm border border-dashed border-rule py-24 text-center">
@@ -187,11 +206,13 @@ export default function WorkGrid() {
         <p aria-live="polite" className="py-16 text-center text-sm text-muted-foreground">No works match your search.</p>
       )}
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 items-start gap-6">
-        {visibleWorks.map((work, index) => (
-          <WorkCard key={work.slug} work={work} revealIndex={index} />
-        ))}
-      </div>
+      {!loading && visibleWorks.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 items-start gap-6">
+          {visibleWorks.map((work, index) => (
+            <WorkCard key={work.slug} work={work} revealIndex={index} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

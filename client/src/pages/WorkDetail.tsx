@@ -6,12 +6,14 @@ import { useCopiesByWork } from "@/hooks/useCopiesByWork";
 import { CopyCard } from "@/components/CopyCard";
 import { NoteTimeline } from "@/components/NoteTimeline";
 import { EditWorkModal } from "@/components/EditWorkModal";
+import { Skeleton } from "@/components/Skeleton";
+import { CoverImage } from "@/components/CoverImage";
 import { Button } from "@/components/ui/button";
 import Markdown from "react-markdown";
 
 export default function WorkDetail() {
   const { slug = "" } = useParams();
-  const { work, loading, notFound, refetch } = useWork(slug);
+  const { work, loading, notFound, error, refetch } = useWork(slug);
   const { editions } = useEditionsByWork(slug);
   const { copies } = useCopiesByWork(slug);
   const [editOpen, setEditOpen] = useState(false);
@@ -28,8 +30,39 @@ export default function WorkDetail() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="mx-auto max-w-2xl px-6 py-24 text-center">
+        <p role="alert" className="text-sm text-destructive">{error}</p>
+        <Button variant="outline" size="sm" onClick={refetch} className="mt-4">Retry</Button>
+      </div>
+    );
+  }
+
   if (loading || !work) {
-    return <div aria-live="polite" className="mx-auto max-w-5xl px-6 py-24 text-center text-sm text-muted-foreground">Loading…</div>;
+    return (
+      <div className="mx-auto max-w-5xl px-6 py-8">
+        <div className="grid grid-cols-[100px_1fr] gap-4 md:grid-cols-[minmax(200px,280px)_1fr] md:gap-12">
+          <Skeleton className="aspect-[2/3] w-full rounded-sm" />
+          <div className="space-y-3 md:border-l-2 md:border-stamp/40 md:pl-10">
+            <Skeleton className="h-8 w-3/4" />
+            <Skeleton className="h-5 w-1/2" />
+            <Skeleton className="h-4 w-1/3" />
+            <div className="flex gap-2">
+              <Skeleton className="h-5 w-16" />
+              <Skeleton className="h-5 w-20" />
+              <Skeleton className="h-5 w-14" />
+            </div>
+            <Skeleton className="h-20 w-full" />
+          </div>
+        </div>
+        <div className="mt-12 space-y-4">
+          <Skeleton className="h-6 w-24" />
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-24 w-full" />
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -45,24 +78,18 @@ export default function WorkDetail() {
 
       <div className="grid grid-cols-[100px_1fr] gap-4 md:grid-cols-[minmax(200px,280px)_1fr] md:gap-12">
         <div className="md:mr-[-1.5rem]">
-          {work.primary_cover ? (
-            <img
-              src={`/api/attachments/${work.primary_cover}`}
-              alt={`Cover of ${work.title}`}
-              className="w-full rounded-sm border border-rule shadow-[0_4px_12px_-4px_oklch(0.2_0.02_50_/_0.35)] md:shadow-[0_20px_40px_-16px_oklch(0.2_0.02_50_/_0.45)]"
-            />
-          ) : (
-            <div className="flex aspect-[2/3] w-full items-center justify-center rounded-sm border border-rule bg-muted">
-              <span className="text-xs text-muted-foreground">No cover</span>
-            </div>
-          )}
+          <CoverImage
+            src={work.primary_cover ? `/api/attachments/${work.primary_cover}` : ""}
+            alt={`Cover of ${work.title}`}
+            variant="detail"
+          />
         </div>
 
         <div className="md:border-t-0 md:border-l-2 md:border-stamp/40 md:pt-0 md:pl-10">
           <h1 className="font-display text-2xl text-foreground md:text-3xl lg:text-4xl">{work.title}</h1>
           {work.subtitle && <p className="mt-1 text-lg text-muted-foreground">{work.subtitle}</p>}
 
-          {work.authors_meta && work.authors_meta.length > 0 && (
+          {work.authors_meta && work.authors_meta.length > 0 ? (
             <p className="mt-3 text-sm">
               {work.authors_meta.map((a, i) => (
                 <span key={a.slug}>
@@ -73,6 +100,8 @@ export default function WorkDetail() {
                 </span>
               ))}
             </p>
+          ) : (
+            <p className="mt-3 text-sm text-muted-foreground">Unknown author</p>
           )}
 
           {work.series_meta && (

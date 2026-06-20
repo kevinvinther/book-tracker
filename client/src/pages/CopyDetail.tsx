@@ -6,13 +6,15 @@ import { ReadThroughList } from "@/components/ReadThroughList";
 import { NoteTimeline } from "@/components/NoteTimeline";
 import { LoanHistory } from "@/components/LoanHistory";
 import { StatusStamp } from "@/components/StatusStamp";
+import { Skeleton } from "@/components/Skeleton";
+import { CoverImage } from "@/components/CoverImage";
 import { Button } from "@/components/ui/button";
 import type { ReadThrough } from "@/lib/types";
 import Markdown from "react-markdown";
 
 export default function CopyDetail() {
   const { slug = "" } = useParams();
-  const { copy, loading, notFound, refetch, updateCopy } = useCopy(slug);
+  const { copy, loading, notFound, error, refetch, updateCopy } = useCopy(slug);
 
   const handleRTUpdate = useCallback((rts?: ReadThrough[]) => {
     if (rts) {
@@ -35,8 +37,36 @@ export default function CopyDetail() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="mx-auto max-w-2xl px-6 py-24 text-center">
+        <p role="alert" className="text-sm text-destructive">{error}</p>
+        <Button variant="outline" size="sm" onClick={refetch} className="mt-4">Retry</Button>
+      </div>
+    );
+  }
+
   if (loading || !copy) {
-    return <div aria-live="polite" className="mx-auto max-w-5xl px-6 py-24 text-center text-sm text-muted-foreground">Loading…</div>;
+    return (
+      <div className="mx-auto max-w-5xl px-6 py-8">
+        <div className="grid grid-cols-[100px_1fr] gap-4 md:grid-cols-[minmax(200px,280px)_1fr] md:gap-12">
+          <Skeleton className="aspect-[2/3] w-full rounded-sm" />
+          <div className="space-y-3 md:border-l-2 md:border-stamp/40 md:pl-10">
+            <Skeleton className="h-8 w-3/4" />
+            <Skeleton className="h-4 w-1/2" />
+            <Skeleton className="h-4 w-1/3" />
+            <Skeleton className="h-4 w-2/3" />
+            <Skeleton className="h-4 w-1/4" />
+          </div>
+        </div>
+        <div className="mt-10 space-y-6">
+          <Skeleton className="h-6 w-40" />
+          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-6 w-32" />
+          <Skeleton className="h-24 w-full" />
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -52,17 +82,11 @@ export default function CopyDetail() {
 
       <div className="grid grid-cols-[100px_1fr] gap-4 md:grid-cols-[minmax(200px,280px)_1fr] md:gap-12">
         <div className="md:mr-[-1.5rem]">
-          {copy.cover_image ? (
-            <img
-              src={`/api/attachments/${copy.cover_image}`}
-              alt={`Cover of ${copy.work_meta?.title ?? "unknown work"}`}
-              className="w-full rounded-sm border border-rule shadow-[0_4px_12px_-4px_oklch(0.2_0.02_50_/_0.35)] md:shadow-[0_20px_40px_-16px_oklch(0.2_0.02_50_/_0.45)]"
-            />
-          ) : (
-            <div className="flex aspect-[2/3] w-full items-center justify-center rounded-sm border border-rule bg-muted">
-              <span className="text-xs text-muted-foreground">No cover</span>
-            </div>
-          )}
+          <CoverImage
+            src={copy.cover_image ? `/api/attachments/${copy.cover_image}` : ""}
+            alt={`Cover of ${copy.work_meta?.title ?? "unknown work"}`}
+            variant="detail"
+          />
         </div>
 
         <div className="md:border-t-0 md:border-l-2 md:border-stamp/40 md:pt-0 md:pl-10">

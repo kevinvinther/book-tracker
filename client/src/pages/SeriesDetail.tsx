@@ -2,12 +2,15 @@ import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useSeries } from "@/hooks/useSeries";
 import { EditSeriesModal } from "@/components/EditSeriesModal";
+import { Skeleton } from "@/components/Skeleton";
 import { Button } from "@/components/ui/button";
+import { Tooltip } from "@/components/Tooltip";
+import { CoverImage } from "@/components/CoverImage";
 import Markdown from "react-markdown";
 
 export default function SeriesDetail() {
   const { slug = "" } = useParams();
-  const { series, loading, notFound, refetch } = useSeries(slug);
+  const { series, loading, notFound, error, refetch } = useSeries(slug);
   const [editOpen, setEditOpen] = useState(false);
 
   if (notFound) {
@@ -22,8 +25,32 @@ export default function SeriesDetail() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="mx-auto max-w-2xl px-6 py-24 text-center">
+        <p role="alert" className="text-sm text-destructive">{error}</p>
+        <Button variant="outline" size="sm" onClick={refetch} className="mt-4">Retry</Button>
+      </div>
+    );
+  }
+
   if (loading || !series) {
-    return <div className="mx-auto max-w-5xl px-6 py-24 text-center text-sm text-muted-foreground">Loading…</div>;
+    return (
+      <div className="mx-auto max-w-5xl px-6 py-8">
+        <Skeleton className="h-9 w-64" />
+        <div className="mt-8 space-y-6">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="flex items-start gap-4">
+              <Skeleton className="h-16 w-10 shrink-0" />
+              <div className="flex-1 space-y-1">
+                <Skeleton className="h-5 w-3/4" />
+                <Skeleton className="h-4 w-1/3" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   const placeholderCount = series.total_works ? Math.max(0, series.total_works - series.works.length) : 0;
@@ -66,24 +93,21 @@ export default function SeriesDetail() {
               </span>
 
               <div className="h-16 w-10 shrink-0 overflow-hidden rounded-xs border border-rule bg-card">
-                {work.primary_cover ? (
-                  <img
-                    src={`/api/attachments/${work.primary_cover}`}
-                    alt={`Cover of ${work.title}`}
-                    className="block h-full w-full object-cover"
-                    loading="lazy"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-muted">
-                    <span className="text-[0.625rem] text-muted-foreground">—</span>
-                  </div>
-                )}
+                <CoverImage
+                  src={work.primary_cover ? `/api/attachments/${work.primary_cover}` : ""}
+                  alt={`Cover of ${work.title}`}
+                  variant="mini"
+                />
               </div>
 
               <div className="min-w-0 flex-1">
                 <h3 className="font-display text-base leading-snug text-foreground">{work.title}</h3>
-                {firstAuthor && (
-                  <p className="mt-0.5 truncate text-xs text-muted-foreground">{firstAuthor.name}</p>
+                {firstAuthor ? (
+                  <Tooltip content={firstAuthor.name}>
+                    <p className="mt-0.5 truncate text-xs text-muted-foreground">{firstAuthor.name}</p>
+                  </Tooltip>
+                ) : (
+                  <p className="mt-0.5 text-xs text-muted-foreground">Unknown author</p>
                 )}
               </div>
 
