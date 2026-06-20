@@ -25,11 +25,15 @@ A Copy entity SHALL be stored as a markdown file at `copies/{slug}.md` with YAML
   ```
 
 ### Requirement: Create a copy
-The system SHALL expose `POST /api/copies` that accepts a JSON body with at least `edition` (edition slug) and `work` (work slug), validates both exist in the index, generates a slug from the edition slug via `generateSlug`, creates a Copy file in `copies/{slug}.md`, inserts it into the index, and returns the created copy with HTTP 201. The `status` field SHALL default to `owned` if not provided. The optional `aliases` field, when provided as an array of strings, SHALL be written to the copy's frontmatter.
+The system SHALL expose `POST /api/copies` that accepts a JSON body with at least `edition` (edition slug) and `work` (work slug), validates both exist in the index, and generates a self-describing slug composed of the edition slug followed by `-copy` (`<edition-slug>-copy`). If the resulting slug already exists in the global slug namespace, a numeric counter SHALL be appended (`<edition-slug>-copy-2`, `<edition-slug>-copy-3`, …). The handler then creates a Copy file in `copies/{slug}.md`, inserts it into the index, and returns the created copy with HTTP 201. The `status` field SHALL default to `owned` if not provided. The optional `aliases` field, when provided as an array of strings, SHALL be written to the copy's frontmatter.
 
 #### Scenario: Successful creation with required fields
 - **WHEN** a POST request is made to `/api/copies` with `{ "edition": "dune-ace-books-1990", "work": "dune" }`
-- **THEN** the response has status 201 and the copy has `edition: "[[editions/dune-ace-books-1990]]"`, `work: "[[works/dune]]"`, and `status: "owned"`
+- **THEN** the response has status 201 and the copy has slug `dune-ace-books-1990-copy`, `edition: "[[editions/dune-ace-books-1990]]"`, `work: "[[works/dune]]"`, and `status: "owned"`
+
+#### Scenario: Second copy of the same edition appends a counter
+- **WHEN** a second copy is created with `{ "edition": "dune-ace-books-1990", "work": "dune" }` while `dune-ace-books-1990-copy` already exists
+- **THEN** the response has status 201 and the new copy slug is `dune-ace-books-1990-copy-2`
 
 #### Scenario: Creation with aliases
 - **WHEN** a POST request is made to `/api/copies` with `{ "edition": "dune-ace-books-1990", "work": "dune", "aliases": ["Dune paperback", "My Dune"] }`
