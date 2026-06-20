@@ -2,7 +2,7 @@ import { Router } from "express";
 import { Index } from "../lib/index.js";
 import { Edition } from "../lib/types.js";
 import { readFile, writeFile, deleteFile, resolveLibraryPath } from "../lib/io.js";
-import { generateSlug } from "../lib/slug.js";
+import { generateEditionSlug } from "../lib/slug.js";
 import { renderBody } from "../lib/render-body.js";
 
 const MUTABLE_FIELDS = [
@@ -38,9 +38,7 @@ export function createEditionsRouter(index: Index, libraryPath: string): Router 
     }
 
     const publisher: string = req.body.publisher ?? "";
-    const year = req.body.publish_date ? String(req.body.publish_date).split("-")[0] : "";
-    const slugInput = [workSlug, publisher, year].filter(Boolean).join(" ");
-    const slug = generateSlug(slugInput, getAllSlugs(index));
+    const slug = generateEditionSlug(workSlug, req.body.publisher, req.body.publish_date, getAllSlugs(index));
 
     const edition: Edition = {
       type: "edition",

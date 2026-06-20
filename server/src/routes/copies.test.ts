@@ -31,6 +31,15 @@ beforeAll(async () => {
     created_at: "2024-01-01T00:00:00.000Z", _schema: 1,
   }, "");
 
+  // Isolated edition with no copies, used by the counter test so its slugs
+  // stay deterministic regardless of copies created by other shared-state tests.
+  writeFile(join(tmpRoot, "editions/dune-gollancz-2007.md"), {
+    type: "edition", slug: "dune-gollancz-2007",
+    work: "[[works/dune]]",
+    publisher: "Gollancz", format: "paperback", page_count: 592,
+    created_at: "2024-01-01T00:00:00.000Z", _schema: 1,
+  }, "");
+
   // Pre-seeded copy for PATCH / DELETE / GET tests
   writeFile(join(tmpRoot, "copies/dune-ace-1990.md"), {
     type: "copy", slug: "dune-ace-1990",
@@ -83,7 +92,26 @@ describe("Copy API", () => {
       expect(copy.edition).toBe("[[editions/dune-ace-1990]]");
       expect(copy.work).toBe("[[works/dune]]");
       expect(copy.status).toBe("owned");
-      expect(copy.slug).toBeTruthy();
+      expect(copy.slug).toBe("dune-ace-1990-copy");
+    });
+
+    it("appends a counter for a second copy of the same edition", async () => {
+      const first = await api("/api/copies", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ edition: "dune-gollancz-2007", work: "dune" }),
+      });
+      expect(first.status).toBe(201);
+      const second = await api("/api/copies", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ edition: "dune-gollancz-2007", work: "dune" }),
+      });
+      expect(second.status).toBe(201);
+      const firstCopy = await first.json();
+      const secondCopy = await second.json();
+      expect(firstCopy.slug).toBe("dune-gollancz-2007-copy");
+      expect(secondCopy.slug).toBe("dune-gollancz-2007-copy-2");
     });
 
     it("creates a copy with all optional fields", async () => {

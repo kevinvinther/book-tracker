@@ -158,11 +158,13 @@ describe("Quick-add API", () => {
 
       const editions = idx.getEditionsByWork(body.workSlug);
       expect(editions.length).toBe(1);
+      expect(editions[0].slug).toBe("foundation-gnome-press-1951");
       expect(editions[0].publisher).toBe("Gnome Press");
       expect(editions[0].page_count).toBe(255);
 
       const copies = idx.getCopiesByWork(body.workSlug);
       expect(copies.length).toBe(1);
+      expect(copies[0].slug).toBe("foundation-gnome-press-1951-copy");
       expect(copies[0].condition).toBe("fine");
       expect(copies[0].location).toBe("Shelf 3");
     });
@@ -189,9 +191,11 @@ describe("Quick-add API", () => {
 
       const editions = idx.getEditionsByWork(body.workSlug);
       expect(editions.length).toBe(1);
+      expect(editions[0].slug).toBe("minimal-book-edition");
 
       const copies = idx.getCopiesByWork(body.workSlug);
       expect(copies.length).toBe(1);
+      expect(copies[0].slug).toBe("minimal-book-edition-copy");
       expect(copies[0].status).toBe("owned");
     });
 

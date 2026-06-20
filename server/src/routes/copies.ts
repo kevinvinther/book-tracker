@@ -2,7 +2,7 @@ import { Router } from "express";
 import { Index } from "../lib/index.js";
 import { Copy, Loan, ReadThrough, PageLog } from "../lib/types.js";
 import { readFile, writeFile, deleteFile, resolveLibraryPath } from "../lib/io.js";
-import { generateSlug } from "../lib/slug.js";
+import { generateCopySlug } from "../lib/slug.js";
 import { renderBody } from "../lib/render-body.js";
 
 const MUTABLE_FIELDS = [
@@ -180,7 +180,7 @@ export function createCopiesRouter(index: Index, libraryPath: string): Router {
       return;
     }
 
-    const slug = generateSlug(editionSlug, getAllSlugs(index));
+    const slug = generateCopySlug(editionSlug, getAllSlugs(index));
 
     const status = req.body.status && VALID_STATUSES.has(req.body.status)
       ? req.body.status

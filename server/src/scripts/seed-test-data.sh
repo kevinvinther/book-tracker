@@ -243,10 +243,10 @@ END
 
 # ── Copies ─────────────────────────────────────────────────────
 
-cat > "$LIB/copies/dune-ace-2005.md" << END
+cat > "$LIB/copies/dune-ace-2005-copy.md" << END
 ---
 type: copy
-slug: dune-ace-2005
+slug: dune-ace-2005-copy
 edition: '[[editions/dune-ace-2005]]'
 work: '[[works/dune]]'
 condition: like new
@@ -293,10 +293,10 @@ _schema: 1
 ---
 END
 
-cat > "$LIB/copies/the-goldfinch-little-brown.md" << END
+cat > "$LIB/copies/the-goldfinch-little-brown-copy.md" << END
 ---
 type: copy
-slug: the-goldfinch-little-brown
+slug: the-goldfinch-little-brown-copy
 edition: '[[editions/the-goldfinch-little-brown]]'
 work: '[[works/the-goldfinch]]'
 condition: good
@@ -319,10 +319,10 @@ _schema: 1
 ---
 END
 
-cat > "$LIB/copies/the-goldfinch-dutch.md" << END
+cat > "$LIB/copies/the-goldfinch-dutch-copy.md" << END
 ---
 type: copy
-slug: the-goldfinch-dutch
+slug: the-goldfinch-dutch-copy
 edition: '[[editions/the-goldfinch-dutch]]'
 work: '[[works/the-goldfinch]]'
 condition: new
@@ -342,10 +342,10 @@ _schema: 1
 ---
 END
 
-cat > "$LIB/copies/the-gunslinger-grant.md" << END
+cat > "$LIB/copies/the-gunslinger-grant-copy.md" << END
 ---
 type: copy
-slug: the-gunslinger-grant
+slug: the-gunslinger-grant-copy
 edition: '[[editions/the-gunslinger-grant]]'
 work: '[[works/the-gunslinger]]'
 condition: worn
@@ -358,10 +358,10 @@ _schema: 1
 ---
 END
 
-cat > "$LIB/copies/the-waste-lands-grant.md" << END
+cat > "$LIB/copies/the-waste-lands-grant-copy.md" << END
 ---
 type: copy
-slug: the-waste-lands-grant
+slug: the-waste-lands-grant-copy
 edition: '[[editions/the-waste-lands-grant]]'
 work: '[[works/the-waste-lands]]'
 condition: good
@@ -382,7 +382,7 @@ type: note
 slug: '2024-02-15-143000'
 date: '2024-02-15T14:30:00.000Z'
 modified: '2024-02-15T14:30:00.000Z'
-copy: '[[copies/dune-ace-2005]]'
+copy: '[[copies/dune-ace-2005-copy]]'
 edition: '[[editions/dune-ace-2005]]'
 work: '[[works/dune]]'
 read_through: '2024-02-01'
@@ -404,7 +404,7 @@ type: note
 slug: '2024-03-02-091500'
 date: '2024-03-02T09:15:00.000Z'
 modified: '2024-03-02T09:15:00.000Z'
-copy: '[[copies/dune-ace-2005]]'
+copy: '[[copies/dune-ace-2005-copy]]'
 edition: '[[editions/dune-ace-2005]]'
 work: '[[works/dune]]'
 read_through: '2024-02-01'
@@ -426,7 +426,7 @@ type: note
 slug: '2024-03-16-200000'
 date: '2024-03-16T20:00:00.000Z'
 modified: '2024-03-16T20:00:00.000Z'
-copy: '[[copies/dune-ace-2005]]'
+copy: '[[copies/dune-ace-2005-copy]]'
 edition: '[[editions/dune-ace-2005]]'
 work: '[[works/dune]]'
 tags:
@@ -449,7 +449,7 @@ type: note
 slug: '2023-07-02-103000'
 date: '2023-07-02T10:30:00.000Z'
 modified: '2023-07-02T10:30:00.000Z'
-copy: '[[copies/the-goldfinch-little-brown]]'
+copy: '[[copies/the-goldfinch-little-brown-copy]]'
 edition: '[[editions/the-goldfinch-little-brown]]'
 work: '[[works/the-goldfinch]]'
 read_through: '2023-06-15'

@@ -96,11 +96,11 @@ describe("Edition API", () => {
       expect(edition.publisher).toBe("Ace Books");
       expect(edition.isbn).toBe("978-0441013593");
       expect(edition.page_count).toBe(604);
-      expect(edition.slug).toBeTruthy();
+      expect(edition.slug).toBe("dune-ace-books-1990");
       expect(edition.aliases).toEqual(["Ace Dune"]);
     });
 
-    it("creates an edition with only work field", async () => {
+    it("creates an edition with only work field, falling back to <work>-edition", async () => {
       const res = await api("/api/editions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -109,6 +109,7 @@ describe("Edition API", () => {
       expect(res.status).toBe(201);
       const edition = await res.json();
       expect(edition.work).toBe("[[works/dune]]");
+      expect(edition.slug).toBe("dune-edition");
     });
 
     it("returns 400 when work is missing", async () => {

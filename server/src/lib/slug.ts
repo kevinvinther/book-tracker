@@ -51,6 +51,26 @@ export function generateSlug(
   }
 }
 
+export function generateEditionSlug(
+  workSlug: string,
+  publisher: string | undefined,
+  publishDate: string | undefined,
+  existingSlugs: Set<string> = new Set(),
+): string {
+  const year = publishDate ? String(publishDate).split("-")[0] : "";
+  const pub = publisher && publisher.trim() !== "" ? publisher.trim() : "";
+  const descriptor = [pub, year].filter(Boolean).join(" ");
+  const seed = descriptor ? `${workSlug} ${descriptor}` : `${workSlug} edition`;
+  return generateSlug(seed, existingSlugs);
+}
+
+export function generateCopySlug(
+  editionSlug: string,
+  existingSlugs: Set<string> = new Set(),
+): string {
+  return generateSlug(`${editionSlug} copy`, existingSlugs);
+}
+
 export function generateNoteSlug(existingSlugs: Set<string>): string {
   const now = new Date();
   const pad = (n: number) => n.toString().padStart(2, "0");

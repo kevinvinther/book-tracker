@@ -2,7 +2,7 @@ import { Router } from "express";
 import { Index } from "../lib/index.js";
 import { Edition, Copy, Work } from "../lib/types.js";
 import { writeFile, resolveLibraryPath } from "../lib/io.js";
-import { generateSlug } from "../lib/slug.js";
+import { generateSlug, generateEditionSlug, generateCopySlug } from "../lib/slug.js";
 import { findOrCreateAuthors } from "../lib/authors.js";
 import { renderBody } from "../lib/render-body.js";
 import { normalizeGenre } from "../lib/genres.js";
@@ -113,7 +113,7 @@ export function createQuickAddRouter(index: Index, libraryPath: string): Router 
       return;
     }
 
-    const editionSlug = generateSlug(workSlug, getAllSlugs(index));
+    const editionSlug = generateEditionSlug(workSlug, req.body.publisher, req.body.publish_date, getAllSlugs(index));
     const edition: Edition = {
       type: "edition",
       slug: editionSlug,
@@ -136,7 +136,7 @@ export function createQuickAddRouter(index: Index, libraryPath: string): Router 
       ? req.body.status
       : "owned";
 
-    const copySlug = generateSlug(editionSlug, getAllSlugs(index));
+    const copySlug = generateCopySlug(editionSlug, getAllSlugs(index));
     const copy: Copy = {
       type: "copy",
       slug: copySlug,

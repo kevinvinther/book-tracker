@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { generateSlug } from "./slug.js";
+import { generateSlug, generateEditionSlug, generateCopySlug } from "./slug.js";
 
 describe("generateSlug", () => {
   it('converts "The Brothers Karamazov"', () => {
@@ -54,5 +54,43 @@ describe("generateSlug", () => {
   it("resolves collision with numeric fallback when no author", () => {
     const existing = new Set<string>(["dune"]);
     expect(generateSlug("Dune", existing)).toBe("dune-2");
+  });
+});
+
+describe("generateEditionSlug", () => {
+  it("composes work, publisher, and year", () => {
+    expect(generateEditionSlug("dune", "Ace Books", "1990-09-01")).toBe("dune-ace-books-1990");
+  });
+
+  it("uses only the publisher when year is absent", () => {
+    expect(generateEditionSlug("dune", "Ace Books", undefined)).toBe("dune-ace-books");
+  });
+
+  it("uses only the year when publisher is absent", () => {
+    expect(generateEditionSlug("dune", "", "1990-09-01")).toBe("dune-1990");
+  });
+
+  it("falls back to <work>-edition when both are absent", () => {
+    expect(generateEditionSlug("dune", undefined, undefined)).toBe("dune-edition");
+  });
+
+  it("treats a whitespace-only publisher as absent", () => {
+    expect(generateEditionSlug("dune", "   ", undefined)).toBe("dune-edition");
+  });
+
+  it("appends a numeric counter on collision", () => {
+    const existing = new Set<string>(["dune-ace-books-1990"]);
+    expect(generateEditionSlug("dune", "Ace Books", "1990-09-01", existing)).toBe("dune-ace-books-1990-2");
+  });
+});
+
+describe("generateCopySlug", () => {
+  it("composes the edition slug with a -copy suffix", () => {
+    expect(generateCopySlug("dune-ace-books-1990")).toBe("dune-ace-books-1990-copy");
+  });
+
+  it("appends a numeric counter on collision", () => {
+    const existing = new Set<string>(["dune-ace-books-1990-copy"]);
+    expect(generateCopySlug("dune-ace-books-1990", existing)).toBe("dune-ace-books-1990-copy-2");
   });
 });
