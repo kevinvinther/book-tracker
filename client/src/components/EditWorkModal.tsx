@@ -100,12 +100,12 @@ export function EditWorkModal({ work, open, onOpenChange, onSaved }: EditWorkMod
             className="mt-1 block w-full rounded-sm border border-rule bg-background px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
         </label>
-        <label className="block">
+        <div className="block">
           <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Genres</span>
           <div className="mt-1">
             <GenreSelector selected={genres} onChange={setGenres} />
           </div>
-        </label>
+        </div>
         <label className="block">
           <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">Description</span>
           <textarea
@@ -156,7 +156,7 @@ export function EditWorkModal({ work, open, onOpenChange, onSaved }: EditWorkMod
           />
         </label>
 
-        {error && <p className="text-sm text-destructive">{error}</p>}
+        {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
 
         <div className="flex justify-end gap-2 pt-2">
           <Dialog.Close render={<Button type="button" variant="outline" />}>Cancel</Dialog.Close>

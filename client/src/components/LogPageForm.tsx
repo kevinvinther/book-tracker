@@ -82,7 +82,7 @@ export function LogPageForm({
           {saving ? "…" : "Log page"}
         </Button>
       </form>
-      {error && <p className="mt-1.5 text-xs text-destructive">{error}</p>}
+      {error && <p role="alert" className="mt-1.5 text-xs text-destructive">{error}</p>}
     </div>
   );
 }

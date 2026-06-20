@@ -146,7 +146,6 @@ export default function BarcodeScanner({ onScan, onCancel }: BarcodeScannerProps
       }
     };
     // onScan is intentionally captured once for the scanner's lifetime.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function handleCancel() {
@@ -188,7 +187,7 @@ export default function BarcodeScanner({ onScan, onCancel }: BarcodeScannerProps
           aria-label="Cancel scanning"
           className="text-stone-100 hover:bg-white/10 hover:text-white"
         >
-          <X />
+          <X aria-hidden="true" />
         </Button>
       </div>
 
@@ -274,7 +273,6 @@ function ManualEntry({ value, onChange, onSubmit }: ManualEntryProps) {
           ISBN
         </span>
         <input
-          autoFocus
           inputMode="numeric"
           value={value}
           onChange={(e) => onChange(e.target.value)}

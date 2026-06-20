@@ -73,7 +73,7 @@ export function StartReadThroughForm({ copySlug, isLent, onUpdate }: StartReadTh
               Cancel
             </button>
           </form>
-          {error && <p className="mt-1.5 text-xs text-destructive">{error}</p>}
+          {error && <p role="alert" className="mt-1.5 text-xs text-destructive">{error}</p>}
         </div>
       ) : (
         <Button variant="outline" size="xs" onClick={() => setOpen(true)}>

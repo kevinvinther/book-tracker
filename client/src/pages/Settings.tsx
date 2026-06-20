@@ -99,8 +99,8 @@ export default function Settings() {
             placeholder="~/book-tracker-data/"
           />
         </label>
-        {error && <p className="text-sm text-red-600">{error}</p>}
-        {saved && <p className="text-sm text-green-600">Saved. Restart the server for changes to take effect.</p>}
+        {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
+        {saved && <p role="status" className="text-sm text-green-600">Saved. Restart the server for changes to take effect.</p>}
         <button
           type="submit"
           className="rounded-md bg-neutral-900 px-4 py-2 text-sm text-white hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-100"
@@ -114,15 +114,18 @@ export default function Settings() {
         <p className="mt-1 text-sm text-muted-foreground">
           One genre per line. Edit and save to curate the controlled vocabulary.
         </p>
-        <textarea
-          value={genresText}
-          onChange={(e) => setGenresText(e.target.value)}
-          rows={10}
-          className="mt-3 block w-full rounded-sm border border-rule bg-background px-3 py-2 text-sm font-mono focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          placeholder={"fiction\nscience-fiction\nmystery"}
-        />
-        {genresError && <p className="mt-2 text-sm text-destructive">{genresError}</p>}
-        {genresSaved && <p className="mt-2 text-sm text-green-600">Genres saved.</p>}
+        <label className="block">
+          <span className="text-sm font-medium">Genre vocabulary</span>
+          <textarea
+            value={genresText}
+            onChange={(e) => setGenresText(e.target.value)}
+            rows={10}
+            className="mt-1 block w-full rounded-sm border border-rule bg-background px-3 py-2 text-sm font-mono focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            placeholder={"fiction\nscience-fiction\nmystery"}
+          />
+        </label>
+        {genresError && <p role="alert" className="mt-2 text-sm text-destructive">{genresError}</p>}
+        {genresSaved && <p role="status" className="mt-2 text-sm text-green-600">Genres saved.</p>}
         <button
           type="button"
           onClick={handleGenresSave}

@@ -176,16 +176,18 @@ function PageLogRow({
             value={editDate}
             onChange={(e) => setEditDate(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="w-full rounded-sm border border-rule bg-background px-1 py-0.5 text-xs focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-          />
-        </td>
-        <td className="px-1 py-2 md:py-1">
-          <input
-            type="number"
-            value={editPage}
-            onChange={(e) => setEditPage(e.target.value)}
-            onKeyDown={handleKeyDown}
-            className="w-20 rounded-sm border border-rule bg-background px-1 py-0.5 text-right text-xs focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              aria-label="Date"
+              className="w-full rounded-sm border border-rule bg-background px-1 py-0.5 text-xs focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+            />
+          </td>
+          <td className="px-1 py-2 md:py-1">
+            <input
+              type="number"
+              value={editPage}
+              onChange={(e) => setEditPage(e.target.value)}
+              onKeyDown={handleKeyDown}
+              aria-label="Page number"
+              className="w-20 rounded-sm border border-rule bg-background px-1 py-0.5 text-right text-xs focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           />
         </td>
         <td className="px-1 py-2 md:py-1 text-right text-muted-foreground">{pct}</td>
@@ -216,7 +218,15 @@ function PageLogRow({
           "border-b border-rule/50 hover:bg-muted/50",
           isActive && "cursor-pointer",
         )}
+        tabIndex={isActive ? 0 : -1}
+        role="button"
         onClick={() => isActive && setEditing(true)}
+        onKeyDown={(e) => {
+          if (isActive && (e.key === "Enter" || e.key === " ")) {
+            e.preventDefault();
+            setEditing(true);
+          }
+        }}
       >
         <td className="px-1 py-2 md:py-1 whitespace-nowrap">{formatDate(entry.date)}</td>
         <td className="px-1 py-2 md:py-1 text-right tabular-nums">{entry.page}</td>

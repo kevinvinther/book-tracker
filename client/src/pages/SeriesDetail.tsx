@@ -46,7 +46,9 @@ export default function SeriesDetail() {
         </p>
       )}
 
-      <div className="mt-8 space-y-1">
+      <div className="mt-8">
+        <h2 className="text-sm font-semibold text-foreground mb-1">Works</h2>
+        <div className="space-y-1">
         {series.works.length === 0 && placeholderCount === 0 && (
           <p className="text-sm text-muted-foreground">No works in this series yet.</p>
         )}
@@ -109,6 +111,7 @@ export default function SeriesDetail() {
               </div>
             </div>
           ))}
+      </div>
       </div>
 
       {series.body && (

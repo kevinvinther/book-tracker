@@ -11,7 +11,7 @@ const TABS = [
 
 export function BottomNav() {
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-30 border-t border-rule bg-card pb-[max(0.5rem,env(safe-area-inset-bottom))] md:hidden">
+    <nav aria-label="Page navigation" className="fixed inset-x-0 bottom-0 z-30 border-t border-rule bg-card pb-[max(0.5rem,env(safe-area-inset-bottom))] md:hidden">
       <div className="flex items-center justify-around pt-1.5 pb-1">
         {TABS.map(({ to, label, icon: Icon }) => (
           <NavLink
@@ -25,7 +25,7 @@ export function BottomNav() {
               )
             }
           >
-            <Icon className="size-5" />
+            <Icon className="size-5" aria-hidden="true" />
             <span className="truncate">{label}</span>
           </NavLink>
         ))}

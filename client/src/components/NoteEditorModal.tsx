@@ -111,6 +111,7 @@ export function NoteEditorModal({
           <button
             type="button"
             onClick={() => setPreview(false)}
+            aria-pressed={!preview}
             className={`rounded-sm px-2.5 py-2 md:py-1 font-medium transition-colors ${
               !preview
                 ? "bg-foreground text-background"
@@ -122,6 +123,7 @@ export function NoteEditorModal({
           <button
             type="button"
             onClick={() => setPreview(true)}
+            aria-pressed={preview}
             className={`rounded-sm px-2.5 py-2 md:py-1 font-medium transition-colors ${
               preview
                 ? "bg-foreground text-background"
@@ -142,6 +144,7 @@ export function NoteEditorModal({
           </div>
         ) : (
           <label className="block">
+            <span className="sr-only">Note content</span>
             <textarea
               value={body}
               onChange={(e) => setBody(e.target.value)}
@@ -192,7 +195,7 @@ export function NoteEditorModal({
           </label>
         </div>
 
-        {error && <p className="text-sm text-destructive">{error}</p>}
+        {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
 
         <div className="flex items-center justify-between pt-2">
           <div>

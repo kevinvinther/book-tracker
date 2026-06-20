@@ -25,7 +25,7 @@ export default function CopyDetail() {
 
   if (notFound) {
     return (
-      <div className="mx-auto max-w-2xl px-6 py-24 text-center">
+      <div aria-live="polite" className="mx-auto max-w-2xl px-6 py-24 text-center">
         <p className="font-display text-2xl text-foreground">No such copy.</p>
         <p className="mt-2 text-sm text-muted-foreground">This copy may have been removed or never existed.</p>
         <Link to="/" className="mt-6 inline-block text-sm text-primary underline-offset-4 hover:underline">
@@ -36,7 +36,7 @@ export default function CopyDetail() {
   }
 
   if (loading || !copy) {
-    return <div className="mx-auto max-w-5xl px-6 py-24 text-center text-sm text-muted-foreground">Loading…</div>;
+    return <div aria-live="polite" className="mx-auto max-w-5xl px-6 py-24 text-center text-sm text-muted-foreground">Loading…</div>;
   }
 
   return (
@@ -55,7 +55,7 @@ export default function CopyDetail() {
           {copy.cover_image ? (
             <img
               src={`/api/attachments/${copy.cover_image}`}
-              alt="Copy cover"
+              alt={`Cover of ${copy.work_meta?.title ?? "unknown work"}`}
               className="w-full rounded-sm border border-rule shadow-[0_4px_12px_-4px_oklch(0.2_0.02_50_/_0.35)] md:shadow-[0_20px_40px_-16px_oklch(0.2_0.02_50_/_0.45)]"
             />
           ) : (

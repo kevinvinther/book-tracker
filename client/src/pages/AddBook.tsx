@@ -545,13 +545,14 @@ export default function AddBook() {
                   <div className="relative mb-2 inline-block">
                     <img
                       src={coverPreview}
-                      alt="Cover preview"
+                      alt={`Cover of ${title || "book"}`}
                       className="h-40 rounded-sm border border-rule object-cover"
                     />
                     <button
                       type="button"
                       onClick={() => { setCoverPreview(null); setCoverImage(""); }}
                       className="absolute top-1 right-1 rounded-full bg-background/80 px-1.5 py-0.5 text-xs text-muted-foreground hover:text-foreground"
+                      aria-label="Remove cover"
                     >
                       ×
                     </button>
@@ -629,7 +630,7 @@ export default function AddBook() {
       </h1>
 
       {error && (
-        <div className="mt-4 rounded-sm border border-destructive/30 bg-destructive/10 px-4 py-3">
+        <div role="alert" className="mt-4 rounded-sm border border-destructive/30 bg-destructive/10 px-4 py-3">
           <p className="text-sm text-destructive">{error}</p>
         </div>
       )}

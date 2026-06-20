@@ -70,7 +70,7 @@ export function EditAuthorModal({ author, open, onOpenChange, onSaved }: EditAut
           />
         </label>
 
-        {error && <p className="text-sm text-destructive">{error}</p>}
+        {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
 
         <div className="flex justify-end gap-2 pt-2">
           <Dialog.Close render={<Button type="button" variant="outline" />}>Cancel</Dialog.Close>

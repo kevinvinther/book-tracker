@@ -10,6 +10,7 @@ export function GenreSelector({ selected, onChange }: GenreSelectorProps) {
   const [allGenres, setAllGenres] = useState<string[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [open, setOpen] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -68,15 +69,38 @@ export function GenreSelector({ selected, onChange }: GenreSelectorProps) {
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
-    if (e.key === "Enter") {
+    const hasCreateOption = loaded && input.trim() && !exactMatch;
+    const optionCount = filtered.length + (hasCreateOption ? 1 : 0);
+
+    if (e.key === "ArrowDown") {
       e.preventDefault();
-      if (input.trim() && loaded && !exactMatch) {
+      setActiveIndex((prev) => (prev + 1 >= optionCount ? 0 : prev + 1));
+      if (!open) setOpen(true);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex((prev) => (prev - 1 < 0 ? optionCount - 1 : prev - 1));
+      if (!open) setOpen(true);
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      setActiveIndex(optionCount > 0 ? 0 : -1);
+    } else if (e.key === "End") {
+      e.preventDefault();
+      setActiveIndex(optionCount > 0 ? optionCount - 1 : -1);
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (activeIndex >= 0) {
+        if (activeIndex < filtered.length) {
+          addGenre(filtered[activeIndex]);
+        } else {
+          addNewGenre();
+        }
+      } else if (input.trim() && loaded && !exactMatch) {
         addNewGenre();
       } else if (filtered.length > 0) {
         addGenre(filtered[0]);
       }
-    }
-    if (e.key === "Escape") {
+    } else if (e.key === "Escape") {
+      setActiveIndex(-1);
       setOpen(false);
     }
   }
@@ -88,22 +112,35 @@ export function GenreSelector({ selected, onChange }: GenreSelectorProps) {
         value={input}
         onChange={(e) => {
           setInput(e.target.value);
+          setActiveIndex(-1);
           setOpen(true);
         }}
-        onFocus={() => setOpen(true)}
+        onFocus={() => {
+          setActiveIndex(-1);
+          setOpen(true);
+        }}
         onKeyDown={handleKeyDown}
         placeholder="Type a genre…"
         className="block w-full rounded-sm border border-rule bg-background px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        aria-label="Search genres"
+        role="combobox"
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        aria-controls="genre-listbox"
+        aria-activedescendant={activeIndex >= 0 ? `genre-option-${activeIndex}` : undefined}
       />
 
       {open && input && (
-        <div className="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-sm border border-rule bg-card shadow-lg">
+        <div role="listbox" id="genre-listbox" className="absolute z-20 mt-1 max-h-48 w-full overflow-y-auto rounded-sm border border-rule bg-card shadow-lg">
           {filtered.length > 0 && (
             <>
-              {filtered.map((g) => (
+              {filtered.map((g, index) => (
                 <button
                   key={g}
                   type="button"
+                  role="option"
+                  id={`genre-option-${index}`}
+                  aria-selected={false}
                   onClick={() => addGenre(g)}
                   className="block w-full px-3 py-1.5 text-left text-sm hover:bg-muted"
                 >
@@ -116,6 +153,9 @@ export function GenreSelector({ selected, onChange }: GenreSelectorProps) {
           {loaded && input.trim() && !exactMatch && (
             <button
               type="button"
+              role="option"
+              id={`genre-option-${filtered.length}`}
+              aria-selected={false}
               onClick={addNewGenre}
               className="block w-full px-3 py-1.5 text-left text-sm text-primary hover:bg-muted"
             >
@@ -136,7 +176,7 @@ export function GenreSelector({ selected, onChange }: GenreSelectorProps) {
               className="inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-0.5 text-xs text-secondary-foreground"
             >
               {g}
-              <button type="button" onClick={() => removeGenre(g)} className="ml-0.5 text-muted-foreground hover:text-foreground">
+              <button type="button" onClick={() => removeGenre(g)} className="ml-0.5 text-muted-foreground hover:text-foreground" aria-label={`Remove ${g}`}>
                 ×
               </button>
             </span>

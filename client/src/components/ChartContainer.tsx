@@ -23,7 +23,9 @@ export default function ChartContainer({
           {emptyMessage}
         </div>
       ) : (
-        children
+        <div role="img" aria-label={title}>
+          {children}
+        </div>
       )}
     </div>
   );

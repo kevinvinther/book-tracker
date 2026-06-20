@@ -128,6 +128,7 @@ export default function GlobalSearch() {
       {/* Desktop: always show full input */}
       <div className="relative hidden md:block">
         <svg
+          aria-hidden="true"
           className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 24 24"
@@ -165,6 +166,7 @@ export default function GlobalSearch() {
             aria-label="Search"
           >
             <svg
+              aria-hidden="true"
               className="h-4 w-4"
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -181,6 +183,7 @@ export default function GlobalSearch() {
         ) : (
           <div className="relative w-full">
             <svg
+              aria-hidden="true"
               className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -212,7 +215,7 @@ export default function GlobalSearch() {
               className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               aria-label="Close search"
             >
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+              <svg aria-hidden="true" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
@@ -225,6 +228,7 @@ export default function GlobalSearch() {
         <div
           className="absolute top-full mt-1 w-full bg-popover border border-rule rounded-md shadow-lg
                      max-h-80 overflow-y-auto z-50"
+          aria-live="polite"
         >
           {query.trim() === "" && recent.length > 0 && (
             <div className="p-2">

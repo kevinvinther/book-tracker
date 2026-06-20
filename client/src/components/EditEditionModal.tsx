@@ -99,7 +99,7 @@ export function EditEditionModal({ edition, open, onOpenChange, onSaved }: EditE
           <input value={contributors} onChange={(e) => setContributors(e.target.value)} className="mt-1 block w-full rounded-sm border border-rule bg-background px-3 py-1.5 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
         </label>
 
-        {error && <p className="text-sm text-destructive">{error}</p>}
+        {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
 
         <div className="flex justify-end gap-2 pt-2">
           <Dialog.Close render={<Button type="button" variant="outline" />}>Cancel</Dialog.Close>

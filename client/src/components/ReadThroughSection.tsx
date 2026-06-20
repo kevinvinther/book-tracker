@@ -221,7 +221,7 @@ export function ReadThroughSection({ rt, copySlug, pageCount, onUpdate }: ReadTh
         </Button>
       </div>
 
-      {actionError && <p className="mt-1.5 text-xs text-destructive">{actionError}</p>}
+      {actionError && <p role="alert" className="mt-1.5 text-xs text-destructive">{actionError}</p>}
 
       {/* DNF inline form */}
       {dnfOpen && (

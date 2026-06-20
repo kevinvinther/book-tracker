@@ -31,7 +31,6 @@ export default function WorkGrid() {
       });
     }, 300);
     return () => clearTimeout(timeout);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchInput]);
 
   const { works, loading, error } = useWorks({ q, sort, order: sort === "created_at" ? "desc" : "asc" });
@@ -70,6 +69,7 @@ export default function WorkGrid() {
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">
+      <h1 className="sr-only">My Books</h1>
       <div className="mb-6 md:mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sticky top-12 md:static z-10 bg-background md:bg-transparent -mx-6 px-6 py-3 md:py-0 md:mx-0 md:px-0">
         <div className="inline-flex items-center rounded-sm border border-rule bg-card px-3 py-1.5">
           <span className="mr-2 text-xs text-muted-foreground">Search</span>
@@ -78,6 +78,7 @@ export default function WorkGrid() {
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Title, author, or genre…"
+            aria-label="Search books"
             className="w-40 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none sm:w-64"
           />
         </div>
@@ -121,6 +122,7 @@ export default function WorkGrid() {
         <div className="mb-8 hidden md:flex flex-wrap gap-1.5">
           <button
             onClick={() => setGenre("")}
+            aria-pressed={!genre}
             className={cn(
               "rounded-full px-3 py-1 text-xs font-medium transition-colors",
               !genre ? "bg-stamp text-stamp-foreground" : "bg-secondary text-secondary-foreground hover:bg-muted",
@@ -132,6 +134,7 @@ export default function WorkGrid() {
             <button
               key={g}
               onClick={() => setGenre(g === genre ? "" : g)}
+              aria-pressed={genre === g}
               className={cn(
                 "rounded-full px-3 py-1 text-xs font-medium transition-colors",
                 genre === g ? "bg-stamp text-stamp-foreground" : "bg-secondary text-secondary-foreground hover:bg-muted",
@@ -147,6 +150,7 @@ export default function WorkGrid() {
         <div className="mt-4 flex flex-wrap gap-2">
           <button
             onClick={() => handleGenreSelect("")}
+            aria-pressed={!genre}
             className={cn(
               "rounded-full px-4 py-2 md:py-1 text-sm font-medium transition-colors",
               !genre ? "bg-stamp text-stamp-foreground" : "bg-secondary text-secondary-foreground hover:bg-muted",
@@ -158,6 +162,7 @@ export default function WorkGrid() {
             <button
               key={g}
               onClick={() => handleGenreSelect(g === genre ? "" : g)}
+              aria-pressed={genre === g}
               className={cn(
                 "rounded-full px-4 py-2 md:py-1 text-sm font-medium transition-colors",
                 genre === g ? "bg-stamp text-stamp-foreground" : "bg-secondary text-secondary-foreground hover:bg-muted",
@@ -169,17 +174,17 @@ export default function WorkGrid() {
         </div>
       </ResponsiveDialog>
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
 
       {!loading && visibleWorks.length === 0 && !q && !genre && (
-        <div className="flex flex-col items-center justify-center rounded-sm border border-dashed border-rule py-24 text-center">
+        <div aria-live="polite" className="flex flex-col items-center justify-center rounded-sm border border-dashed border-rule py-24 text-center">
           <p className="font-display text-xl text-foreground">No books yet.</p>
           <p className="mt-1 text-sm text-muted-foreground">Add your first book to start your shelf.</p>
         </div>
       )}
 
       {!loading && visibleWorks.length === 0 && (q || genre) && (
-        <p className="py-16 text-center text-sm text-muted-foreground">No works match your search.</p>
+        <p aria-live="polite" className="py-16 text-center text-sm text-muted-foreground">No works match your search.</p>
       )}
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 items-start gap-6">

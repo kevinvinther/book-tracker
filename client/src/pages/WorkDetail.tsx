@@ -18,7 +18,7 @@ export default function WorkDetail() {
 
   if (notFound) {
     return (
-      <div className="mx-auto max-w-2xl px-6 py-24 text-center">
+      <div aria-live="polite" className="mx-auto max-w-2xl px-6 py-24 text-center">
         <p className="font-display text-2xl text-foreground">No such book.</p>
         <p className="mt-2 text-sm text-muted-foreground">It may have been removed or never existed.</p>
         <Link to="/" className="mt-6 inline-block text-sm text-primary underline-offset-4 hover:underline">
@@ -29,7 +29,7 @@ export default function WorkDetail() {
   }
 
   if (loading || !work) {
-    return <div className="mx-auto max-w-5xl px-6 py-24 text-center text-sm text-muted-foreground">Loading…</div>;
+    return <div aria-live="polite" className="mx-auto max-w-5xl px-6 py-24 text-center text-sm text-muted-foreground">Loading…</div>;
   }
 
   return (

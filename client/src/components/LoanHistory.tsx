@@ -112,6 +112,7 @@ export function LoanHistory({ copySlug, loans, copyStatus, onSaved }: LoanHistor
             <input
               value={editBorrower}
               onChange={(e) => setEditBorrower(e.target.value)}
+              aria-label="Borrower name"
               className="w-full rounded-sm border border-rule bg-background px-1.5 py-0.5 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
           </td>
@@ -120,6 +121,7 @@ export function LoanHistory({ copySlug, loans, copyStatus, onSaved }: LoanHistor
               type="date"
               value={editLentDate}
               onChange={(e) => setEditLentDate(e.target.value)}
+              aria-label="Lent date"
               className="w-full rounded-sm border border-rule bg-background px-1.5 py-0.5 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
           </td>
@@ -128,6 +130,7 @@ export function LoanHistory({ copySlug, loans, copyStatus, onSaved }: LoanHistor
               type="date"
               value={editExpectedReturn}
               onChange={(e) => setEditExpectedReturn(e.target.value)}
+              aria-label="Expected return date"
               className="w-full rounded-sm border border-rule bg-background px-1.5 py-0.5 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
           </td>
@@ -136,12 +139,13 @@ export function LoanHistory({ copySlug, loans, copyStatus, onSaved }: LoanHistor
               type="date"
               value={editReturned}
               onChange={(e) => setEditReturned(e.target.value)}
+              aria-label="Returned date"
               className="w-full rounded-sm border border-rule bg-background px-1.5 py-0.5 text-xs focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
           </td>
           <td className="px-3 py-1.5 text-right">
             <div className="flex items-center justify-end gap-1">
-              {editError && <span className="text-xs text-destructive">{editError}</span>}
+              {editError && <span role="alert" className="text-xs text-destructive">{editError}</span>}
               <Button size="xs" onClick={submitEdit} disabled={saving}>{saving ? "…" : "Save"}</Button>
               <button onClick={cancelEdit} className="text-xs text-muted-foreground hover:text-foreground">Cancel</button>
             </div>
@@ -151,7 +155,18 @@ export function LoanHistory({ copySlug, loans, copyStatus, onSaved }: LoanHistor
     }
 
     return (
-      <tr key={lentKey} className={index === 0 ? "" : "border-t border-rule/30"}>
+      <tr
+        key={lentKey}
+        className={index === 0 ? "" : "border-t border-rule/30"}
+        tabIndex={0}
+        role="button"
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            startEdit(loan);
+          }
+        }}
+      >
         <td className="px-3 py-2 md:py-1.5 text-xs">{loan.borrower_name}</td>
         <td className="px-3 py-2 md:py-1.5 text-xs text-muted-foreground tabular-nums">{formatDate(loan.lent_date)}</td>
         <td className={`px-3 py-2 md:py-1.5 text-xs tabular-nums ${isOverdue(loan) ? "text-destructive" : "text-muted-foreground"}`}>

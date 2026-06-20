@@ -67,7 +67,6 @@ export function LendCopyForm({ copySlug, onSaved }: LendCopyFormProps) {
             onChange={(e) => setBorrowerName(e.target.value)}
             placeholder="Sarah"
             className="mt-0.5 block w-full max-w-xs rounded-sm border border-rule bg-background px-2 py-1 text-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            autoFocus
           />
         </label>
         <div className="flex gap-3 flex-wrap">
@@ -90,7 +89,7 @@ export function LendCopyForm({ copySlug, onSaved }: LendCopyFormProps) {
             />
           </label>
         </div>
-        {error && <p className="text-xs text-destructive">{error}</p>}
+        {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
         <div className="flex gap-2">
           <Button type="submit" size="sm" disabled={saving}>
             {saving ? "…" : "Lend"}

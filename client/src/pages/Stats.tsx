@@ -97,6 +97,7 @@ function TimeRangeSelector({
         <button
           key={p.value}
           onClick={() => onChange(p.value)}
+          aria-pressed={preset === p.value}
           className={`rounded-md border px-3 py-1.5 text-xs transition-colors ${
             preset === p.value
               ? "border-primary bg-primary text-primary-foreground"
@@ -112,6 +113,7 @@ function TimeRangeSelector({
             type="date"
             value={from}
             onChange={(e) => onFromChange(e.target.value)}
+            aria-label="From date"
             className="rounded-md border border-rule bg-card px-2 py-1.5 text-xs text-foreground"
           />
           <span className="text-xs text-muted-foreground">to</span>
@@ -119,6 +121,7 @@ function TimeRangeSelector({
             type="date"
             value={to}
             onChange={(e) => onToChange(e.target.value)}
+            aria-label="To date"
             className="rounded-md border border-rule bg-card px-2 py-1.5 text-xs text-foreground"
           />
         </div>
@@ -141,32 +144,37 @@ function SimpleBarChart({
   colorIndex: number;
 }) {
   return (
-    <ResponsiveContainer width="100%" height={height}>
-      <BarChart data={data} margin={{ top: 4, right: 4, bottom: 4, left: 4 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-rule)" />
-        <XAxis
-          dataKey="name"
-          tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }}
-          axisLine={{ stroke: "var(--color-rule)" }}
-          tickLine={false}
-        />
-        <YAxis
-          tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }}
-          axisLine={false}
-          tickLine={false}
-          allowDecimals={false}
-        />
-        <Tooltip
-          contentStyle={{
-            background: "var(--color-card)",
-            border: "1px solid var(--color-rule)",
-            borderRadius: "var(--radius)",
-            fontSize: 12,
-          }}
-        />
-        <Bar dataKey={dataKey} fill={chartColor(colorIndex)} radius={[3, 3, 0, 0]} />
-      </BarChart>
-    </ResponsiveContainer>
+    <div
+      role="img"
+      aria-label={`Bar chart: ${data.map(d => `${d.name}: ${d.value}`).join(', ')}`}
+    >
+      <ResponsiveContainer width="100%" height={height}>
+        <BarChart data={data} margin={{ top: 4, right: 4, bottom: 4, left: 4 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-rule)" />
+          <XAxis
+            dataKey="name"
+            tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }}
+            axisLine={{ stroke: "var(--color-rule)" }}
+            tickLine={false}
+          />
+          <YAxis
+            tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }}
+            axisLine={false}
+            tickLine={false}
+            allowDecimals={false}
+          />
+          <Tooltip
+            contentStyle={{
+              background: "var(--color-card)",
+              border: "1px solid var(--color-rule)",
+              borderRadius: "var(--radius)",
+              fontSize: 12,
+            }}
+          />
+          <Bar dataKey={dataKey} fill={chartColor(colorIndex)} radius={[3, 3, 0, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
   );
 }
 
@@ -184,34 +192,39 @@ function HorizontalBarChart({
   colorIndex: number;
 }) {
   return (
-    <ResponsiveContainer width="100%" height={height}>
-      <BarChart data={data} layout="vertical" margin={{ top: 4, right: 4, bottom: 4, left: 4 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="var(--color-rule)" horizontal={false} />
-        <XAxis
-          type="number"
-          tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }}
-          axisLine={false}
-          tickLine={false}
-        />
-        <YAxis
-          type="category"
-          dataKey="name"
-          tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }}
-          axisLine={false}
-          tickLine={false}
-          width={120}
-        />
-        <Tooltip
-          contentStyle={{
-            background: "var(--color-card)",
-            border: "1px solid var(--color-rule)",
-            borderRadius: "var(--radius)",
-            fontSize: 12,
-          }}
-        />
-        <Bar dataKey={dataKey} fill={chartColor(colorIndex)} radius={[0, 3, 3, 0]} />
-      </BarChart>
-    </ResponsiveContainer>
+    <div
+      role="img"
+      aria-label={`Horizontal bar chart: ${data.map(d => `${d.name}: ${d.value}`).join(', ')}`}
+    >
+      <ResponsiveContainer width="100%" height={height}>
+        <BarChart data={data} layout="vertical" margin={{ top: 4, right: 4, bottom: 4, left: 4 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-rule)" horizontal={false} />
+          <XAxis
+            type="number"
+            tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }}
+            axisLine={false}
+            tickLine={false}
+          />
+          <YAxis
+            type="category"
+            dataKey="name"
+            tick={{ fontSize: 11, fill: "var(--color-muted-foreground)" }}
+            axisLine={false}
+            tickLine={false}
+            width={120}
+          />
+          <Tooltip
+            contentStyle={{
+              background: "var(--color-card)",
+              border: "1px solid var(--color-rule)",
+              borderRadius: "var(--radius)",
+              fontSize: 12,
+            }}
+          />
+          <Bar dataKey={dataKey} fill={chartColor(colorIndex)} radius={[0, 3, 3, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
   );
 }
 
@@ -387,7 +400,7 @@ export default function Stats() {
   if (loading) {
     return (
       <div className="mx-auto max-w-5xl px-6 py-10">
-        <p className="text-center text-sm text-muted-foreground">Loading stats...</p>
+        <p aria-live="polite" className="text-center text-sm text-muted-foreground">Loading stats...</p>
       </div>
     );
   }
@@ -395,7 +408,7 @@ export default function Stats() {
   if (error) {
     return (
       <div className="mx-auto max-w-5xl px-6 py-10">
-        <p className="text-center text-sm text-destructive">{error}</p>
+        <p role="alert" className="text-center text-sm text-destructive">{error}</p>
       </div>
     );
   }
@@ -403,7 +416,7 @@ export default function Stats() {
   if (!data) {
     return (
       <div className="mx-auto max-w-5xl px-6 py-10">
-        <p className="text-center text-sm text-muted-foreground">No data available.</p>
+        <p aria-live="polite" className="text-center text-sm text-muted-foreground">No data available.</p>
       </div>
     );
   }
