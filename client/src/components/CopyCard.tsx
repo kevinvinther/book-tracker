@@ -72,7 +72,7 @@ export function CopyCard({ copy, edition }: CopyCardProps) {
         </p>
       )}
       {loanNames.length > 0 && (
-        <p className="mt-1.5 text-xs text-stamp-foreground font-medium">
+        <p className="mt-1.5 text-xs text-stamp font-medium">
           Lent to {loanNames.join(", ")}
         </p>
       )}

@@ -1,4 +1,5 @@
 import { Routes, Route, Link } from "react-router-dom";
+import { Sun, Moon } from "lucide-react";
 import WorkGrid from "./pages/WorkGrid";
 import WorkDetail from "./pages/WorkDetail";
 import AuthorDetail from "./pages/AuthorDetail";
@@ -10,8 +11,11 @@ import Settings from "./pages/Settings";
 import Stats from "./pages/Stats";
 import GlobalSearch from "./components/GlobalSearch";
 import { BottomNav } from "./components/BottomNav";
+import { useTheme } from "./components/ThemeProvider";
 
 export default function App() {
+  const { effectiveTheme, toggleTheme } = useTheme();
+
   return (
     <div className="paper-grain min-h-screen">
       <header className="sticky top-0 z-20 border-b border-rule bg-background px-4 py-3 md:px-6 md:py-4">
@@ -20,6 +24,14 @@ export default function App() {
             Book Tracker
           </Link>
           <GlobalSearch />
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="hidden md:inline-flex items-center justify-center size-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted shrink-0"
+            aria-label={effectiveTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            {effectiveTheme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
+          </button>
           <Link to="/stats" className="hidden md:block text-muted-foreground hover:text-foreground">
             Stats
           </Link>

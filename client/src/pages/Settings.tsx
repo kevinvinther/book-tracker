@@ -1,4 +1,11 @@
 import { useEffect, useState } from "react";
+import { useTheme } from "../components/ThemeProvider";
+
+const THEME_OPTIONS = [
+  { value: "light" as const, label: "Light" },
+  { value: "dark" as const, label: "Dark" },
+  { value: "system" as const, label: "System" },
+];
 
 export default function Settings() {
   const [libraryPath, setLibraryPath] = useState("");
@@ -9,6 +16,8 @@ export default function Settings() {
   const [genresSaved, setGenresSaved] = useState(false);
   const [genresError, setGenresError] = useState("");
   const [genresSaving, setGenresSaving] = useState(false);
+
+  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     fetch("/api/config")
@@ -122,6 +131,31 @@ export default function Settings() {
         >
           {genresSaving ? "Saving…" : "Save Genres"}
         </button>
+      </section>
+
+      <section className="mt-10 border-t border-rule pt-8">
+        <h2 className="text-lg font-semibold">Appearance</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Choose your preferred colour scheme.
+        </p>
+        <fieldset className="mt-4 space-y-2">
+          {THEME_OPTIONS.map(({ value, label }) => (
+            <label
+              key={value}
+              className="flex items-center gap-3 rounded-md border border-border px-3 py-2 text-sm cursor-pointer hover:bg-muted/50"
+            >
+              <input
+                type="radio"
+                name="theme"
+                value={value}
+                checked={theme === value}
+                onChange={() => setTheme(value)}
+                className="size-4 accent-primary"
+              />
+              {label}
+            </label>
+          ))}
+        </fieldset>
       </section>
     </main>
   );
