@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Author } from "@/lib/types";
+import { useRefetchOnChange } from "./useWebSocket";
 
 interface UseAuthorResult {
   author: Author | null;
@@ -48,6 +49,12 @@ export function useAuthor(slug: string): UseAuthorResult {
   useEffect(() => {
     return fetchAuthor();
   }, [fetchAuthor]);
+
+  useRefetchOnChange(fetchAuthor, (msg) => {
+    if (msg.type === "author" && msg.slug === slug) return true;
+    if (msg.type === "work") return true;
+    return false;
+  });
 
   return { author, loading, notFound, error, refetch: fetchAuthor };
 }

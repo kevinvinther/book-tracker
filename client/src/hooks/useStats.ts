@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { StatsResponse, ResolvedStats, Series } from "@/lib/types";
 import { languageName } from "@/lib/languages";
+import { useRefetchOnChange } from "./useWebSocket";
 
 interface StatsRangeParams {
   year?: number;
@@ -79,6 +80,8 @@ export function useStats(params?: StatsRangeParams): {
   useEffect(() => {
     return fetchStats();
   }, [fetchStats]);
+
+  useRefetchOnChange(fetchStats, () => true);
 
   return { data, loading, error, refetch: fetchStats };
 }

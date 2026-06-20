@@ -551,6 +551,32 @@ export class Index {
     }
   }
 
+  handleFileChange(type: EntityType, slug: string): void {
+    const dirMap: Record<EntityType, string> = {
+      author: "authors",
+      series: "series",
+      work: "works",
+      edition: "editions",
+      copy: "copies",
+      note: "notes",
+    };
+    const dir = dirMap[type];
+    const filePath = resolveLibraryPath(`${dir}/${slug}.md`, this.libraryPath);
+
+    try {
+      const { frontmatter, body } = readFile(filePath);
+      const entity = { ...frontmatter, slug: frontmatter.slug || slug } as Entity;
+
+      if (type === "note") {
+        (entity as Note).body = body;
+      }
+
+      this.upsert(type, entity);
+    } catch {
+      this.remove(type, slug);
+    }
+  }
+
   private count(): number {
     return (
       this.authors.size +

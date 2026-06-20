@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Series } from "@/lib/types";
+import { useRefetchOnChange } from "./useWebSocket";
 
 interface UseSeriesResult {
   series: Series | null;
@@ -48,6 +49,12 @@ export function useSeries(slug: string): UseSeriesResult {
   useEffect(() => {
     return fetchSeries();
   }, [fetchSeries]);
+
+  useRefetchOnChange(fetchSeries, (msg) => {
+    if (msg.type === "series" && msg.slug === slug) return true;
+    if (msg.type === "work") return true;
+    return false;
+  });
 
   return { series, loading, notFound, error, refetch: fetchSeries };
 }

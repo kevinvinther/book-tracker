@@ -7,6 +7,8 @@ import { readConfig, ensureLibraryDirectories } from "./config.js";
 import { resolveLibraryPath } from "./lib/io.js";
 import { Index } from "./lib/index.js";
 import { seedGenresYaml } from "./lib/genres.js";
+import { createWebSocketServer, broadcast } from "./lib/websocketServer.js";
+import { startWatcher } from "./lib/fileWatcher.js";
 import { createWorksRouter } from "./routes/works.js";
 import { createAuthorsRouter } from "./routes/authors.js";
 import { createEditionsRouter } from "./routes/editions.js";
@@ -106,6 +108,10 @@ app.use("/api/attachments", (_req, res) => {
   res.status(404).json({ error: "Attachment not found" });
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
+
+createWebSocketServer(server);
+
+startWatcher(config.library_path, index, broadcast);

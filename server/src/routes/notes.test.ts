@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import express from "express";
 import { Server } from "http";
 import { existsSync, mkdirSync, rmSync } from "fs";
@@ -9,6 +9,7 @@ const tmpRoot = join(os.tmpdir(), `bt-notes-api-test-${Date.now()}`);
 
 let server: Server;
 let port: number;
+let index: any;
 
 beforeAll(async () => {
   mkdirSync(tmpRoot, { recursive: true });
@@ -67,7 +68,7 @@ beforeAll(async () => {
   app.use(express.json());
 
   const { Index } = await import("../lib/index.js");
-  const index = new Index(tmpRoot);
+  index = new Index(tmpRoot);
   index.load();
   app.locals.index = index;
 
@@ -220,29 +221,35 @@ describe("Notes API", () => {
     });
 
     it("handles slug collision by appending suffix", async () => {
-      // Determine the timestamp slug that would be generated right now
-      const now = new Date();
+      // Lock the clock so both note slugs share the same timestamp
+      vi.useFakeTimers();
+      const frozenTime = new Date("2025-06-15T12:00:00.000Z");
+      vi.setSystemTime(frozenTime);
       const pad = (n: number) => n.toString().padStart(2, "0");
-      const base = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+      const base = `${frozenTime.getFullYear()}-${pad(frozenTime.getMonth() + 1)}-${pad(frozenTime.getDate())}-${pad(frozenTime.getHours())}${pad(frozenTime.getMinutes())}${pad(frozenTime.getSeconds())}`;
 
-      // Pre-create a note with the timestamp slug so the next create collides
-      const { writeFile } = await import("../lib/io.js");
-      writeFile(join(tmpRoot, `notes/${base}.md`), {
-        type: "note", slug: base,
-        date: now.toISOString(), modified: now.toISOString(),
-        work: "[[works/dune]]", _schema: 1,
-      }, "Collision note body.");
+      // Seed a note into the index at the frozen timestamp slug
+      index.upsert("note", {
+        type: "note",
+        slug: base,
+        date: frozenTime.toISOString(),
+        modified: frozenTime.toISOString(),
+        work: "[[works/dune]]",
+        body: "Seeded collision note.",
+        _schema: 1,
+      });
 
-      // Reload index (re-create the express app via the same pattern)
-      // Instead, let's just test via the API which uses the index
       const res = await api("/api/notes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ work: "dune", content: "After collision." }),
       });
+
+      vi.useRealTimers();
+
       expect(res.status).toBe(201);
       const note = await res.json();
-      expect(note.slug).toMatch(new RegExp(`^${base}-\\d+`));
+      expect(note.slug).toBe(`${base}-2`);
     });
   });
 

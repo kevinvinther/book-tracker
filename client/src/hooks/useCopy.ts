@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { CopyFull } from "@/lib/types";
+import { useRefetchOnChange } from "./useWebSocket";
 
 interface UseCopyResult {
   copy: CopyFull | null;
@@ -49,6 +50,8 @@ export function useCopy(slug: string): UseCopyResult {
   useEffect(() => {
     return fetchCopy();
   }, [fetchCopy]);
+
+  useRefetchOnChange(fetchCopy, (msg) => msg.type === "copy" && msg.slug === slug);
 
   const updateCopy = useCallback((data: CopyFull | ((prev: CopyFull) => CopyFull)) => {
     setCopy((prev) => {

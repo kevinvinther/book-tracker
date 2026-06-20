@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { EditionFull } from "@/lib/types";
+import { useRefetchOnChange } from "./useWebSocket";
 
 interface UseEditionResult {
   edition: EditionFull | null;
@@ -48,6 +49,8 @@ export function useEdition(slug: string): UseEditionResult {
   useEffect(() => {
     return fetchEdition();
   }, [fetchEdition]);
+
+  useRefetchOnChange(fetchEdition, (msg) => msg.type === "edition" && msg.slug === slug);
 
   return { edition, loading, notFound, error, refetch: fetchEdition };
 }

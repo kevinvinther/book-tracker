@@ -799,4 +799,92 @@ describe("Index", () => {
       }
     });
   });
+
+  describe("handleFileChange", () => {
+    it("re-reads a file and upserts it into the index", () => {
+      makeCopy("test-hc", "dune", "dune-ace");
+
+      const index = new Index(tmpRoot);
+      index.load();
+
+      const copy = index.getCopy("test-hc");
+      expect(copy).toBeDefined();
+
+      // Modify the file on disk
+      writeFile(join(tmpRoot, "copies/test-hc.md"), {
+        type: "copy", slug: "test-hc",
+        work: "[[works/dune]]",
+        edition: "[[editions/dune-ace]]",
+        condition: "pristine",
+        created_at: "2024-01-01T00:00:00", _schema: 1,
+      }, "# Updated Copy");
+
+      // Index still has old value
+      const staleCopy = index.getCopy("test-hc");
+      expect(staleCopy?.condition).not.toBe("pristine");
+
+      // handleFileChange re-reads from disk
+      index.handleFileChange("copy", "test-hc");
+
+      const updatedCopy = index.getCopy("test-hc");
+      expect(updatedCopy?.condition).toBe("pristine");
+    });
+
+    it("removes entity from index if file no longer exists", () => {
+      makeWork("handlefile-test-work", "HandleFile Test", "hera");
+
+      const index = new Index(tmpRoot);
+      index.load();
+
+      const work = index.getWork("handlefile-test-work");
+      expect(work).toBeDefined();
+
+      // Delete the file from disk
+      rmSync(join(tmpRoot, "works/handlefile-test-work.md"));
+
+      index.handleFileChange("work", "handlefile-test-work");
+
+      expect(index.getWork("handlefile-test-work")).toBeUndefined();
+    });
+
+    it("handles note files correctly (sets body field)", () => {
+      makeNote("2025-06-01-120000", "dune-hc", "dune-ace", "dune", "Original note body");
+
+      const index = new Index(tmpRoot);
+      index.load();
+
+      const note = index.getNote("2025-06-01-120000");
+      expect(note).toBeDefined();
+
+      // Modify the note body on disk
+      writeFile(join(tmpRoot, "notes/2025-06-01-120000.md"), {
+        type: "note", slug: "2025-06-01-120000",
+        date: "2025-06-01T12:00:00",
+        modified: "2025-06-02T08:00:00",
+        copy: "[[copies/dune-hc]]",
+        _schema: 1,
+      }, "# Updated Note Body\n\nNew content here.");
+
+      index.handleFileChange("note", "2025-06-01-120000");
+
+      const updatedNote = index.getNote("2025-06-01-120000");
+      expect(updatedNote?.body).toBe(`# Updated Note Body
+
+New content here.`);
+      expect(updatedNote?.modified).toBe("2025-06-02T08:00:00");
+    });
+
+    it("is a no-op when file does not exist", () => {
+      const index = new Index(tmpRoot);
+      index.load();
+      const countBefore = (index as any).count();
+
+      // File doesn't exist yet, handleFileChange will remove (no-op for non-existent)
+      index.handleFileChange("work", "does-not-exist");
+      index.handleFileChange("author", "also-fake");
+
+      const countAfter = (index as any).count();
+      expect(countAfter).toBe(countBefore);
+    });
+  });
 });
