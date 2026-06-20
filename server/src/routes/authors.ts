@@ -44,7 +44,7 @@ export function createAuthorsRouter(index: Index, libraryPath: string): Router {
     }
 
     const filePath = resolveLibraryPath(`authors/${slug}.md`, libraryPath);
-    writeFile(filePath, author as unknown as Record<string, unknown>, `# ${author.name}`);
+    writeFile(filePath, author as unknown as Record<string, unknown>, renderBody(author, index));
     index.upsert("author", author);
 
     res.status(201).json(author);
@@ -102,7 +102,7 @@ export function createAuthorsRouter(index: Index, libraryPath: string): Router {
     frontmatter._schema = 1;
 
     const updated = frontmatter as unknown as Author;
-    const body = updated.name ? `# ${updated.name}` : "";
+    const body = renderBody(updated, index);
     writeFile(filePath, frontmatter, body);
     index.upsert("author", updated);
 

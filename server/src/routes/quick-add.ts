@@ -4,6 +4,7 @@ import { Edition, Copy, Work } from "../lib/types.js";
 import { writeFile, resolveLibraryPath } from "../lib/io.js";
 import { generateSlug } from "../lib/slug.js";
 import { findOrCreateAuthors } from "../lib/authors.js";
+import { renderBody } from "../lib/render-body.js";
 
 function getAllSlugs(index: Index): Set<string> {
   const slugs = new Set<string>();
@@ -101,7 +102,7 @@ export function createQuickAddRouter(index: Index, libraryPath: string): Router 
         work.primary_cover = req.body.cover_image.trim();
       }
 
-      writeFile(resolveLibraryPath(`works/${workSlug}.md`, libraryPath), work as unknown as Record<string, unknown>, "");
+      writeFile(resolveLibraryPath(`works/${workSlug}.md`, libraryPath), work as unknown as Record<string, unknown>, renderBody(work, index));
       index.upsert("work", work);
     } else {
       res.status(400).json({ error: "either title or attachToWorkSlug is required" });
@@ -124,7 +125,7 @@ export function createQuickAddRouter(index: Index, libraryPath: string): Router 
     if (req.body.format !== undefined && req.body.format !== "") edition.format = req.body.format;
     if (req.body.language !== undefined && req.body.language !== "") edition.language = req.body.language;
 
-    writeFile(resolveLibraryPath(`editions/${editionSlug}.md`, libraryPath), edition as unknown as Record<string, unknown>, "");
+    writeFile(resolveLibraryPath(`editions/${editionSlug}.md`, libraryPath), edition as unknown as Record<string, unknown>, renderBody(edition, index));
     index.upsert("edition", edition);
 
     const status = req.body.status && ["owned", "lent", "lost", "given-away", "sold"].includes(req.body.status)
@@ -150,7 +151,7 @@ export function createQuickAddRouter(index: Index, libraryPath: string): Router 
     if (req.body.location !== undefined && req.body.location !== "") copy.location = req.body.location;
     if (req.body.cover_image !== undefined && req.body.cover_image !== "") copy.cover_image = req.body.cover_image;
 
-    writeFile(resolveLibraryPath(`copies/${copySlug}.md`, libraryPath), copy as unknown as Record<string, unknown>, "");
+    writeFile(resolveLibraryPath(`copies/${copySlug}.md`, libraryPath), copy as unknown as Record<string, unknown>, renderBody(copy, index));
     index.upsert("copy", copy);
 
     res.status(201).json({ workSlug });

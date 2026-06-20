@@ -84,7 +84,7 @@ function readAndWriteCopy(
 
   mutate(copy);
 
-  writeFile(filePath, copy as unknown as Record<string, unknown>, "");
+  writeFile(filePath, copy as unknown as Record<string, unknown>, renderBody(copy, index));
   index.upsert("copy", copy);
 
   return copy;
@@ -205,7 +205,7 @@ export function createCopiesRouter(index: Index, libraryPath: string): Router {
     if (req.body.location !== undefined) copy.location = req.body.location;
 
     const filePath = resolveLibraryPath(`copies/${slug}.md`, libraryPath);
-    writeFile(filePath, copy as unknown as Record<string, unknown>, "");
+    writeFile(filePath, copy as unknown as Record<string, unknown>, renderBody(copy, index));
     index.upsert("copy", copy);
 
     res.status(201).json(copy);
@@ -290,7 +290,7 @@ export function createCopiesRouter(index: Index, libraryPath: string): Router {
     frontmatter._schema = 1;
 
     const updated = frontmatter as unknown as Copy;
-    writeFile(filePath, frontmatter, "");
+    writeFile(filePath, frontmatter, renderBody(updated, index));
     index.upsert("copy", updated);
 
     res.json(updated);

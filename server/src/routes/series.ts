@@ -43,7 +43,7 @@ export function createSeriesRouter(index: Index, libraryPath: string): Router {
     if (Array.isArray(req.body.aliases)) series.aliases = req.body.aliases;
 
     const filePath = resolveLibraryPath(`series/${slug}.md`, libraryPath);
-    writeFile(filePath, series as unknown as Record<string, unknown>, "");
+    writeFile(filePath, series as unknown as Record<string, unknown>, renderBody(series, index));
     index.upsert("series", series);
 
     res.status(201).json(series);
@@ -111,7 +111,7 @@ export function createSeriesRouter(index: Index, libraryPath: string): Router {
     frontmatter._schema = 1;
 
     const updated = frontmatter as unknown as Series;
-    writeFile(filePath, frontmatter, "");
+    writeFile(filePath, frontmatter, renderBody(updated, index));
     index.upsert("series", updated);
 
     res.json(updated);

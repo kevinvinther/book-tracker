@@ -77,7 +77,7 @@ export function createWorksRouter(index: Index, libraryPath: string): Router {
     if (req.body.primary_cover) work.primary_cover = req.body.primary_cover;
 
     const filePath = resolveLibraryPath(`works/${slug}.md`, libraryPath);
-    const body = work.title ? `# ${work.title}` : "";
+    const body = renderBody(work, index);
     writeFile(filePath, work as unknown as Record<string, unknown>, body);
     index.upsert("work", work);
 
@@ -163,7 +163,7 @@ export function createWorksRouter(index: Index, libraryPath: string): Router {
     frontmatter._schema = 1;
 
     const updated = frontmatter as unknown as Work;
-    const body = updated.title ? `# ${updated.title}` : "";
+    const body = renderBody(updated, index);
     writeFile(filePath, frontmatter, body);
     index.upsert("work", updated);
 
@@ -235,7 +235,7 @@ export function createWorksRouter(index: Index, libraryPath: string): Router {
     frontmatter.aliases = aliases;
 
     const updated = frontmatter as unknown as Work;
-    const body = updated.title ? `# ${updated.title}` : "";
+    const body = renderBody(updated, index);
     writeFile(filePath, frontmatter, body);
     index.upsert("work", updated);
 
@@ -269,7 +269,7 @@ export function createWorksRouter(index: Index, libraryPath: string): Router {
     frontmatter.aliases = aliases.length > 0 ? aliases : undefined;
 
     const updated = frontmatter as unknown as Work;
-    const body = updated.title ? `# ${updated.title}` : "";
+    const body = renderBody(updated, index);
     writeFile(filePath, frontmatter, body);
     index.upsert("work", updated);
 

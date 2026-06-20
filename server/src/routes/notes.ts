@@ -3,6 +3,8 @@ import { Index } from "../lib/index.js";
 import { Note } from "../lib/types.js";
 import { readFile, writeFile, deleteFile, resolveLibraryPath } from "../lib/io.js";
 import { generateNoteSlug } from "../lib/slug.js";
+import { renderBody } from "../lib/render-body.js";
+import { Copy } from "../lib/types.js";
 
 const MUTABLE_FIELDS = ["content", "body", "read_through", "context_page", "tags"] as const;
 
@@ -94,6 +96,15 @@ function noteToResponse(note: Note, meta: ResolvedMeta) {
   };
 }
 
+function regenerateCopyBody(copyWikilink: string, index: Index, libraryPath: string): void {
+  const copySlug = slugFromWikilink(copyWikilink);
+  if (!copySlug) return;
+  const copyPath = resolveLibraryPath(`copies/${copySlug}.md`, libraryPath);
+  const { frontmatter } = readFile(copyPath);
+  const body = renderBody(frontmatter as unknown as Copy, index);
+  writeFile(copyPath, frontmatter, body);
+}
+
 export function createNotesRouter(index: Index, libraryPath: string): Router {
   const router = Router();
 
@@ -173,6 +184,10 @@ export function createNotesRouter(index: Index, libraryPath: string): Router {
       const filePath = resolveLibraryPath(`notes/${note.slug}.md`, libraryPath);
       writeFile(filePath, frontmatter, bodyContent);
       index.upsert("note", note);
+
+      if (note.copy) {
+        regenerateCopyBody(note.copy, index, libraryPath);
+      }
 
       const meta = resolveNoteMeta(index, note);
       res.status(201).json(noteToResponse(note, meta));
@@ -290,6 +305,10 @@ export function createNotesRouter(index: Index, libraryPath: string): Router {
 
     writeFile(filePath, frontmatterOut, bodyContent);
     index.upsert("note", note);
+
+    if (note.copy) {
+      regenerateCopyBody(note.copy, index, libraryPath);
+    }
 
     const meta = resolveNoteMeta(index, note);
     res.json(noteToResponse(note, meta));

@@ -58,7 +58,7 @@ export function createEditionsRouter(index: Index, libraryPath: string): Router 
     if (Array.isArray(req.body.contributors)) edition.contributors = req.body.contributors;
 
     const filePath = resolveLibraryPath(`editions/${slug}.md`, libraryPath);
-    writeFile(filePath, edition as unknown as Record<string, unknown>, "");
+    writeFile(filePath, edition as unknown as Record<string, unknown>, renderBody(edition, index));
     index.upsert("edition", edition);
 
     res.status(201).json(edition);
@@ -111,7 +111,7 @@ export function createEditionsRouter(index: Index, libraryPath: string): Router 
     frontmatter._schema = 1;
 
     const updated = frontmatter as unknown as Edition;
-    writeFile(filePath, frontmatter, "");
+    writeFile(filePath, frontmatter, renderBody(updated, index));
     index.upsert("edition", updated);
 
     res.json(updated);
