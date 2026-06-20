@@ -3,6 +3,7 @@ import { Index } from "../lib/index.js";
 import { Author } from "../lib/types.js";
 import { readFile, writeFile, deleteFile, resolveLibraryPath } from "../lib/io.js";
 import { generateSlug } from "../lib/slug.js";
+import { renderBody } from "../lib/render-body.js";
 
 const MUTABLE_FIELDS = ["name", "aliases"] as const;
 
@@ -70,7 +71,7 @@ export function createAuthorsRouter(index: Index, libraryPath: string): Router {
       }))
       .sort((a, b) => a.title.localeCompare(b.title));
 
-    res.json({ ...author, works });
+    res.json({ ...author, works, body: renderBody(author, index) });
   });
 
   router.patch("/:slug", (req, res) => {

@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { useSeries } from "@/hooks/useSeries";
 import { EditSeriesModal } from "@/components/EditSeriesModal";
 import { Button } from "@/components/ui/button";
+import Markdown from "react-markdown";
 
 export default function SeriesDetail() {
   const { slug = "" } = useParams();
@@ -109,6 +110,17 @@ export default function SeriesDetail() {
             </div>
           ))}
       </div>
+
+      {series.body && (
+        <details className="mt-12 group">
+          <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground select-none">
+            Markdown Preview
+          </summary>
+          <div className="mt-4 border border-rule rounded-sm p-6 prose prose-sm max-w-none dark:prose-invert">
+            <Markdown>{series.body}</Markdown>
+          </div>
+        </details>
+      )}
 
       <EditSeriesModal series={series} open={editOpen} onOpenChange={setEditOpen} onSaved={refetch} />
     </div>

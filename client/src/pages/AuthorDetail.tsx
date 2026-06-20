@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { useAuthor } from "@/hooks/useAuthor";
 import { EditAuthorModal } from "@/components/EditAuthorModal";
 import { Button } from "@/components/ui/button";
+import Markdown from "react-markdown";
 
 export default function AuthorDetail() {
   const { slug = "" } = useParams();
@@ -82,6 +83,17 @@ export default function AuthorDetail() {
           </div>
         )}
       </div>
+
+      {author.body && (
+        <details className="mt-12 group">
+          <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground select-none">
+            Markdown Preview
+          </summary>
+          <div className="mt-4 border border-rule rounded-sm p-6 prose prose-sm max-w-none dark:prose-invert">
+            <Markdown>{author.body}</Markdown>
+          </div>
+        </details>
+      )}
 
       <EditAuthorModal author={author} open={editOpen} onOpenChange={setEditOpen} onSaved={refetch} />
     </div>

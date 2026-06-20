@@ -3,6 +3,7 @@ import { Index } from "../lib/index.js";
 import { Series, Work } from "../lib/types.js";
 import { readFile, writeFile, deleteFile, resolveLibraryPath } from "../lib/io.js";
 import { generateSlug } from "../lib/slug.js";
+import { renderBody } from "../lib/render-body.js";
 
 const MUTABLE_FIELDS = ["name", "total_works", "aliases"] as const;
 
@@ -78,7 +79,7 @@ export function createSeriesRouter(index: Index, libraryPath: string): Router {
       }))
       .sort((a, b) => (a.series_position ?? Infinity) - (b.series_position ?? Infinity));
 
-    res.json({ ...series, works });
+    res.json({ ...series, works, body: renderBody(series, index) });
   });
 
   router.patch("/:slug", (req, res) => {

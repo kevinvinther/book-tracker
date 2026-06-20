@@ -7,6 +7,7 @@ import { CopyCard } from "@/components/CopyCard";
 import { NoteTimeline } from "@/components/NoteTimeline";
 import { EditWorkModal } from "@/components/EditWorkModal";
 import { Button } from "@/components/ui/button";
+import Markdown from "react-markdown";
 
 export default function WorkDetail() {
   const { slug = "" } = useParams();
@@ -137,6 +138,17 @@ export default function WorkDetail() {
       <div className="mt-12">
         <NoteTimeline entityType="work" entitySlug={work.slug} />
       </div>
+
+      {work.body && (
+        <details className="mt-12 group">
+          <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground select-none">
+            Markdown Preview
+          </summary>
+          <div className="mt-4 border border-rule rounded-sm p-6 prose prose-sm max-w-none dark:prose-invert">
+            <Markdown>{work.body}</Markdown>
+          </div>
+        </details>
+      )}
 
       <EditWorkModal work={work} open={editOpen} onOpenChange={setEditOpen} onSaved={refetch} />
     </div>

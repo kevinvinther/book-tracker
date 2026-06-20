@@ -3,6 +3,7 @@ import { Index } from "../lib/index.js";
 import { Edition } from "../lib/types.js";
 import { readFile, writeFile, deleteFile, resolveLibraryPath } from "../lib/io.js";
 import { generateSlug } from "../lib/slug.js";
+import { renderBody } from "../lib/render-body.js";
 
 const MUTABLE_FIELDS = [
   "isbn", "publisher", "publish_date", "page_count", "format", "language", "contributors",
@@ -84,7 +85,7 @@ export function createEditionsRouter(index: Index, libraryPath: string): Router 
     const work = workSlug ? index.getWork(workSlug) : undefined;
     const work_meta = work ? { slug: work.slug, title: work.title, authors: work.authors } : null;
 
-    res.json({ ...edition, copy_count, work_meta });
+    res.json({ ...edition, copy_count, work_meta, body: renderBody(edition, index) });
   });
 
   router.patch("/:slug", (req, res) => {

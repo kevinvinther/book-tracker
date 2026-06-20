@@ -7,6 +7,7 @@ import { NoteTimeline } from "@/components/NoteTimeline";
 import { EditEditionModal } from "@/components/EditEditionModal";
 import { AddCopyModal } from "@/components/AddCopyModal";
 import { Button } from "@/components/ui/button";
+import Markdown from "react-markdown";
 
 export default function EditionDetail() {
   const { slug = "" } = useParams();
@@ -123,6 +124,17 @@ export default function EditionDetail() {
       <div className="mt-12">
         <NoteTimeline entityType="edition" entitySlug={edition.slug} />
       </div>
+
+      {edition.body && (
+        <details className="mt-12 group">
+          <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground select-none">
+            Markdown Preview
+          </summary>
+          <div className="mt-4 border border-rule rounded-sm p-6 prose prose-sm max-w-none dark:prose-invert">
+            <Markdown>{edition.body}</Markdown>
+          </div>
+        </details>
+      )}
 
       <EditEditionModal edition={edition} open={editOpen} onOpenChange={setEditOpen} onSaved={refetch} />
       <AddCopyModal

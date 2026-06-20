@@ -3,6 +3,7 @@ import { Index } from "../lib/index.js";
 import { Copy, Loan, ReadThrough, PageLog } from "../lib/types.js";
 import { readFile, writeFile, deleteFile, resolveLibraryPath } from "../lib/io.js";
 import { generateSlug } from "../lib/slug.js";
+import { renderBody } from "../lib/render-body.js";
 
 const MUTABLE_FIELDS = [
   "condition", "location", "cover_image", "release_date",
@@ -241,7 +242,7 @@ export function createCopiesRouter(index: Index, libraryPath: string): Router {
       ? { slug: work.slug, title: work.title, authors: work.authors }
       : null;
 
-    res.json({ ...copy, edition_meta, work_meta });
+    res.json({ ...copy, edition_meta, work_meta, body: renderBody(copy, index) });
   });
 
   router.patch("/:slug", (req, res) => {

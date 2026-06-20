@@ -3,6 +3,7 @@ import { Index } from "../lib/index.js";
 import { Work } from "../lib/types.js";
 import { readFile, writeFile, deleteFile, resolveLibraryPath } from "../lib/io.js";
 import { generateSlug } from "../lib/slug.js";
+import { renderBody } from "../lib/render-body.js";
 
 const MUTABLE_FIELDS = [
   "title", "subtitle", "authors", "original_language", "original_publish_year",
@@ -129,7 +130,7 @@ export function createWorksRouter(index: Index, libraryPath: string): Router {
     const series = seriesSlug ? index.getSeries(seriesSlug) : undefined;
     const series_meta = series ? { slug: series.slug, name: series.name } : null;
 
-    res.json({ ...work, edition_count: editionCount, copy_count: copyCount, authors_meta, series_meta });
+    res.json({ ...work, edition_count: editionCount, copy_count: copyCount, authors_meta, series_meta, body: renderBody(work, index) });
   });
 
   router.patch("/:slug", (req, res) => {

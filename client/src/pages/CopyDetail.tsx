@@ -8,6 +8,7 @@ import { LoanHistory } from "@/components/LoanHistory";
 import { StatusStamp } from "@/components/StatusStamp";
 import { Button } from "@/components/ui/button";
 import type { ReadThrough } from "@/lib/types";
+import Markdown from "react-markdown";
 
 export default function CopyDetail() {
   const { slug = "" } = useParams();
@@ -150,6 +151,17 @@ export default function CopyDetail() {
         copyStatus={copy.status}
         onSaved={refetch}
       />
+
+      {copy.body && (
+        <details className="mt-12 group">
+          <summary className="cursor-pointer text-sm text-muted-foreground hover:text-foreground select-none">
+            Markdown Preview
+          </summary>
+          <div className="mt-4 border border-rule rounded-sm p-6 prose prose-sm max-w-none dark:prose-invert">
+            <Markdown>{copy.body}</Markdown>
+          </div>
+        </details>
+      )}
 
       <EditCopyModal copy={copy} open={editOpen} onOpenChange={setEditOpen} onSaved={refetch} />
     </div>

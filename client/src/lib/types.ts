@@ -26,6 +26,7 @@ export interface Work {
   created_at: string;
   edition_count?: number;
   copy_count?: number;
+  body?: string;
 }
 
 export interface Contributor {
@@ -56,6 +57,7 @@ export interface EditionWorkMeta {
 
 export interface EditionFull extends Edition {
   work_meta: EditionWorkMeta | null;
+  body?: string;
 }
 
 export interface PageLog {
@@ -114,6 +116,7 @@ export interface CopyWorkMeta {
 export interface CopyFull extends Copy {
   edition_meta: CopyEditionMeta | null;
   work_meta: CopyWorkMeta | null;
+  body?: string;
 }
 
 export interface EnrichedWorkInAuthor {
@@ -141,6 +144,7 @@ export interface Author {
   aliases?: string[];
   created_at: string;
   works: EnrichedWorkInAuthor[];
+  body?: string;
 }
 
 export interface Series {
@@ -151,6 +155,7 @@ export interface Series {
   aliases?: string[];
   created_at: string;
   works: EnrichedWorkInSeries[];
+  body?: string;
 }
 
 export interface NoteCopyMeta {
