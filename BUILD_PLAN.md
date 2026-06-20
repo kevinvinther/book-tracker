@@ -390,17 +390,17 @@ Dashboard page with library and reading stats.
 
 Full-text search across all entity types.
 
-- [ ] `GET /api/search?q=...` — searches works, editions, copies, authors, series, notes, loans
+- [x] `GET /api/search?q=...` — searches works, editions, copies, authors, series, notes, loans
   - Works: title, authors, genres, description
   - Editions: ISBN, publisher
   - Copies: acquisition_source
   - Authors: name
   - Notes: body text
   - Loans: borrower_name
-- [ ] Results grouped by entity type, each with relevant snippet/context
-- [ ] Client: search bar in header (keyboard shortcut `/` or `Ctrl+K`)
-- [ ] Results flyout/dialog with grouped sections
-- [ ] Recent searches in localStorage
+- [x] Results grouped by entity type, each with relevant snippet/context
+- [x] Client: search bar in header (keyboard shortcut `/` or `Ctrl+K`)
+- [x] Results flyout/dialog with grouped sections
+- [x] Recent searches in localStorage
 
 ---
 
