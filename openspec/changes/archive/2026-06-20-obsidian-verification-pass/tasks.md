@@ -17,7 +17,7 @@
 
 ## 3. Client type updates
 
-- [ ] 3.1 Add `aliases?: string[]` to `Edition` and `Copy` types in `client/src/lib/types.ts`
+- [x] 3.1 Add `aliases?: string[]` to `Edition` and `Copy` types in `client/src/lib/types.ts`
 
 ## 4. Rich test data
 
@@ -50,4 +50,4 @@
 - [x] 7.2 Run the seed script to populate test data
 - [x] 7.3 Start the server and verify test data loads into index (21 entities, all with correct aliases, read-throughs, loans, tags)
 - [x] 7.4 Run the CLI verification script — all checks pass
-- [ ] 7.5 Manual Obsidian check: open vault, verify graph view shows connected nodes, backlinks panel works, Dataview queries return expected results, aliases work in quick switcher
+- [x] 7.5 Manual Obsidian check: open vault, verify graph view shows connected nodes, backlinks panel works, Dataview queries return expected results, aliases work in quick switcher

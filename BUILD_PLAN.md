@@ -445,15 +445,15 @@ Bodies are written to disk on every save operation.
 
 Open the library as an Obsidian vault and verify everything works.
 
-- [ ] Open `~/book-tracker-data/` as an Obsidian vault
-- [ ] `[[wikilinks]]` navigate correctly: Work → Author, Work → Series, Work → Edition → Copy → Note
-- [ ] Graph view: shows all entity types as connected nodes
-- [ ] Backlinks panel: Works show up on Author pages, Copies show up on Edition pages
-- [ ] Frontmatter is queryable with Dataview
-- [ ] Markdown bodies are readable and correctly formatted
-- [ ] `aliases` work in Obsidian quick switcher and search
-- [ ] If issues found: fix and re-verify
-- [ ] Document which Obsidian plugins improve the experience (Dataview for dynamic queries)
+- [x] Open `~/book-tracker-data/` as an Obsidian vault
+- [x] `[[wikilinks]]` navigate correctly: Work → Author, Work → Series, Work → Edition → Copy → Note
+- [x] Graph view: shows all entity types as connected nodes
+- [x] Backlinks panel: Works show up on Author pages, Copies show up on Edition pages
+- [x] Frontmatter is queryable with Dataview
+- [x] Markdown bodies are readable and correctly formatted
+- [x] `aliases` work in Obsidian quick switcher and search
+- [x] If issues found: fix and re-verify
+- [x] Document which Obsidian plugins improve the experience (Dataview for dynamic queries)
 
 ---
 
