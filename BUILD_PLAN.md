@@ -495,12 +495,12 @@ App is usable on a phone browser.
 
 Standard dark mode support.
 
-- [ ] shadcn/ui dark mode provider
-- [ ] Tailwind `dark:` classes for custom components
-- [ ] Toggle in header or settings page
-- [ ] Persist preference in localStorage
-- [ ] Default: respect `prefers-color-scheme` system setting
-- [ ] Verify every page looks correct in both modes
+- [x] shadcn/ui dark mode provider
+- [x] Tailwind `dark:` classes for custom components
+- [x] Toggle in header or settings page
+- [x] Persist preference in localStorage
+- [x] Default: respect `prefers-color-scheme` system setting
+- [x] Verify every page looks correct in both modes
 
 ---
 
