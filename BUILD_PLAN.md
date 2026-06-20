@@ -478,14 +478,14 @@ Consistent genre values across the library.
 
 App is usable on a phone browser.
 
-- [ ] Work Grid: 2 columns tablet, 1 column phone
-- [ ] Bottom navigation bar (mobile only): Grid | Stats | Scan | Settings
-- [ ] All touch targets ≥ 44px
-- [ ] Search bar fixed at top, filters in slide-out bottom sheet
-- [ ] Forms: full-width inputs, large tap targets
-- [ ] Modals/dialogs: full-width on mobile, centered on desktop
-- [ ] Tables (page log, loan history): horizontal scroll or card layout on mobile
-- [ ] Barcode scanner works on mobile (verify on real device)
+- [x] Work Grid: 2 columns tablet, 1 column phone
+- [x] Bottom navigation bar (mobile only): Grid | Stats | Scan | Settings
+- [x] All touch targets ≥ 44px
+- [x] Search bar fixed at top, filters in slide-out bottom sheet
+- [x] Forms: full-width inputs, large tap targets
+- [x] Modals/dialogs: full-width on mobile, centered on desktop
+- [x] Tables (page log, loan history): horizontal scroll or card layout on mobile
+- [x] Barcode scanner works on mobile (verify on real device)
 
 ---
 
@@ -549,18 +549,6 @@ Handle unusual but real situations gracefully.
 
 ---
 
-## S33: Export Endpoint
-
-**Prerequisites:** S3
-
-User can get their entire library as a zip file.
-
-- [ ] `GET /api/export` — zip the library directory, stream the download
-- [ ] Frontend: "Export Library" button in Settings
-- [ ] Document in-app: "Your data lives in `~/book-tracker-data/`. Back it up like any other folder."
-
----
-
 ## Dependency Graph
 
 ```
@@ -591,7 +579,6 @@ S1 ──→ S2 ──→ S3 ──┬──→ S4 ──→ S9 ──┬──�
               S30 ←── S28+S29          │
               S31 ←── S3+S25           │
               S32 ←── S9–S25           │
-              S33 ←── S3               │
 ```
 
 ## Summary
@@ -630,6 +617,5 @@ S1 ──→ S2 ──→ S3 ──┬──→ S4 ──→ S9 ──┬──�
 | S30 | Accessibility | 1 evening |
 | S31 | File Watching | 1 evening |
 | S32 | Edge Cases & Empty States | 1 evening |
-| S33 | Export | 1 evening |
 
 **Total: ~40 evenings.** Each step is ~1–4 hours of focused work and produces a verifiable, mergeable changeset suitable for one OpenSpec artifact.
