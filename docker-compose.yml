@@ -9,7 +9,8 @@ services:
       - server-node-modules:/app/node_modules
       - ./data:/app/data:z
       - ./.env:/app/.env:ro
-      - ~/book-tracker-data/:/root/book-tracker-data
+      - ~/book-tracker-data/:/book-tracker-data
+    user: "1000:1000"
     environment:
       - NODE_ENV=development
 

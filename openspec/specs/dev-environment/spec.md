@@ -18,6 +18,8 @@ The project SHALL use a monorepo structure with `server/` and `client/` director
 ### Requirement: Docker Compose development environment
 The project SHALL include a root `docker-compose.yml` and per-service `Dockerfile`s so that a developer can run the full stack with `docker compose up` without installing Node.js locally. The server service SHALL mount `./.env:/app/.env` so the container reads the same configuration as local development. `./data/` SHALL be mounted to `/data` for the default library path. No `BOOKTRACKER_LIBRARY_PATH` SHALL be hardcoded in the Compose file — the `.env` file is the single source of truth for both Docker and local dev.
 
+The server service SHALL run as the host user via the `user:` directive (e.g., `user: "1000:1000"`) so that files created in bind-mounted volumes are owned by the host user, not root. This ensures interoperability with host-side tools like Obsidian. The library path mount target SHALL be an accessible path (e.g., `/book-tracker-data`) rather than a root-owned directory like `/root/`. If existing data was created by a root-owned container, the developer SHALL run `sudo chown -R $USER:$USER` on the data directory once.
+
 #### Scenario: Developer starts containers
 - **WHEN** the developer runs `docker compose up` from the project root
 - **THEN** both the server and client containers start
