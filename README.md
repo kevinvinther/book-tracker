@@ -37,3 +37,7 @@ volumes:
 
 Then `docker compose up --build`.
 
+## Credits
+
+The book icon (favicon) is from [Twemoji](https://github.com/twitter/twemoji) by Twitter, licensed under [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+
