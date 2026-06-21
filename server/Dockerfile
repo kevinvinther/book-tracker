@@ -4,7 +4,10 @@
 # ./server) continues to build it unchanged.
 
 # --- Production: compile the server with tsc ---
-FROM node:22-alpine AS server-build
+# glibc base (not alpine): `npm ci` on musl fails to install the platform-native
+# binaries for lightningcss / @tailwindcss/oxide (npm optional-deps bug). This
+# matches the glibc environment CI builds on.
+FROM node:22-slim AS server-build
 WORKDIR /app
 COPY server/package.json server/package-lock.json* ./
 RUN npm ci
@@ -12,7 +15,7 @@ COPY server/ ./
 RUN npm run build
 
 # --- Production: build the client with vite ---
-FROM node:22-alpine AS client-build
+FROM node:22-slim AS client-build
 WORKDIR /app
 COPY client/package.json client/package-lock.json* ./
 RUN npm ci
@@ -20,7 +23,7 @@ COPY client/ ./
 RUN npm run build
 
 # --- Production: runtime with production dependencies only ---
-FROM node:22-alpine AS runtime
+FROM node:22-slim AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 COPY server/package.json server/package-lock.json* ./
