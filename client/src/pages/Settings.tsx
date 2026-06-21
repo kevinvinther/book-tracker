@@ -160,6 +160,31 @@ export default function Settings() {
           ))}
         </fieldset>
       </section>
+
+      <section className="mt-10 border-t border-rule pt-8">
+        <h2 className="text-lg font-semibold">Credits</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          The book icon is from{" "}
+          <a
+            href="https://github.com/twitter/twemoji"
+            target="_blank"
+            rel="noreferrer"
+            className="underline hover:text-foreground"
+          >
+            Twemoji
+          </a>{" "}
+          by Twitter, licensed under{" "}
+          <a
+            href="https://creativecommons.org/licenses/by/4.0/"
+            target="_blank"
+            rel="noreferrer"
+            className="underline hover:text-foreground"
+          >
+            CC-BY 4.0
+          </a>
+          .
+        </p>
+      </section>
     </main>
   );
 }
