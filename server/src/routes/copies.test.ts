@@ -31,6 +31,15 @@ beforeAll(async () => {
     created_at: "2024-01-01T00:00:00.000Z", _schema: 1,
   }, "");
 
+  // Isolated edition with no copies, used by the counter test so its slugs
+  // stay deterministic regardless of copies created by other shared-state tests.
+  writeFile(join(tmpRoot, "editions/dune-gollancz-2007.md"), {
+    type: "edition", slug: "dune-gollancz-2007",
+    work: "[[works/dune]]",
+    publisher: "Gollancz", format: "paperback", page_count: 592,
+    created_at: "2024-01-01T00:00:00.000Z", _schema: 1,
+  }, "");
+
   // Pre-seeded copy for PATCH / DELETE / GET tests
   writeFile(join(tmpRoot, "copies/dune-ace-1990.md"), {
     type: "copy", slug: "dune-ace-1990",
@@ -83,7 +92,26 @@ describe("Copy API", () => {
       expect(copy.edition).toBe("[[editions/dune-ace-1990]]");
       expect(copy.work).toBe("[[works/dune]]");
       expect(copy.status).toBe("owned");
-      expect(copy.slug).toBeTruthy();
+      expect(copy.slug).toBe("dune-ace-1990-copy");
+    });
+
+    it("appends a counter for a second copy of the same edition", async () => {
+      const first = await api("/api/copies", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ edition: "dune-gollancz-2007", work: "dune" }),
+      });
+      expect(first.status).toBe(201);
+      const second = await api("/api/copies", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ edition: "dune-gollancz-2007", work: "dune" }),
+      });
+      expect(second.status).toBe(201);
+      const firstCopy = await first.json();
+      const secondCopy = await second.json();
+      expect(firstCopy.slug).toBe("dune-gollancz-2007-copy");
+      expect(secondCopy.slug).toBe("dune-gollancz-2007-copy-2");
     });
 
     it("creates a copy with all optional fields", async () => {
@@ -100,6 +128,7 @@ describe("Copy API", () => {
           price_amount: 14.99,
           price_currency: "USD",
           status: "owned",
+          aliases: ["Dune PB", "My Dune"],
         }),
       });
       expect(res.status).toBe(201);
@@ -107,6 +136,7 @@ describe("Copy API", () => {
       expect(copy.condition).toBe("very good");
       expect(copy.location).toBe("living room shelf");
       expect(copy.price_amount).toBe(14.99);
+      expect(copy.aliases).toEqual(["Dune PB", "My Dune"]);
     });
 
     it("returns 400 when edition is missing", async () => {
@@ -218,11 +248,11 @@ describe("Copy API", () => {
       const res = await api("/api/copies/dune-ace-1990", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "lent" }),
+        body: JSON.stringify({ status: "lost" }),
       });
       expect(res.status).toBe(200);
       const copy = await res.json();
-      expect(copy.status).toBe("lent");
+      expect(copy.status).toBe("lost");
     });
 
     it("ignores attempts to change edition, work, or slug", async () => {
@@ -236,6 +266,17 @@ describe("Copy API", () => {
       expect(copy.edition).toBe("[[editions/dune-ace-1990]]");
       expect(copy.work).toBe("[[works/dune]]");
       expect(copy.slug).toBe("dune-ace-1990");
+    });
+
+    it("updates aliases via PATCH", async () => {
+      const res = await api("/api/copies/dune-ace-1990", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ aliases: ["Updated Dune"] }),
+      });
+      expect(res.status).toBe(200);
+      const copy = await res.json();
+      expect(copy.aliases).toEqual(["Updated Dune"]);
     });
 
     it("returns 404 for non-existent copy", async () => {
@@ -269,6 +310,363 @@ describe("Copy API", () => {
     it("returns 404 for non-existent copy", async () => {
       const res = await api("/api/copies/nonexistent", { method: "DELETE" });
       expect(res.status).toBe(404);
+    });
+  });
+
+  describe("Loan API", () => {
+    async function createOwnedCopy(): Promise<string> {
+      const res = await api("/api/copies", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ edition: "dune-ace-1990", work: "dune" }),
+      });
+      const { slug } = await res.json();
+      return slug;
+    }
+
+    describe("POST /api/copies/:slug/loans", () => {
+      it("creates a loan with required fields", async () => {
+        const slug = await createOwnedCopy();
+        const res = await api(`/api/copies/${slug}/loans`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ borrower_name: "Sarah" }),
+        });
+        expect(res.status).toBe(201);
+        const copy = await res.json();
+        expect(copy.status).toBe("lent");
+        expect(copy.loans).toHaveLength(1);
+        expect(copy.loans[0].borrower_name).toBe("Sarah");
+        expect(copy.loans[0].lent_date).toBeTruthy();
+        expect(copy.loans[0].returned_date).toBeUndefined();
+      });
+
+      it("creates a loan with all fields", async () => {
+        const slug = await createOwnedCopy();
+        const res = await api(`/api/copies/${slug}/loans`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            borrower_name: "Mike",
+            lent_date: "2025-06-15",
+            expected_return_date: "2025-07-15",
+          }),
+        });
+        expect(res.status).toBe(201);
+        const copy = await res.json();
+        expect(copy.loans[0].borrower_name).toBe("Mike");
+        expect(copy.loans[0].lent_date).toContain("2025-06-15");
+        expect(copy.loans[0].expected_return_date).toBe("2025-07-15");
+      });
+
+      it("uses today as default lent_date", async () => {
+        const slug = await createOwnedCopy();
+        const res = await api(`/api/copies/${slug}/loans`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ borrower_name: "Default" }),
+        });
+        expect(res.status).toBe(201);
+        const copy = await res.json();
+        const today = new Date().toISOString().slice(0, 10);
+        expect(copy.loans[0].lent_date.slice(0, 10)).toBe(today);
+      });
+
+      it("returns 400 when borrower_name is missing", async () => {
+        const slug = await createOwnedCopy();
+        const res = await api(`/api/copies/${slug}/loans`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({}),
+        });
+        expect(res.status).toBe(400);
+      });
+
+      it("returns 400 when borrower_name is empty", async () => {
+        const slug = await createOwnedCopy();
+        const res = await api(`/api/copies/${slug}/loans`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ borrower_name: "  " }),
+        });
+        expect(res.status).toBe(400);
+      });
+
+      it("returns 404 for non-existent copy", async () => {
+        const res = await api("/api/copies/nonexistent/loans", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ borrower_name: "Sarah" }),
+        });
+        expect(res.status).toBe(404);
+      });
+
+      it("returns 400 when copy is already lent", async () => {
+        const slug = await createOwnedCopy();
+        // Create first loan
+        await api(`/api/copies/${slug}/loans`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ borrower_name: "First" }),
+        });
+        // Try to create second loan
+        const res = await api(`/api/copies/${slug}/loans`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ borrower_name: "Second" }),
+        });
+        expect(res.status).toBe(400);
+        expect(await res.json()).toHaveProperty("error");
+      });
+
+      it("returns 400 when copy has non-owned status", async () => {
+        const slug = await createOwnedCopy();
+        await api(`/api/copies/${slug}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "lost" }),
+        });
+
+        const res = await api(`/api/copies/${slug}/loans`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ borrower_name: "Sarah" }),
+        });
+        expect(res.status).toBe(400);
+      });
+    });
+
+    describe("POST auto-pause active read-through", () => {
+      it("pauses active read-through when creating a loan", async () => {
+        const slug = await createOwnedCopy();
+
+        // Start a read-through
+        await api(`/api/copies/${slug}/read-throughs`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({}),
+        });
+
+        // Create a loan — should auto-pause the read-through
+        const res = await api(`/api/copies/${slug}/loans`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ borrower_name: "Sarah" }),
+        });
+        expect(res.status).toBe(201);
+        const copy = await res.json();
+        expect(copy.status).toBe("lent");
+        expect(copy.read_throughs[0].status).toBe("paused");
+        expect(copy).toHaveProperty("warning");
+        expect(copy.warning).toContain("Paused");
+      });
+    });
+
+    describe("POST lent_date deduplication", () => {
+      it("increments seconds when lent_date conflicts", async () => {
+        const slug = await createOwnedCopy();
+
+        // First loan on a specific date
+        await api(`/api/copies/${slug}/loans`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ borrower_name: "First", lent_date: "2025-01-01" }),
+        });
+
+        // Return it so we can create another
+        const get1 = await api(`/api/copies/${slug}`);
+        const copy1 = await get1.json();
+        const lentDate1 = copy1.loans[0].lent_date;
+        await api(`/api/copies/${slug}/loans/${copy1.loans[0].lent_date.slice(0, 10)}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ returned_date: "2025-02-01" }),
+        });
+
+        // Second loan with same date
+        const res = await api(`/api/copies/${slug}/loans`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ borrower_name: "Second", lent_date: "2025-01-01" }),
+        });
+        expect(res.status).toBe(201);
+        const copy2 = await res.json();
+        const secondLoan = copy2.loans.find((l: { borrower_name: string }) => l.borrower_name === "Second");
+        expect(secondLoan.lent_date).not.toBe(lentDate1);
+      });
+    });
+
+    describe("PATCH /api/copies/:slug/loans/:lentDate", () => {
+      async function createLentCopy(borrower = "Sarah"): Promise<{ slug: string; lentDate: string }> {
+        const slug = await createOwnedCopy();
+        const res = await api(`/api/copies/${slug}/loans`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ borrower_name: borrower, lent_date: "2025-06-01" }),
+        });
+        const copy = await res.json();
+        return { slug, lentDate: copy.loans[0].lent_date.slice(0, 10) };
+      }
+
+      it("sets returned_date and recalculates status to owned", async () => {
+        const { slug, lentDate } = await createLentCopy();
+        const res = await api(`/api/copies/${slug}/loans/${lentDate}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ returned_date: "2025-08-01" }),
+        });
+        expect(res.status).toBe(200);
+        const updated = await res.json();
+        expect(updated.status).toBe("owned");
+        expect(updated.loans[0].returned_date).toContain("2025-08-01");
+      });
+
+      it("clears returned_date and recalculates status to lent", async () => {
+        const { slug, lentDate } = await createLentCopy();
+        // Return first
+        await api(`/api/copies/${slug}/loans/${lentDate}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ returned_date: "2025-08-01" }),
+        });
+        // Clear returned_date
+        const res = await api(`/api/copies/${slug}/loans/${lentDate}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ returned_date: null }),
+        });
+        expect(res.status).toBe(200);
+        const updated = await res.json();
+        expect(updated.status).toBe("lent");
+      });
+
+      it("edits borrower_name", async () => {
+        const { slug, lentDate } = await createLentCopy();
+        const res = await api(`/api/copies/${slug}/loans/${lentDate}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ borrower_name: "Sarah Connor" }),
+        });
+        expect(res.status).toBe(200);
+        const updated = await res.json();
+        expect(updated.loans[0].borrower_name).toBe("Sarah Connor");
+      });
+
+      it("rejects conflicting lent_date", async () => {
+        const slug = await createOwnedCopy();
+        // Create first loan
+        const r1 = await api(`/api/copies/${slug}/loans`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ borrower_name: "First", lent_date: "2025-09-01" }),
+        });
+        const c1 = await r1.json();
+        expect(r1.status).toBe(201);
+        // Return first loan
+        await api(`/api/copies/${slug}/loans/${c1.loans[0].lent_date.slice(0, 10)}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ returned_date: "2025-10-01" }),
+        });
+        // Create second loan with different date
+        await api(`/api/copies/${slug}/loans`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ borrower_name: "Second", lent_date: "2025-09-15" }),
+        });
+        // Try to change second loan's lent_date to conflict with first
+        const res = await api(`/api/copies/${slug}/loans/2025-09-15`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ lent_date: c1.loans[0].lent_date.slice(0, 10) }),
+        });
+        expect(res.status).toBe(400);
+      });
+
+      it("returns 404 for non-existent loan", async () => {
+        const slug = await createOwnedCopy();
+        const res = await api(`/api/copies/${slug}/loans/2099-01-01`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ borrower_name: "Nope" }),
+        });
+        expect(res.status).toBe(404);
+      });
+
+      it("rejects expected_return_date before lent_date", async () => {
+        const { slug, lentDate } = await createLentCopy();
+        const res = await api(`/api/copies/${slug}/loans/${lentDate}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ expected_return_date: "2025-01-01" }),
+        });
+        expect(res.status).toBe(400);
+      });
+    });
+
+    describe("DELETE /api/copies/:slug/loans/:lentDate", () => {
+      it("deletes an outstanding loan and recalculates status to owned", async () => {
+        const slug = await createOwnedCopy();
+        await api(`/api/copies/${slug}/loans`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ borrower_name: "ToDelete", lent_date: "2025-11-01" }),
+        });
+
+        const res = await api(`/api/copies/${slug}/loans/2025-11-01`, {
+          method: "DELETE",
+        });
+        expect(res.status).toBe(200);
+        const updated = await res.json();
+        expect(updated.status).toBe("owned");
+        expect(updated.loans.every((l: { borrower_name: string }) => l.borrower_name !== "ToDelete")).toBe(true);
+      });
+
+      it("returns 404 for non-existent loan", async () => {
+        const slug = await createOwnedCopy();
+        const res = await api(`/api/copies/${slug}/loans/2099-01-01`, {
+          method: "DELETE",
+        });
+        expect(res.status).toBe(404);
+      });
+    });
+
+    describe("PATCH /api/copies/:slug status restrictions", () => {
+      it("rejects status owned when outstanding loans exist", async () => {
+        const slug = await createOwnedCopy();
+        await api(`/api/copies/${slug}/loans`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ borrower_name: "Test" }),
+        });
+
+        const res = await api(`/api/copies/${slug}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "owned" }),
+        });
+        expect(res.status).toBe(400);
+      });
+
+      it("rejects status lent via manual PATCH", async () => {
+        const slug = await createOwnedCopy();
+        const res = await api(`/api/copies/${slug}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "lent" }),
+        });
+        expect(res.status).toBe(400);
+      });
+
+      it("accepts status lost regardless of loans", async () => {
+        const slug = await createOwnedCopy();
+        const res = await api(`/api/copies/${slug}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "lost" }),
+        });
+        expect(res.status).toBe(200);
+      });
     });
   });
 });

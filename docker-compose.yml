@@ -1,18 +1,24 @@
 services:
   server:
     build: ./server
+    dns_search: ""
     ports:
       - "3001:3001"
     volumes:
       - ./server/src:/app/src
       - server-node-modules:/app/node_modules
-      - ./data:/data
-      - ./.env:/app/.env
+      - ./data:/app/data:z
+      - ./.env:/app/.env:ro
+      - ~/book-tracker-data/:/book-tracker-data
+    user: "1000:1000"
     environment:
       - NODE_ENV=development
 
   client:
-    build: ./client
+    build:
+      context: ./client
+      target: dev-https
+    dns_search: ""
     ports:
       - "5173:5173"
     volumes:
@@ -21,6 +27,7 @@ services:
       - ./client/vite.config.ts:/app/vite.config.ts
       - ./client/tsconfig.json:/app/tsconfig.json
       - ./client/components.json:/app/components.json
+      - ./client/.certs:/app/certs:ro
       - client-node-modules:/app/node_modules
     environment:
       - NODE_ENV=development

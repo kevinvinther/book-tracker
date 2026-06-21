@@ -3,10 +3,13 @@ import { Index } from "../lib/index.js";
 import { Work } from "../lib/types.js";
 import { readFile, writeFile, deleteFile, resolveLibraryPath } from "../lib/io.js";
 import { generateSlug } from "../lib/slug.js";
+import { renderBody } from "../lib/render-body.js";
+import { normalizeGenre } from "../lib/genres.js";
 
 const MUTABLE_FIELDS = [
   "title", "subtitle", "authors", "original_language", "original_publish_year",
   "genres", "description", "series", "series_position", "primary_cover",
+  "aliases",
 ] as const;
 
 function extractFirstAuthorName(authors?: string[]): string | undefined {
@@ -69,14 +72,15 @@ export function createWorksRouter(index: Index, libraryPath: string): Router {
     if (req.body.subtitle) work.subtitle = req.body.subtitle;
     if (req.body.original_language) work.original_language = req.body.original_language;
     if (req.body.original_publish_year != null) work.original_publish_year = req.body.original_publish_year;
-    if (req.body.genres) work.genres = req.body.genres;
+    if (req.body.genres) work.genres = req.body.genres.map(normalizeGenre);
     if (req.body.description) work.description = req.body.description;
     if (req.body.series) work.series = req.body.series;
     if (req.body.series_position != null) work.series_position = req.body.series_position;
     if (req.body.primary_cover) work.primary_cover = req.body.primary_cover;
+    if (Array.isArray(req.body.aliases)) work.aliases = req.body.aliases;
 
     const filePath = resolveLibraryPath(`works/${slug}.md`, libraryPath);
-    const body = work.title ? `# ${work.title}` : "";
+    const body = renderBody(work, index);
     writeFile(filePath, work as unknown as Record<string, unknown>, body);
     index.upsert("work", work);
 
@@ -129,7 +133,7 @@ export function createWorksRouter(index: Index, libraryPath: string): Router {
     const series = seriesSlug ? index.getSeries(seriesSlug) : undefined;
     const series_meta = series ? { slug: series.slug, name: series.name } : null;
 
-    res.json({ ...work, edition_count: editionCount, copy_count: copyCount, authors_meta, series_meta });
+    res.json({ ...work, edition_count: editionCount, copy_count: copyCount, authors_meta, series_meta, body: renderBody(work, index) });
   });
 
   router.patch("/:slug", (req, res) => {
@@ -153,7 +157,11 @@ export function createWorksRouter(index: Index, libraryPath: string): Router {
       if (req.body[field] === null) {
         delete frontmatter[field];
       } else if (req.body[field] !== undefined) {
-        frontmatter[field] = req.body[field];
+        if (field === "genres" && Array.isArray(req.body[field])) {
+          frontmatter[field] = req.body[field].map(normalizeGenre);
+        } else {
+          frontmatter[field] = req.body[field];
+        }
       }
     }
 
@@ -162,7 +170,7 @@ export function createWorksRouter(index: Index, libraryPath: string): Router {
     frontmatter._schema = 1;
 
     const updated = frontmatter as unknown as Work;
-    const body = updated.title ? `# ${updated.title}` : "";
+    const body = renderBody(updated, index);
     writeFile(filePath, frontmatter, body);
     index.upsert("work", updated);
 
@@ -234,7 +242,7 @@ export function createWorksRouter(index: Index, libraryPath: string): Router {
     frontmatter.aliases = aliases;
 
     const updated = frontmatter as unknown as Work;
-    const body = updated.title ? `# ${updated.title}` : "";
+    const body = renderBody(updated, index);
     writeFile(filePath, frontmatter, body);
     index.upsert("work", updated);
 
@@ -268,7 +276,7 @@ export function createWorksRouter(index: Index, libraryPath: string): Router {
     frontmatter.aliases = aliases.length > 0 ? aliases : undefined;
 
     const updated = frontmatter as unknown as Work;
-    const body = updated.title ? `# ${updated.title}` : "";
+    const body = renderBody(updated, index);
     writeFile(filePath, frontmatter, body);
     index.upsert("work", updated);
 

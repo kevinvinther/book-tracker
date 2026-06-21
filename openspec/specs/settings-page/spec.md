@@ -23,3 +23,54 @@ The application shell SHALL include a navigation link to the Settings page.
 - **THEN** a link or button labeled "Settings" is visible in the header
 - **AND** clicking it navigates to `/settings`
 
+### Requirement: Genre curation section
+The Settings page SHALL include a "Genres" section with a textarea displaying the curated genre list (one genre per line), fetched from `GET /api/genres` on mount. A "Save Genres" button SHALL parse the textarea content as a newline-separated list, normalize each line, and send the result to `PATCH /api/genres`. The section SHALL be visually separated from the library path section.
+
+#### Scenario: Genre section loads current curated list
+- **WHEN** the Settings page mounts
+- **THEN** the genre textarea is populated with the response from `GET /api/genres`, one genre per line
+
+#### Scenario: Save edited genre list
+- **WHEN** the user edits the textarea and clicks "Save Genres"
+- **THEN** a PATCH request is sent to `/api/genres` with the parsed genre list
+- **AND** a brief success toast or indicator is shown
+
+#### Scenario: Empty genre list is valid
+- **WHEN** the user clears the textarea and clicks "Save Genres"
+- **THEN** the PATCH request sends an empty array and the curated list is cleared
+
+#### Scenario: Network error on save
+- **WHEN** the PATCH request fails
+- **THEN** an error message is displayed to the user
+
+#### Scenario: API load failure
+- **WHEN** the `GET /api/genres` request fails on mount
+- **THEN** the textarea is empty and the user can still type and save genres
+
+### Requirement: Appearance theme selector
+The Settings page SHALL include an "Appearance" section that allows the user to select between Light, Dark, and System theme modes using radio buttons. The section SHALL be visually separated from the library path and genres sections. The currently selected theme SHALL be reflected in the radio button state on mount and SHALL update immediately when a new option is chosen.
+
+#### Scenario: Appearance section below genres
+- **WHEN** the user navigates to `/settings`
+- **THEN** an "Appearance" section is displayed below the Genres section
+- **AND** it is separated by a border (matching the existing `border-t border-rule pt-8` pattern)
+
+#### Scenario: Radio buttons reflect stored theme
+- **WHEN** the stored theme is `"system"`
+- **THEN** the "System" radio input is checked and the other two are not
+
+#### Scenario: Selecting Light
+- **WHEN** the user clicks the "Light" radio option
+- **THEN** the stored theme changes to `"light"`
+- **AND** the `.dark` class is removed from `<html>`
+
+#### Scenario: Selecting Dark
+- **WHEN** the user clicks the "Dark" radio option
+- **THEN** the stored theme changes to `"dark"`
+- **AND** the `.dark` class is added to `<html>`
+
+#### Scenario: Selecting System
+- **WHEN** the user clicks the "System" radio option
+- **THEN** the stored theme changes to `"system"`
+- **AND** the effective theme matches the operating system preference
+

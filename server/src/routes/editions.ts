@@ -2,10 +2,12 @@ import { Router } from "express";
 import { Index } from "../lib/index.js";
 import { Edition } from "../lib/types.js";
 import { readFile, writeFile, deleteFile, resolveLibraryPath } from "../lib/io.js";
-import { generateSlug } from "../lib/slug.js";
+import { generateEditionSlug } from "../lib/slug.js";
+import { renderBody } from "../lib/render-body.js";
 
 const MUTABLE_FIELDS = [
   "isbn", "publisher", "publish_date", "page_count", "format", "language", "contributors",
+  "aliases",
 ] as const;
 
 function getAllSlugs(index: Index): Set<string> {
@@ -36,9 +38,7 @@ export function createEditionsRouter(index: Index, libraryPath: string): Router 
     }
 
     const publisher: string = req.body.publisher ?? "";
-    const year = req.body.publish_date ? String(req.body.publish_date).split("-")[0] : "";
-    const slugInput = [workSlug, publisher, year].filter(Boolean).join(" ");
-    const slug = generateSlug(slugInput, getAllSlugs(index));
+    const slug = generateEditionSlug(workSlug, req.body.publisher, req.body.publish_date, getAllSlugs(index));
 
     const edition: Edition = {
       type: "edition",
@@ -55,9 +55,10 @@ export function createEditionsRouter(index: Index, libraryPath: string): Router 
     if (req.body.format !== undefined) edition.format = req.body.format;
     if (req.body.language !== undefined) edition.language = req.body.language;
     if (Array.isArray(req.body.contributors)) edition.contributors = req.body.contributors;
+    if (Array.isArray(req.body.aliases)) edition.aliases = req.body.aliases;
 
     const filePath = resolveLibraryPath(`editions/${slug}.md`, libraryPath);
-    writeFile(filePath, edition as unknown as Record<string, unknown>, "");
+    writeFile(filePath, edition as unknown as Record<string, unknown>, renderBody(edition, index));
     index.upsert("edition", edition);
 
     res.status(201).json(edition);
@@ -79,7 +80,12 @@ export function createEditionsRouter(index: Index, libraryPath: string): Router 
     }
 
     const copy_count = index.getCopiesByEdition(edition.slug).length;
-    res.json({ ...edition, copy_count });
+
+    const workSlug = edition.work.match(/^\[\[works\/(.+)\]\]$/)?.[1];
+    const work = workSlug ? index.getWork(workSlug) : undefined;
+    const work_meta = work ? { slug: work.slug, title: work.title, authors: work.authors } : null;
+
+    res.json({ ...edition, copy_count, work_meta, body: renderBody(edition, index) });
   });
 
   router.patch("/:slug", (req, res) => {
@@ -105,7 +111,7 @@ export function createEditionsRouter(index: Index, libraryPath: string): Router 
     frontmatter._schema = 1;
 
     const updated = frontmatter as unknown as Edition;
-    writeFile(filePath, frontmatter, "");
+    writeFile(filePath, frontmatter, renderBody(updated, index));
     index.upsert("edition", updated);
 
     res.json(updated);

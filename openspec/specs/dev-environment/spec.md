@@ -18,6 +18,8 @@ The project SHALL use a monorepo structure with `server/` and `client/` director
 ### Requirement: Docker Compose development environment
 The project SHALL include a root `docker-compose.yml` and per-service `Dockerfile`s so that a developer can run the full stack with `docker compose up` without installing Node.js locally. The server service SHALL mount `./.env:/app/.env` so the container reads the same configuration as local development. `./data/` SHALL be mounted to `/data` for the default library path. No `BOOKTRACKER_LIBRARY_PATH` SHALL be hardcoded in the Compose file — the `.env` file is the single source of truth for both Docker and local dev.
 
+The server service SHALL run as the host user via the `user:` directive (e.g., `user: "1000:1000"`) so that files created in bind-mounted volumes are owned by the host user, not root. This ensures interoperability with host-side tools like Obsidian. The library path mount target SHALL be an accessible path (e.g., `/book-tracker-data`) rather than a root-owned directory like `/root/`. If existing data was created by a root-owned container, the developer SHALL run `sudo chown -R $USER:$USER` on the data directory once.
+
 #### Scenario: Developer starts containers
 - **WHEN** the developer runs `docker compose up` from the project root
 - **THEN** both the server and client containers start
@@ -62,4 +64,73 @@ The Vite dev server SHALL proxy all requests to `/api/*` to the backend server a
 #### Scenario: Proxy does not interfere with static assets
 - **WHEN** the client loads `/src/main.tsx` or any non-API path
 - **THEN** Vite serves the file directly without proxying to the backend
+
+### Requirement: HTTPS with locally-trusted certificates
+
+The project SHALL support HTTPS in the Vite dev server using `mkcert`-generated certificates that are trusted by the developer's operating system, eliminating browser certificate warnings on desktop. The project SHALL provide a `make certs` setup target that automates certificate generation.
+
+#### Scenario: Developer sets up HTTPS certs for the first time
+
+- **WHEN** the developer runs `make certs` from the project root
+- **AND** `mkcert` is installed on the system
+- **THEN** the system runs `mkcert -install` to trust the local CA (idempotent, skips if already trusted)
+- **AND** the system generates `localhost.pem` (certificate) and `localhost-key.pem` (private key) into `client/.certs/`
+
+#### Scenario: Developer starts HTTPS dev server with trusted certs
+
+- **WHEN** the developer runs `npm run dev:https` (or `make dev-local-https`)
+- **AND** `client/.certs/localhost.pem` and `client/.certs/localhost-key.pem` exist
+- **THEN** the Vite dev server starts on `https://localhost:5173`
+- **AND** the browser loads the page without certificate warnings
+
+#### Scenario: Developer starts HTTPS dev server without certs (fallback)
+
+- **WHEN** the developer runs `npm run dev:https`
+- **AND** `client/.certs/` does not contain valid cert files
+- **THEN** the system falls back to `@vitejs/plugin-basic-ssl` (self-signed certs)
+- **AND** the system logs a warning suggesting the developer run `make certs`
+
+#### Scenario: Docker Compose uses host certs via volume mount
+
+- **WHEN** the developer has run `make certs` and runs `docker compose up`
+- **THEN** `client/.certs/` on the host SHALL be mounted into the client container at `/app/certs/`
+- **AND** the Vite dev server inside the container SHALL serve HTTPS using those certs
+- **AND** no cert generation SHALL occur during Docker image build
+
+#### Scenario: mkcert is not installed
+
+- **WHEN** the developer runs `make certs`
+- **AND** `mkcert` is not found on the system PATH
+- **THEN** the `make certs` target SHALL print an error message with installation instructions
+- **AND** the target SHALL exit with a non-zero status
+
+### Requirement: FOUC-prevention script
+The `index.html` SHALL include a blocking inline `<script>` in the `<head>` element, before any stylesheet or module script, that reads the persisted theme from localStorage and applies the `.dark` class to `<html>` if the resolved theme is dark. This SHALL prevent a flash of the incorrect color scheme before the React application mounts.
+
+#### Scenario: Dark mode persists across page load without flash
+- **WHEN** the stored theme is `"dark"`
+- **AND** the page is loaded or reloaded
+- **THEN** the `.dark` class is present on `<html>` before the first paint
+- **AND** no flash of light-themed content is visible
+
+#### Scenario: Light mode does not apply dark class
+- **WHEN** the stored theme is `"light"`
+- **AND** the page is loaded or reloaded
+- **THEN** the `.dark` class is NOT present on `<html>` before the first paint
+
+#### Scenario: System mode respects OS preference before first paint
+- **WHEN** the stored theme is `"system"`
+- **AND** the operating system is in dark mode
+- **AND** the page is loaded or reloaded
+- **THEN** the `.dark` class is present on `<html>` before the first paint
+
+#### Scenario: No stored theme defaults to system
+- **WHEN** no `booktracker-theme` key exists in localStorage
+- **AND** the operating system is in light mode
+- **AND** the page is loaded for the first time
+- **THEN** the `.dark` class is NOT present on `<html>` before the first paint
+
+#### Scenario: Script is positioned before stylesheets
+- **WHEN** `index.html` is served
+- **THEN** the theme-resolution inline `<script>` appears before any `<link>`, `<style>`, or `<script type="module">` element in `<head>`
 

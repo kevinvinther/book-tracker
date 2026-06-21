@@ -35,6 +35,7 @@ const LIBRARY_DIRECTORIES = [
   "copies",
   "notes",
   "attachments",
+  ".booktracker",
   ".booktracker/cache",
 ];
 

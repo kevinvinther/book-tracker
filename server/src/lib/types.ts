@@ -102,14 +102,33 @@ export interface Note {
   slug: string;
   date: string;
   modified: string;
-  copy: string;
-  edition: string;
-  work: string;
+  work?: string;
+  edition?: string;
+  copy?: string;
   read_through?: string;
   context_page?: number;
   tags?: string[];
   body?: string;
   _schema: number;
+}
+
+export interface SearchResult {
+  type: "work" | "author" | "series" | "edition" | "copy" | "note" | "loan";
+  slug: string;
+  title: string;
+  subtitle: string;
+  snippet?: string;
+  link: string;
+}
+
+export interface SearchResults {
+  work: SearchResult[];
+  author: SearchResult[];
+  series: SearchResult[];
+  edition: SearchResult[];
+  copy: SearchResult[];
+  note: SearchResult[];
+  loan: SearchResult[];
 }
 
 export type EntityType = "author" | "series" | "work" | "edition" | "copy" | "note";

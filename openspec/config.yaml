@@ -1,20 +1,32 @@
 schema: spec-driven
 
-# Project context (optional)
-# This is shown to AI when creating artifacts.
-# Add your tech stack, conventions, style guides, domain knowledge, etc.
-# Example:
-#   context: |
-#     Tech stack: TypeScript, React, Node.js
-#     We use conventional commits
-#     Domain: e-commerce platform
+context: |
+  **Domain**: Personal book diary app. Physical copies as first-class entities.
+  **Data store**: Markdown files + YAML frontmatter (Obsidian-compatible).
+  **Stack**: React + Vite + TypeScript + Tailwind + shadcn/ui (frontend). Node.js + Express + TypeScript (backend). No database.
+  **Key conventions**:
+  - Frontmatter is canonical. Markdown bodies are auto-generated renders, never parsed as data input.
+  - Forward `[[wikilinks]]` only. Reverse navigation uses Obsidian backlinks or the in-memory index.
+  - Slugs are immutable once created.
+  - Atomic writes: always write to temp file and rename, never write directly.
+  - Re-read before write: before any PATCH, re-read the target file from disk and merge fields the app isn't touching.
+  - No empty optional fields: omit keys entirely when they have no value.
+  - Genres are normalized: lowercase, trimmed, spaces → hyphens.
+  - Note filenames are timestamps: `YYYY-MM-DD-HHMMSS.md` (no colons).
+  **Server entry point**: `server/src/index.ts` — registers entity routes as factory functions `createXxxRouter(index, libraryPath)`.
+  **File I/O primitives**: `server/src/lib/io.ts` — `readFile`, `writeFile`, `deleteFile`, `listFiles`.
+  **In-memory index**: `server/src/lib/index.ts` — `Index` class loaded at startup from all markdown files.
 
-# Per-artifact rules (optional)
-# Add custom rules for specific artifacts.
-# Example:
-#   rules:
-#     proposal:
-#       - Keep proposals under 500 words
-#       - Always include a "Non-goals" section
-#     tasks:
-#       - Break tasks into chunks of max 2 hours
+rules:
+  proposal:
+    - Do not reference BUILD_PLAN.md or the root-level spec.md (these will be deleted post-implementation)
+    - Do not reference step numbers (S1, S2, etc.)
+  design:
+    - Do not reference BUILD_PLAN.md or the root-level spec.md
+    - Do not reference step numbers (S1, S2, etc.)
+  specs:
+    - Do not reference BUILD_PLAN.md or the root-level spec.md
+    - Do not reference step numbers (S1, S2, etc.)
+  tasks:
+    - Do not reference BUILD_PLAN.md or the root-level spec.md
+    - Do not reference step numbers (S1, S2, etc.)

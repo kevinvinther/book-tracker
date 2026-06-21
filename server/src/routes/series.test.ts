@@ -18,6 +18,12 @@ beforeAll(async () => {
 
   const { writeFile } = await import("../lib/io.js");
 
+  writeFile(join(tmpRoot, "authors/frank-herbert.md"), {
+    type: "author", slug: "frank-herbert",
+    name: "Frank Herbert",
+    created_at: "2024-01-01T00:00:00.000Z", _schema: 1,
+  }, "# Frank Herbert");
+
   writeFile(join(tmpRoot, "series/dune-chronicles.md"), {
     type: "series", slug: "dune-chronicles",
     name: "Dune Chronicles",
@@ -32,21 +38,21 @@ beforeAll(async () => {
 
   writeFile(join(tmpRoot, "works/dune.md"), {
     type: "work", slug: "dune",
-    title: "Dune", authors: [],
+    title: "Dune", authors: ["[[authors/frank-herbert]]"],
     series: "[[series/dune-chronicles]]", series_position: 1,
     created_at: "2024-01-01T00:00:00.000Z", _schema: 1,
   }, "# Dune");
 
   writeFile(join(tmpRoot, "works/dune-messiah.md"), {
     type: "work", slug: "dune-messiah",
-    title: "Dune Messiah", authors: [],
+    title: "Dune Messiah", authors: ["[[authors/frank-herbert]]"],
     series: "[[series/dune-chronicles]]", series_position: 2,
     created_at: "2024-01-01T00:00:00.000Z", _schema: 1,
   }, "# Dune Messiah");
 
   writeFile(join(tmpRoot, "works/children-of-dune.md"), {
     type: "work", slug: "children-of-dune",
-    title: "Children of Dune", authors: [],
+    title: "Children of Dune", authors: ["[[authors/frank-herbert]]"],
     series: "[[series/dune-chronicles]]",
     created_at: "2024-01-01T00:00:00.000Z", _schema: 1,
   }, "# Children of Dune");
@@ -136,7 +142,7 @@ describe("Series API", () => {
   });
 
   describe("GET /api/series/:slug", () => {
-    it("returns series with works sorted by series_position, position-less last", async () => {
+    it("returns series with works sorted by series_position, position-less last, with enriched metadata", async () => {
       const res = await api("/api/series/dune-chronicles");
       expect(res.status).toBe(200);
       const series = await res.json();
@@ -147,6 +153,17 @@ describe("Series API", () => {
         "dune-messiah",
         "children-of-dune",
       ]);
+      // Enriched fields
+      for (const w of series.works) {
+        expect(w).toHaveProperty("authors_meta");
+        expect(w).toHaveProperty("primary_cover");
+        expect(w).toHaveProperty("edition_count");
+        expect(w).toHaveProperty("copy_count");
+        expect(w.edition_count).toBe(0);
+        expect(w.copy_count).toBe(0);
+        expect(w.authors_meta).toEqual([{ slug: "frank-herbert", name: "Frank Herbert" }]);
+        expect(w.primary_cover).toBeNull();
+      }
     });
 
     it("returns empty works array for a series with no linked works", async () => {

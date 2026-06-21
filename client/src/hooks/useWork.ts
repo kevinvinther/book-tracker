@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Work } from "@/lib/types";
+import { useRefetchOnChange } from "./useWebSocket";
 
 interface UseWorkResult {
   work: Work | null;
@@ -48,6 +49,13 @@ export function useWork(slug: string): UseWorkResult {
   useEffect(() => {
     return fetchWork();
   }, [fetchWork]);
+
+  useRefetchOnChange(fetchWork, (msg) => {
+    if (msg.type === "work" && msg.slug === slug) return true;
+    if (msg.type === "edition") return true;
+    if (msg.type === "copy") return true;
+    return false;
+  });
 
   return { work, loading, notFound, error, refetch: fetchWork };
 }

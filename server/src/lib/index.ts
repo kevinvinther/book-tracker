@@ -1,5 +1,5 @@
 import { readFile, listFiles, resolveLibraryPath } from "./io.js";
-import { Author, Series, Work, Edition, Copy, Note, Entity, EntityType } from "./types.js";
+import { Author, Series, Work, Edition, Copy, Note, Entity, EntityType, SearchResult, SearchResults } from "./types.js";
 
 const LIBRARY_DIRECTORIES: { dir: string; type: EntityType }[] = [
   { dir: "authors", type: "author" },
@@ -105,6 +105,10 @@ export class Index {
     return Array.from(this.notes.keys());
   }
 
+  getAllNotes(): Note[] {
+    return Array.from(this.notes.values());
+  }
+
   getWorksByAuthor(authorSlug: string): Work[] {
     const wikilink = `[[authors/${authorSlug}]]`;
     return this.getAllWorks().filter((w) => w.authors.includes(wikilink));
@@ -135,6 +139,30 @@ export class Index {
     return Array.from(this.notes.values()).filter((n) => n.copy === wikilink);
   }
 
+  getEditionByISBN(isbn: string): Edition | undefined {
+    return this.getAllEditions().find((e) => e.isbn === isbn);
+  }
+
+  getWorksByTitleAndAuthor(title: string, authorName: string): Work[] {
+    const titleLower = title.toLowerCase().trim();
+    const authorLower = authorName.toLowerCase().trim();
+
+    return this.getAllWorks()
+      .filter((w) => w.title.toLowerCase().includes(titleLower))
+      .filter((w) =>
+        w.authors.some((a) => {
+          const slug = extractSlugFromWikilink(a);
+          if (!slug) return false;
+          const author = this.authors.get(slug);
+          if (!author) return false;
+          if (author.name.toLowerCase() === authorLower) return true;
+          if (author.aliases?.some((alias) => alias.toLowerCase() === authorLower)) return true;
+          return false;
+        })
+      )
+      .slice(0, 5);
+  }
+
   searchWorks(query: string): Work[] {
     if (!query.trim()) {
       return this.getAllWorks();
@@ -161,6 +189,320 @@ export class Index {
 
       return false;
     });
+  }
+
+  searchAll(query: string): SearchResults {
+    const empty: SearchResults = {
+      work: [], author: [], series: [], edition: [], copy: [], note: [], loan: [],
+    };
+
+    if (!query.trim()) return empty;
+
+    const q = query.toLowerCase().trim();
+
+    const works = this.searchAllWorks(q);
+    const authors = this.searchAllAuthors(q);
+    const series = this.searchAllSeries(q);
+    const editions = this.searchAllEditions(q);
+    const copies = this.searchAllCopies(q);
+    const notes = this.searchAllNotes(q);
+    const loans = this.searchAllLoans(q);
+
+    return { work: works, author: authors, series, edition: editions, copy: copies, note: notes, loan: loans };
+  }
+
+  private getPrimaryAuthorName(work: Work): string {
+    if (work.authors.length === 0) return "";
+    const slug = extractSlugFromWikilink(work.authors[0]);
+    if (!slug) return "";
+    const author = this.authors.get(slug);
+    return author ? author.name : "";
+  }
+
+  private getCopyLabel(copy: Copy): string {
+    const work = this.works.get(extractSlugFromWikilink(copy.work) || "");
+    return work ? work.title : copy.slug;
+  }
+
+  private extractNoteParentLink(note: Note): string {
+    const copySlug = note.copy ? extractSlugFromWikilink(note.copy) : null;
+    if (copySlug && this.copies.has(copySlug)) return `/copies/${copySlug}`;
+
+    const editionSlug = note.edition ? extractSlugFromWikilink(note.edition) : null;
+    if (editionSlug && this.editions.has(editionSlug)) return `/editions/${editionSlug}`;
+
+    const workSlug = note.work ? extractSlugFromWikilink(note.work) : null;
+    if (workSlug && this.works.has(workSlug)) return `/works/${workSlug}`;
+
+    return "";
+  }
+
+  private getNoteParentLabel(note: Note): string {
+    const copySlug = note.copy ? extractSlugFromWikilink(note.copy) : null;
+    if (copySlug) {
+      const copy = this.copies.get(copySlug);
+      if (copy) return this.getCopyLabel(copy);
+    }
+
+    const editionSlug = note.edition ? extractSlugFromWikilink(note.edition) : null;
+    if (editionSlug) {
+      const edition = this.editions.get(editionSlug);
+      if (edition) return edition.slug;
+    }
+
+    const workSlug = note.work ? extractSlugFromWikilink(note.work) : null;
+    if (workSlug) {
+      const work = this.works.get(workSlug);
+      if (work) return work.title;
+    }
+
+    return "";
+  }
+
+  private rankResults<T>(
+    items: T[],
+    field: (item: T) => string,
+    query: string,
+  ): T[] {
+    const scored = items.map((item) => {
+      const val = field(item);
+      const lower = val.toLowerCase();
+      let score: number;
+      if (lower === query) {
+        score = 0;
+      } else if (lower.startsWith(query)) {
+        score = 1;
+      } else {
+        score = 2;
+      }
+      return { item, score, text: lower };
+    });
+
+    scored.sort((a, b) => {
+      if (a.score !== b.score) return a.score - b.score;
+      return a.text.localeCompare(b.text);
+    });
+
+    return scored.map((s) => s.item);
+  }
+
+  private generateSnippet(body: string, query: string, maxLen: number = 120): string {
+    const lowerBody = body.toLowerCase();
+    const idx = lowerBody.indexOf(query);
+    if (idx === -1) return body.slice(0, maxLen);
+
+    const start = Math.max(0, idx - 40);
+    const end = Math.min(body.length, idx + query.length + maxLen - 40);
+    let snippet = body.slice(start, end);
+
+    if (start > 0) snippet = "..." + snippet;
+    if (end < body.length) snippet = snippet + "...";
+
+    return snippet;
+  }
+
+  private searchAllWorks(q: string): SearchResult[] {
+    const matches: { work: Work; field: string }[] = [];
+
+    for (const w of this.getAllWorks()) {
+      let primaryField = w.title;
+      if (w.title.toLowerCase() === q) {
+        matches.push({ work: w, field: w.title });
+        continue;
+      }
+      if (w.title.toLowerCase().includes(q)) {
+        matches.push({ work: w, field: w.title });
+        continue;
+      }
+
+      const authorMatched = w.authors.some((a) => {
+        const slug = extractSlugFromWikilink(a);
+        if (!slug) return false;
+        const author = this.authors.get(slug);
+        if (!author) return false;
+        if (author.name.toLowerCase().includes(q)) {
+          matches.push({ work: w, field: author.name });
+          return true;
+        }
+        if (author.aliases?.some((alias) => alias.toLowerCase().includes(q))) {
+          matches.push({ work: w, field: author.name });
+          return true;
+        }
+        return false;
+      });
+      if (authorMatched) continue;
+
+      if (w.genres?.some((g) => g.toLowerCase().includes(q))) {
+        matches.push({ work: w, field: w.title });
+        continue;
+      }
+      if (w.description?.toLowerCase().includes(q)) {
+        matches.push({ work: w, field: w.title });
+        continue;
+      }
+      if (w.aliases?.some((a) => a.toLowerCase().includes(q))) {
+        matches.push({ work: w, field: w.title });
+      }
+    }
+
+    const ranked = this.rankResults(matches, (m) => m.field, q);
+    return ranked.slice(0, 5).map(({ work }) => ({
+      type: "work" as const,
+      slug: work.slug,
+      title: work.title,
+      subtitle: this.getPrimaryAuthorName(work),
+      link: `/works/${work.slug}`,
+    }));
+  }
+
+  private searchAllAuthors(q: string): SearchResult[] {
+    const matches: { author: Author; field: string }[] = [];
+
+    for (const a of this.getAllAuthors()) {
+      if (a.name.toLowerCase() === q) {
+        matches.push({ author: a, field: a.name });
+      } else if (a.name.toLowerCase().includes(q)) {
+        matches.push({ author: a, field: a.name });
+      } else if (a.aliases?.some((alias) => alias.toLowerCase().includes(q))) {
+        matches.push({ author: a, field: a.name });
+      }
+    }
+
+    const ranked = this.rankResults(matches, (m) => m.field, q);
+    return ranked.slice(0, 5).map(({ author }) => ({
+      type: "author" as const,
+      slug: author.slug,
+      title: author.name,
+      subtitle: "",
+      link: `/authors/${author.slug}`,
+    }));
+  }
+
+  private searchAllSeries(q: string): SearchResult[] {
+    const matches: { series: Series; field: string }[] = [];
+
+    for (const s of this.getAllSeries()) {
+      if (s.name.toLowerCase() === q) {
+        matches.push({ series: s, field: s.name });
+      } else if (s.name.toLowerCase().includes(q)) {
+        matches.push({ series: s, field: s.name });
+      } else if (s.aliases?.some((alias) => alias.toLowerCase().includes(q))) {
+        matches.push({ series: s, field: s.name });
+      }
+    }
+
+    const ranked = this.rankResults(matches, (m) => m.field, q);
+    return ranked.slice(0, 5).map(({ series: s }) => ({
+      type: "series" as const,
+      slug: s.slug,
+      title: s.name,
+      subtitle: "",
+      link: `/series/${s.slug}`,
+    }));
+  }
+
+  private searchAllEditions(q: string): SearchResult[] {
+    const matches: { edition: Edition; field: string }[] = [];
+
+    for (const e of this.getAllEditions()) {
+      if (e.isbn && e.isbn.toLowerCase().includes(q)) {
+        matches.push({ edition: e, field: e.isbn });
+      } else if (e.publisher && e.publisher.toLowerCase().includes(q)) {
+        matches.push({ edition: e, field: e.publisher });
+      }
+    }
+
+    const ranked = this.rankResults(matches, (m) => m.field, q);
+    return ranked.slice(0, 5).map(({ edition }) => {
+      const work = this.works.get(extractSlugFromWikilink(edition.work) || "");
+      const title = work ? `${work.title} — ${edition.slug}` : edition.slug;
+      const subtitle = edition.isbn
+        ? `ISBN: ${edition.isbn}`
+        : edition.publisher
+          ? `Publisher: ${edition.publisher}`
+          : "";
+      return {
+        type: "edition" as const,
+        slug: edition.slug,
+        title,
+        subtitle,
+        link: `/editions/${edition.slug}`,
+      };
+    });
+  }
+
+  private searchAllCopies(q: string): SearchResult[] {
+    const matches: { copy: Copy; field: string }[] = [];
+
+    for (const c of this.getAllCopies()) {
+      if (c.acquisition_source?.toLowerCase().includes(q)) {
+        matches.push({ copy: c, field: c.acquisition_source! });
+      } else if (c.location?.toLowerCase().includes(q)) {
+        matches.push({ copy: c, field: c.location! });
+      }
+    }
+
+    const ranked = this.rankResults(matches, (m) => m.field, q);
+    return ranked.slice(0, 5).map(({ copy }) => {
+      const workLabel = this.getCopyLabel(copy);
+      const subtitle = copy.location || copy.acquisition_source || "";
+      return {
+        type: "copy" as const,
+        slug: copy.slug,
+        title: workLabel,
+        subtitle,
+        link: `/copies/${copy.slug}`,
+      };
+    });
+  }
+
+  private searchAllNotes(q: string): SearchResult[] {
+    const matches: { note: Note; field: string }[] = [];
+
+    for (const n of this.getAllNotes()) {
+      if (n.body?.toLowerCase().includes(q)) {
+        matches.push({ note: n, field: n.body! });
+      }
+    }
+
+    const ranked = this.rankResults(matches, (m) => m.field, q);
+    return ranked.slice(0, 5).map(({ note }) => {
+      const parentLabel = this.getNoteParentLabel(note);
+      const formattedDate = note.date
+        ? new Date(note.date).toLocaleDateString()
+        : note.slug;
+      return {
+        type: "note" as const,
+        slug: note.slug,
+        title: formattedDate,
+        subtitle: parentLabel,
+        snippet: this.generateSnippet(note.body || "", q),
+        link: this.extractNoteParentLink(note),
+      };
+    });
+  }
+
+  private searchAllLoans(q: string): SearchResult[] {
+    const matches: { copy: Copy; loan: { borrower_name: string }; field: string }[] = [];
+
+    for (const c of this.getAllCopies()) {
+      if (c.loans) {
+        for (const loan of c.loans) {
+          if (loan.borrower_name.toLowerCase().includes(q)) {
+            matches.push({ copy: c, loan, field: loan.borrower_name });
+          }
+        }
+      }
+    }
+
+    const ranked = this.rankResults(matches, (m) => m.field, q);
+    return ranked.slice(0, 5).map(({ copy, loan }) => ({
+      type: "loan" as const,
+      slug: copy.slug,
+      title: loan.borrower_name,
+      subtitle: `Lent: ${this.getCopyLabel(copy)}`,
+      link: `/copies/${copy.slug}`,
+    }));
   }
 
   upsert(type: EntityType, entity: Entity): void {
@@ -206,6 +548,32 @@ export class Index {
       case "note":
         this.notes.delete(slug);
         break;
+    }
+  }
+
+  handleFileChange(type: EntityType, slug: string): void {
+    const dirMap: Record<EntityType, string> = {
+      author: "authors",
+      series: "series",
+      work: "works",
+      edition: "editions",
+      copy: "copies",
+      note: "notes",
+    };
+    const dir = dirMap[type];
+    const filePath = resolveLibraryPath(`${dir}/${slug}.md`, this.libraryPath);
+
+    try {
+      const { frontmatter, body } = readFile(filePath);
+      const entity = { ...frontmatter, slug: frontmatter.slug || slug } as Entity;
+
+      if (type === "note") {
+        (entity as Note).body = body;
+      }
+
+      this.upsert(type, entity);
+    } catch {
+      this.remove(type, slug);
     }
   }
 

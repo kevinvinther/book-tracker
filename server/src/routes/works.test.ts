@@ -136,12 +136,14 @@ describe("Work API", () => {
           description: "A classic",
           original_language: "en",
           original_publish_year: 1951,
+          aliases: ["Foundation Trilogy", "Asimov Foundation"],
         }),
       });
       const work = await res.json();
       expect(res.status).toBe(201);
       expect(work.subtitle).toBe("Book One");
       expect(work.genres).toEqual(["fiction", "science-fiction"]);
+      expect(work.aliases).toEqual(["Foundation Trilogy", "Asimov Foundation"]);
     });
 
     it("returns 400 when title is missing", async () => {
@@ -270,6 +272,17 @@ describe("Work API", () => {
         body: JSON.stringify({ title: "X" }),
       });
       expect(res.status).toBe(404);
+    });
+
+    it("updates aliases via PATCH", async () => {
+      const res = await api(`/api/works/${slug}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ aliases: ["TBK", "Karamazov"] }),
+      });
+      const work = await res.json();
+      expect(res.status).toBe(200);
+      expect(work.aliases).toEqual(["TBK", "Karamazov"]);
     });
 
     it("rejects empty title on update", async () => {

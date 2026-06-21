@@ -71,7 +71,7 @@
     --secondary: oklch(0.86 0.03 90);
     --secondary-foreground: oklch(0.24 0.02 50);
     --muted: oklch(0.87 0.025 90);
-    --muted-foreground: oklch(0.45 0.03 60);
+    --muted-foreground: oklch(0.38 0.03 60);
     --accent: oklch(0.86 0.03 90);
     --accent-foreground: oklch(0.24 0.02 50);
     --destructive: oklch(0.45 0.16 25);
@@ -81,7 +81,7 @@
     --rule: oklch(0.7 0.04 80);
     --stamp: oklch(0.4 0.13 22);
     --stamp-foreground: oklch(0.96 0.015 80);
-    --verdigris: oklch(0.5 0.05 165);
+    --verdigris: oklch(0.42 0.05 165);
     --verdigris-foreground: oklch(0.96 0.015 80);
     --chart-1: oklch(0.4 0.13 22);
     --chart-2: oklch(0.5 0.05 165);
@@ -139,6 +139,29 @@
     --sidebar-ring: oklch(0.62 0.13 24 / 50%);
 }
 
+@utility sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+@utility not-sr-only {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: 0;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -149,6 +172,20 @@
   html {
     @apply font-sans;
     }
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+  select,
+  textarea {
+    min-height: 44px;
+    min-width: 0;
+  }
+  @media (width >= 48rem) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+    select,
+    textarea {
+      min-height: auto;
+      min-width: auto;
+    }
+  }
 }
 
 /* Paper-grain: a faint fixed noise layer suggesting the desk/drawer surface. */
@@ -189,4 +226,31 @@
   .card-reveal {
     animation: none;
   }
+  .animate-slide-up {
+    animation: none;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.scroll-shadow-x {
+  background:
+    linear-gradient(to right, var(--card) 30%, transparent),
+    linear-gradient(to right, transparent, var(--card) 70%) 100% 0,
+    radial-gradient(farthest-side at 0% 50%, rgba(0,0,0,0.08), transparent),
+    radial-gradient(farthest-side at 100% 50%, rgba(0,0,0,0.08), transparent) 100% 0;
+  background-repeat: no-repeat;
+  background-size: 40px 100%, 40px 100%, 14px 100%, 14px 100%;
+  background-attachment: local, local, scroll, scroll;
 }

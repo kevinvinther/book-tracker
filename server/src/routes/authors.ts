@@ -3,6 +3,7 @@ import { Index } from "../lib/index.js";
 import { Author } from "../lib/types.js";
 import { readFile, writeFile, deleteFile, resolveLibraryPath } from "../lib/io.js";
 import { generateSlug } from "../lib/slug.js";
+import { renderBody } from "../lib/render-body.js";
 
 const MUTABLE_FIELDS = ["name", "aliases"] as const;
 
@@ -43,7 +44,7 @@ export function createAuthorsRouter(index: Index, libraryPath: string): Router {
     }
 
     const filePath = resolveLibraryPath(`authors/${slug}.md`, libraryPath);
-    writeFile(filePath, author as unknown as Record<string, unknown>, `# ${author.name}`);
+    writeFile(filePath, author as unknown as Record<string, unknown>, renderBody(author, index));
     index.upsert("author", author);
 
     res.status(201).json(author);
@@ -60,12 +61,17 @@ export function createAuthorsRouter(index: Index, libraryPath: string): Router {
       return;
     }
 
-    const works = index.getWorksByAuthor(author.slug).map((w) => ({
-      slug: w.slug,
-      title: w.title,
-    }));
+    const works = index.getWorksByAuthor(author.slug)
+      .map((w) => ({
+        slug: w.slug,
+        title: w.title,
+        primary_cover: w.primary_cover ?? null,
+        edition_count: index.getEditionsByWork(w.slug).length,
+        copy_count: index.getCopiesByWork(w.slug).length,
+      }))
+      .sort((a, b) => a.title.localeCompare(b.title));
 
-    res.json({ ...author, works });
+    res.json({ ...author, works, body: renderBody(author, index) });
   });
 
   router.patch("/:slug", (req, res) => {
@@ -96,7 +102,7 @@ export function createAuthorsRouter(index: Index, libraryPath: string): Router {
     frontmatter._schema = 1;
 
     const updated = frontmatter as unknown as Author;
-    const body = updated.name ? `# ${updated.name}` : "";
+    const body = renderBody(updated, index);
     writeFile(filePath, frontmatter, body);
     index.upsert("author", updated);
 
