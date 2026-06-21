@@ -37,6 +37,3 @@ volumes:
 
 Then `docker compose up --build`.
 
-## Documentation
-
-- `BUILD_PLAN.md` — 33-step implementation sequence with dependency graph
