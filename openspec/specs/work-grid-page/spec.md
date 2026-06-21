@@ -6,10 +6,10 @@ Client home page that displays a responsive grid of all Works as cover thumbnail
 ## Requirements
 
 ### Requirement: The system SHALL render a responsive grid of Work cover thumbnails at the route `/`, fetched from `GET /api/works`.
-The system SHALL render a responsive grid of Work cover thumbnails at the route `/`, fetched from `GET /api/works`.
+The system SHALL render a responsive grid of Work cover thumbnails at the route `/library`, fetched from `GET /api/works`. The route `/` no longer renders this grid (it renders the reading dashboard); the grid is reached via the "Library" navigation entry.
 
 #### Scenario: Grid fetches and renders
-- **WHEN** the user navigates to `/`
+- **WHEN** the user navigates to `/library`
 - **THEN** the app fetches `GET /api/works` and renders one card per work
 
 #### Scenario: Grid columns by viewport width
@@ -86,7 +86,7 @@ When the work grid fetch fails with an error, the error message SHALL be accompa
 While works are loading, the grid SHALL display skeleton card placeholders instead of no content.
 
 #### Scenario: Initial load shows skeleton grid
-- **WHEN** the user navigates to `/` and data has not yet loaded
+- **WHEN** the user navigates to `/library` and data has not yet loaded
 - **THEN** a grid of animated skeleton cards is displayed in place of work cards
 
 #### Scenario: Skeleton replaced on data arrival

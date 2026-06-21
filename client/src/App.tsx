@@ -1,5 +1,6 @@
 import { Routes, Route, Link } from "react-router-dom";
 import { Sun, Moon } from "lucide-react";
+import Dashboard from "./pages/Dashboard";
 import WorkGrid from "./pages/WorkGrid";
 import WorkDetail from "./pages/WorkDetail";
 import AuthorDetail from "./pages/AuthorDetail";
@@ -38,6 +39,9 @@ export default function App() {
           >
             {effectiveTheme === "dark" ? <Sun className="size-4" aria-hidden="true" /> : <Moon className="size-4" aria-hidden="true" />}
           </button>
+          <Link to="/library" className="hidden md:block text-muted-foreground hover:text-foreground">
+            Library
+          </Link>
           <Link to="/stats" className="hidden md:block text-muted-foreground hover:text-foreground">
             Stats
           </Link>
@@ -48,7 +52,8 @@ export default function App() {
       </header>
       <main id="main-content" tabIndex={-1} className="relative z-10 pb-16 md:pb-0">
         <Routes>
-          <Route path="/" element={<WorkGrid />} />
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/library" element={<WorkGrid />} />
           <Route path="/works/:slug" element={<WorkDetail />} />
           <Route path="/authors/:slug" element={<AuthorDetail />} />
           <Route path="/series/:slug" element={<SeriesDetail />} />

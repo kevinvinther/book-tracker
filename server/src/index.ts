@@ -22,6 +22,7 @@ import { createNotesRouter } from "./routes/notes.js";
 import { createSearchRouter } from "./routes/search.js";
 import { createStatsRouter } from "./routes/stats.js";
 import { createGenresRouter } from "./routes/genres.js";
+import { createDashboardRouter } from "./routes/dashboard.js";
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3001;
@@ -65,6 +66,7 @@ app.use("/api/notes", createNotesRouter(index, config.library_path));
 app.use("/api/search", createSearchRouter(index));
 app.use("/api/stats", createStatsRouter(index, config.library_path));
 app.use("/api/genres", createGenresRouter(index, config.library_path));
+app.use("/api/dashboard", createDashboardRouter(index, config.library_path));
 
 // File upload for cover images
 const upload = multer({

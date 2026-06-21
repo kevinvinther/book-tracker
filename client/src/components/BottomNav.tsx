@@ -1,10 +1,11 @@
 import { NavLink } from "react-router-dom";
-import { Home, BarChart3, Plus, Settings } from "lucide-react";
+import { Home, Library, BarChart3, Plus, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip } from "@/components/Tooltip";
 
 const TABS = [
-  { to: "/", label: "Grid", icon: Home },
+  { to: "/", label: "Home", icon: Home },
+  { to: "/library", label: "Library", icon: Library },
   { to: "/stats", label: "Stats", icon: BarChart3 },
   { to: "/add", label: "Add", icon: Plus },
   { to: "/settings", label: "Settings", icon: Settings },

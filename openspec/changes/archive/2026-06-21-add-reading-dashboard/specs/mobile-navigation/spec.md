@@ -1,16 +1,4 @@
----
-id: mobile-navigation
-title: mobile-navigation
-overview: "Bottom navigation bar for mobile viewports with tab-based routing and safe area handling."
-requirementCount: 3
----
-
-# mobile-navigation Specification
-
-## Purpose
-Provides a fixed bottom navigation bar on mobile viewports (< 768px) with five tabs (Home, Library, Stats, Add, Settings), hides desktop header links, and handles safe area insets for notched devices.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Bottom navigation bar on mobile
 On viewports below 768px, the system SHALL render a fixed bottom navigation bar with five tabs: Home, Library, Stats, Add, and Settings. The Home tab SHALL navigate to `/` (the reading dashboard) and the Library tab SHALL navigate to `/library` (the work grid). Each tab SHALL navigate to its respective route using client-side routing. The active tab SHALL be visually distinguished.
@@ -47,10 +35,3 @@ On viewports below 768px, the desktop header's "Library", "Stats", and "Settings
 #### Scenario: Header is unchanged on desktop
 - **WHEN** the viewport width is 768px or above
 - **THEN** the header contains the app logo, search bar, "Library" link, "Stats" link, and "Settings" link
-
-### Requirement: Safe area padding
-The bottom navigation bar SHALL include padding for the device's safe area inset at the bottom edge to avoid overlap with system home indicators.
-
-#### Scenario: Safe area on notched device
-- **WHEN** the device has a home indicator (e.g., iPhone with notch)
-- **THEN** the bottom nav bar sits above the home indicator with the safe-area-inset-bottom value as padding
