@@ -2,7 +2,9 @@ import "dotenv/config";
 import express from "express";
 import multer from "multer";
 import { randomUUID } from "crypto";
-import { extname } from "path";
+import { existsSync } from "fs";
+import { extname, dirname, join, resolve } from "path";
+import { fileURLToPath } from "url";
 import { readConfig, ensureLibraryDirectories } from "./config.js";
 import { resolveLibraryPath } from "./lib/io.js";
 import { Index } from "./lib/index.js";
@@ -22,7 +24,7 @@ import { createStatsRouter } from "./routes/stats.js";
 import { createGenresRouter } from "./routes/genres.js";
 
 const app = express();
-const PORT = 3001;
+const PORT = Number(process.env.PORT) || 3001;
 
 app.use(express.json());
 
@@ -108,10 +110,72 @@ app.use("/api/attachments", (_req, res) => {
   res.status(404).json({ error: "Attachment not found" });
 });
 
+// Any unmatched /api route returns a JSON 404, never the SPA shell.
+app.use("/api", (_req, res) => {
+  res.status(404).json({ error: "Not found" });
+});
+
+// Serve the built client (static assets + SPA history fallback) from the same
+// origin as the API. Registered after every /api router so it can never shadow
+// an API route. The directory only exists in the production image; in local
+// dev the Vite dev server handles the client, so this block is skipped.
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const clientDistPath = process.env.CLIENT_DIST_PATH || resolve(__dirname, "../public");
+if (existsSync(clientDistPath)) {
+  app.use(express.static(clientDistPath, { maxAge: "1d" }));
+  // History-mode fallback: serve index.html for non-/api, non-asset GETs so
+  // client-side routes resolve on direct navigation and refresh.
+  app.use((req, res, next) => {
+    if (req.method !== "GET" && req.method !== "HEAD") {
+      next();
+      return;
+    }
+    if (req.path.startsWith("/api/")) {
+      next();
+      return;
+    }
+    res.sendFile(join(clientDistPath, "index.html"));
+  });
+} else {
+  console.warn(`Client build not found at ${clientDistPath}; SPA serving disabled.`);
+}
+
 const server = app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
 
-createWebSocketServer(server);
+const wss = createWebSocketServer(server);
 
-startWatcher(config.library_path, index, broadcast);
+const watcher = startWatcher(config.library_path, index, broadcast);
+
+// Graceful shutdown: close the HTTP server, WebSocket server, and file watcher,
+// then exit. A bounded timeout force-exits if any close hangs so container
+// stops never block indefinitely.
+let shuttingDown = false;
+async function shutdown(signal: string): Promise<void> {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  console.log(`Received ${signal}, shutting down...`);
+
+  const forceExit = setTimeout(() => {
+    console.error("Shutdown timed out; forcing exit.");
+    process.exit(1);
+  }, 10_000);
+  forceExit.unref();
+
+  try {
+    await Promise.all([
+      new Promise<void>((res) => server.close(() => res())),
+      new Promise<void>((res) => wss.close(() => res())),
+      watcher.close(),
+    ]);
+    console.log("Shutdown complete.");
+    process.exit(0);
+  } catch (err) {
+    console.error("Error during shutdown:", err);
+    process.exit(1);
+  }
+}
+
+process.on("SIGTERM", () => void shutdown("SIGTERM"));
+process.on("SIGINT", () => void shutdown("SIGINT"));
