@@ -34,4 +34,4 @@
 ## 5. Verification
 
 - [x] 5.1 Run server and client test suites and the type check; fix failures
-- [ ] 5.2 Manually verify the dashboard at `/`: log a page, add a note, and finish a book from a card, confirming live updates; confirm `/library` and the new nav entries on desktop and mobile widths
+- [x] 5.2 Manually verify the dashboard at `/`: log a page, add a note, and finish a book from a card, confirming live updates; confirm `/library` and the new nav entries on desktop and mobile widths
