@@ -292,6 +292,51 @@ export interface ResolvedStats extends StatsResponse {
   languageLabels: Record<string, string>;
 }
 
+export interface DashboardWorkMeta {
+  slug: string;
+  title: string;
+  author: string;
+}
+
+export interface CurrentlyReadingEntry {
+  copy_slug: string;
+  started_date: string;
+  status: "reading" | "paused";
+  page_log: PageLog[];
+  last_page: number;
+  page_count: number | null;
+  work: DashboardWorkMeta | null;
+  cover: string | null;
+}
+
+export interface RecentlyFinishedEntry {
+  copy_slug: string;
+  finished_date: string;
+  rating?: number;
+  work: DashboardWorkMeta | null;
+  cover: string | null;
+}
+
+export interface RecentlyAddedEntry {
+  copy_slug: string;
+  created_at: string;
+  work: DashboardWorkMeta | null;
+  cover: string | null;
+}
+
+export interface DashboardGlance {
+  finished_this_year: number;
+  pages_this_month: number;
+  currently_reading: number;
+}
+
+export interface DashboardResponse {
+  currently_reading: CurrentlyReadingEntry[];
+  recently_finished: RecentlyFinishedEntry[];
+  recently_added: RecentlyAddedEntry[];
+  glance: DashboardGlance;
+}
+
 export interface SearchResult {
   type: "work" | "author" | "series" | "edition" | "copy" | "note" | "loan";
   slug: string;
