@@ -3,9 +3,11 @@ import { Sun, Moon } from "lucide-react";
 import Dashboard from "./pages/Dashboard";
 import WorkGrid from "./pages/WorkGrid";
 import WorkDetail from "./pages/WorkDetail";
+import WorkEdit from "./pages/WorkEdit";
 import AuthorDetail from "./pages/AuthorDetail";
 import SeriesDetail from "./pages/SeriesDetail";
 import EditionDetail from "./pages/EditionDetail";
+import EditionEdit from "./pages/EditionEdit";
 import CopyDetail from "./pages/CopyDetail";
 import AddBook from "./pages/AddBook";
 import Settings from "./pages/Settings";
@@ -55,9 +57,11 @@ export default function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/library" element={<WorkGrid />} />
           <Route path="/works/:slug" element={<WorkDetail />} />
+          <Route path="/works/:slug/edit" element={<WorkEdit />} />
           <Route path="/authors/:slug" element={<AuthorDetail />} />
           <Route path="/series/:slug" element={<SeriesDetail />} />
           <Route path="/editions/:slug" element={<EditionDetail />} />
+          <Route path="/editions/:slug/edit" element={<EditionEdit />} />
           <Route path="/copies/:slug" element={<CopyDetail />} />
           <Route path="/add" element={<AddBook />} />
           <Route path="/stats" element={<Stats />} />

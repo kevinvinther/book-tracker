@@ -298,6 +298,88 @@ export async function lookupGoogleBooks(isbn: string): Promise<Omit<LookupResult
   return normalizeGoogleBooksData(data);
 }
 
+// ---- Multi-source lookup ----
+
+export type SourceId = "google" | "openlibrary";
+
+export const ALL_SOURCES: SourceId[] = ["google", "openlibrary"];
+
+const SOURCE_FETCHERS: Record<SourceId, (isbn: string) => Promise<Omit<LookupResult, "source"> | null>> = {
+  google: lookupGoogleBooks,
+  openlibrary: lookupOpenLibrary,
+};
+
+function sourceCachePath(isbn: string, source: SourceId, libraryPath: string): string {
+  const resolved = expandHome(libraryPath);
+  return join(resolved, ".booktracker", "cache", `${isbn}.${source}.json`);
+}
+
+export function readSourceCache(isbn: string, source: SourceId, libraryPath: string): LookupResult | null {
+  const cachePath = sourceCachePath(isbn, source, libraryPath);
+  if (!existsSync(cachePath)) return null;
+  try {
+    return JSON.parse(readFileSync(cachePath, "utf-8")) as LookupResult;
+  } catch {
+    // Corrupt per-source cache is treated as a miss.
+    return null;
+  }
+}
+
+export function writeSourceCache(isbn: string, source: SourceId, data: LookupResult, libraryPath: string): void {
+  try {
+    const resolved = expandHome(libraryPath);
+    const cacheDir = join(resolved, ".booktracker", "cache");
+    if (!existsSync(cacheDir)) {
+      mkdirSync(cacheDir, { recursive: true });
+    }
+    const cachePath = sourceCachePath(isbn, source, libraryPath);
+    const tmpPath = cachePath + ".tmp";
+    writeFileSync(tmpPath, JSON.stringify(data, null, 2), "utf-8");
+    renameSync(tmpPath, cachePath);
+  } catch {
+    // Cache write failure is non-fatal.
+  }
+}
+
+async function lookupSource(
+  isbn: string,
+  source: SourceId,
+  libraryPath: string,
+  skipCache: boolean,
+): Promise<LookupResult | null> {
+  if (!skipCache) {
+    const cached = readSourceCache(isbn, source, libraryPath);
+    if (cached) {
+      console.log(`[lookup] Per-source cache hit for ISBN ${isbn} (${source})`);
+      return cached;
+    }
+  }
+  // Unlike lookupISBN, the multi-source path does NOT download covers — it returns
+  // the raw cover_url so the client can preview remotely; the chosen cover is
+  // downloaded later, when the edit page saves.
+  const data = await SOURCE_FETCHERS[source](isbn);
+  if (!data) return null;
+  const result: LookupResult = { ...data, source };
+  writeSourceCache(isbn, source, result, libraryPath);
+  return result;
+}
+
+export async function lookupAllSources(
+  isbn: string,
+  sources: SourceId[],
+  libraryPath: string,
+  skipCache = false,
+): Promise<LookupResult[]> {
+  const settled = await Promise.allSettled(
+    sources.map((s) => lookupSource(isbn, s, libraryPath, skipCache)),
+  );
+  const results: LookupResult[] = [];
+  for (const r of settled) {
+    if (r.status === "fulfilled" && r.value) results.push(r.value);
+  }
+  return results;
+}
+
 // ---- Cover Download ----
 
 export async function downloadCover(coverUrl: string, libraryPath: string): Promise<string | null> {

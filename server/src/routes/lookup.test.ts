@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, vi, beforeEach } from "vitest";
 import express from "express";
 import { Server } from "http";
-import { existsSync, mkdirSync, rmSync } from "fs";
+import { existsSync, mkdirSync, rmSync, readdirSync } from "fs";
 import { join } from "path";
 import os from "os";
 
@@ -119,5 +119,133 @@ describe("GET /api/lookup", () => {
     expect(body.authors).toEqual(["Test Author"]);
     expect(body.publisher).toBe("Test Publisher");
     expect(body.source).toBe("openlibrary");
+  });
+});
+
+describe("GET /api/lookup/all", () => {
+  const cacheDir = join(tmpRoot, ".booktracker", "cache");
+  const attachmentsDir = join(tmpRoot, "attachments");
+
+  const olEdition = {
+    title: "OL Book",
+    authors: [{ key: "/authors/OL1A" }],
+    publishers: ["OL Publisher"],
+    publish_date: "2019",
+    number_of_pages: 100,
+    subjects: ["Fiction"],
+    covers: [12345],
+  };
+  const olAuthor = { name: "OL Author" };
+  const gbVolume = {
+    items: [
+      {
+        volumeInfo: {
+          title: "GB Book",
+          authors: ["GB Author"],
+          publisher: "GB Publisher",
+          publishedDate: "2021-05-01",
+          pageCount: 200,
+          categories: ["Fantasy"],
+          imageLinks: { thumbnail: "http://books.google.com/cover.jpg" },
+        },
+      },
+    ],
+  };
+
+  beforeAll(() => {
+    process.env.GOOGLE_BOOKS_API_KEY = "test-key";
+  });
+
+  afterAll(() => {
+    delete process.env.GOOGLE_BOOKS_API_KEY;
+  });
+
+  function mockBothSources() {
+    mockExternalFetch({
+      "openlibrary.org/isbn": { body: olEdition },
+      "openlibrary.org/authors": { body: olAuthor },
+      "googleapis.com/books": { body: gbVolume },
+    });
+  }
+
+  it("returns 400 when ISBN parameter is missing", async () => {
+    const res = await api("/api/lookup/all");
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toBe("ISBN parameter is required");
+  });
+
+  it("returns one result per source when both succeed", async () => {
+    mockBothSources();
+    const res = await api("/api/lookup/all?isbn=9780000000001&sources=google,openlibrary");
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    const sources = body.results.map((r: { source: string }) => r.source).sort();
+    expect(sources).toEqual(["google", "openlibrary"]);
+  });
+
+  it("limits the query when sources is restricted", async () => {
+    mockBothSources();
+    const res = await api("/api/lookup/all?isbn=9780000000002&sources=openlibrary");
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.results).toHaveLength(1);
+    expect(body.results[0].source).toBe("openlibrary");
+  });
+
+  it("omits a failing source but keeps the succeeding one", async () => {
+    // Only Open Library is mocked; Google Books returns ok:false → omitted.
+    mockExternalFetch({
+      "openlibrary.org/isbn": { body: olEdition },
+      "openlibrary.org/authors": { body: olAuthor },
+    });
+    const res = await api("/api/lookup/all?isbn=9780000000003&sources=google,openlibrary");
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.results).toHaveLength(1);
+    expect(body.results[0].source).toBe("openlibrary");
+  });
+
+  it("returns empty results when no source yields data", async () => {
+    mockExternalFetch({});
+    const res = await api("/api/lookup/all?isbn=9780000000004&sources=google,openlibrary");
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.results).toEqual([]);
+  });
+
+  it("does not download covers (returns cover_url, no cover_image)", async () => {
+    mockBothSources();
+    const before = readdirSync(attachmentsDir).length;
+    const res = await api("/api/lookup/all?isbn=9780000000005&sources=openlibrary");
+    const body = await res.json();
+    expect(body.results[0].cover_url).toContain("covers.openlibrary.org");
+    expect(body.results[0].cover_image).toBeUndefined();
+    expect(readdirSync(attachmentsDir).length).toBe(before);
+  });
+
+  it("uses per-source cache on a second call and skips the API with nocache", async () => {
+    mockBothSources();
+    await api("/api/lookup/all?isbn=9780000000006&sources=openlibrary");
+    expect(existsSync(join(cacheDir, "9780000000006.openlibrary.json"))).toBe(true);
+
+    // Second call with no external mock — a cache hit must still return data.
+    mockExternalFetch({});
+    const cachedRes = await api("/api/lookup/all?isbn=9780000000006&sources=openlibrary");
+    const cachedBody = await cachedRes.json();
+    expect(cachedBody.results).toHaveLength(1);
+
+    // nocache=1 forces a refetch; with no mock the source yields nothing.
+    const skipRes = await api("/api/lookup/all?isbn=9780000000006&sources=openlibrary&nocache=1");
+    const skipBody = await skipRes.json();
+    expect(skipBody.results).toEqual([]);
+  });
+
+  it("per-source cache does not collide with the single-result cache", async () => {
+    mockBothSources();
+    await api("/api/lookup?isbn=9780000000007");
+    await api("/api/lookup/all?isbn=9780000000007&sources=openlibrary");
+    expect(existsSync(join(cacheDir, "9780000000007.json"))).toBe(true);
+    expect(existsSync(join(cacheDir, "9780000000007.openlibrary.json"))).toBe(true);
   });
 });
