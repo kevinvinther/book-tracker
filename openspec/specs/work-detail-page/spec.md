@@ -79,11 +79,11 @@ Each copy card SHALL display the copy's format (from its edition), condition, ow
 - **THEN** the copy card shows both values alongside its status badge
 
 ### Requirement: Edit Work
-The page SHALL provide an "Edit Work" action that opens a modal form for editing the work's mutable fields, submitting via `PATCH /api/works/:slug`.
+The page SHALL provide an "Edit Work" action that navigates to the dedicated work edit page at `/works/:slug/edit` (replacing the former edit modal), where the work's mutable fields are edited and submitted via `PATCH /api/works/:slug`.
 
 #### Scenario: Editing a work's title
-- **WHEN** the user opens the edit modal, changes the title, and saves
-- **THEN** a `PATCH /api/works/:slug` request is sent with the new title and the page reflects the update on success
+- **WHEN** the user clicks "Edit Work", changes the title on `/works/:slug/edit`, and saves
+- **THEN** the work is updated via `PATCH /api/works/:slug` and the user is returned to the work detail page showing the new title
 
 ### Requirement: Work Detail recent notes
 The Work Detail page SHALL display a "Recent Notes" section using the `NoteTimeline` component. The section SHALL fetch and display all notes referencing the current work (both notes targeting the work directly and notes on any copies of the work). Notes SHALL appear in reverse-chronological order with an "Add Note" button. The "Add Note" button SHALL open the `NoteEditorModal` in create mode, pre-targeting the current work. When no notes exist, the section SHALL display "No notes yet."
@@ -133,3 +133,4 @@ When a work has zero authors in its `authors_meta` array, the metadata section S
 #### Scenario: Work with empty author list on detail page
 - **WHEN** a work has `authors_meta` as an empty array or `null`
 - **THEN** the author section displays "Unknown author" styled with `text-muted-foreground`
+

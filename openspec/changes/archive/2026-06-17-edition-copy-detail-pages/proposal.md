@@ -1,3 +1,9 @@
+> ⚠️ **Superseded by [`enrich-edit-pages`](../../2026-06-27-enrich-edit-pages/proposal.md)** (archived 2026-06-27)
+>
+> The "Edit Edition" modal (`EditEditionModal`) introduced here is replaced by a dedicated edition edit page at `/editions/:slug/edit`.
+
+---
+
 ## Why
 
 The Work Detail page shows editions and copies but only as flat cards with minimal info. There's no way to link into or navigate to a full edition or copy page — the edition headers and copy cards on Work Detail are not clickable. The build plan calls these out as distinct navigation targets, and once built, links from the Work Detail and future search results will finally have a destination.
