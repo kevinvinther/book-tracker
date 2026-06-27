@@ -39,4 +39,4 @@
 - [x] 6.1 Server tests for `lookupAllSources` results/errors split and `DEFAULT_SOURCES` fallback (fetchers mocked/stubbed)
 - [x] 6.2 Route tests for `title`/`author` params and the `{ results, errors }` response shape
 - [x] 6.3 Per-source parsers tested against saved HTML fixtures for each scraper (happy path + blocked + no-match)
-- [ ] 6.4 Manual check in the edit page: enable a scraper, fetch, adopt a field and a cover, save; confirm cover downloads only on save
+- [x] 6.4 Manual check in the edit page: enable a scraper, fetch, adopt a field and a cover, save; confirm cover downloads only on save
