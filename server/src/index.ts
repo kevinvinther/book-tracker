@@ -12,6 +12,7 @@ import { seedGenresYaml } from "./lib/genres.js";
 import { createWebSocketServer, broadcast } from "./lib/websocketServer.js";
 import { startWatcher } from "./lib/fileWatcher.js";
 import { createWorksRouter } from "./routes/works.js";
+import { createMergeRouter } from "./routes/merge.js";
 import { createAuthorsRouter } from "./routes/authors.js";
 import { createEditionsRouter } from "./routes/editions.js";
 import { createCopiesRouter } from "./routes/copies.js";
@@ -56,6 +57,7 @@ app.get("/api/config", (_req, res) => {
   res.json(readConfig());
 });
 
+app.use("/api/works", createMergeRouter(index, config.library_path));
 app.use("/api/works", createWorksRouter(index, config.library_path));
 app.use("/api/authors", createAuthorsRouter(index, config.library_path));
 app.use("/api/editions", createEditionsRouter(index, config.library_path));

@@ -1,4 +1,5 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { useState } from "react";
 import { useWork } from "@/hooks/useWork";
 import { useEditionsByWork } from "@/hooks/useEditionsByWork";
 import { useCopiesByWork } from "@/hooks/useCopiesByWork";
@@ -7,6 +8,7 @@ import { NoteTimeline } from "@/components/NoteTimeline";
 import { Skeleton } from "@/components/Skeleton";
 import { CoverImage } from "@/components/CoverImage";
 import { Button } from "@/components/ui/button";
+import { MergeWorksModal } from "@/components/MergeWorksModal";
 import Markdown from "react-markdown";
 
 export default function WorkDetail() {
@@ -15,6 +17,8 @@ export default function WorkDetail() {
   const { work, loading, notFound, error, refetch } = useWork(slug);
   const { editions } = useEditionsByWork(slug);
   const { copies } = useCopiesByWork(slug);
+  const [mergeOpen, setMergeOpen] = useState(false);
+  const [mergeSuccess, setMergeSuccess] = useState(false);
 
   if (notFound) {
     return (
@@ -69,10 +73,35 @@ export default function WorkDetail() {
         <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">
           ← Back to shelf
         </Link>
-        <Button variant="outline" size="sm" onClick={() => navigate(`/works/${work.slug}/edit`)}>
-          Edit Work
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => setMergeOpen(true)}>
+            Merge with another work…
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => navigate(`/works/${work.slug}/edit`)}>
+            Edit Work
+          </Button>
+        </div>
       </div>
+
+      {mergeSuccess && (
+        <p role="status" className="mb-4 rounded-sm border border-rule bg-muted/50 px-3 py-2 text-sm text-foreground">
+          Merge complete.
+        </p>
+      )}
+
+      {work && (
+        <MergeWorksModal
+          winnerSlug={work.slug}
+          winnerTitle={work.title}
+          open={mergeOpen}
+          onOpenChange={setMergeOpen}
+          onMerged={() => {
+            setMergeSuccess(true);
+            refetch();
+            window.setTimeout(() => setMergeSuccess(false), 4000);
+          }}
+        />
+      )}
 
       <div className="grid grid-cols-[100px_1fr] gap-4 md:grid-cols-[minmax(200px,280px)_1fr] md:gap-12">
         <div className="md:mr-[-1.5rem]">

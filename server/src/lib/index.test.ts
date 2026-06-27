@@ -227,6 +227,20 @@ describe("Index", () => {
       expect(notes).toHaveLength(1);
       expect(notes[0].slug).toBe("note-1");
     });
+
+    it("getNotesByWork returns notes linked to work", () => {
+      const notes = index.getNotesByWork("dune");
+      expect(notes).toHaveLength(1);
+      expect(notes[0].slug).toBe("note-1");
+    });
+
+    it("getNotesByWork returns empty array for a work with no notes", () => {
+      expect(index.getNotesByWork("dune-messiah")).toEqual([]);
+    });
+
+    it("getNotesByWork returns empty array for an unknown work slug", () => {
+      expect(index.getNotesByWork("nonexistent")).toEqual([]);
+    });
   });
 
   describe("getWorksBySeries", () => {

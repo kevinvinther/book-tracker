@@ -139,6 +139,11 @@ export class Index {
     return Array.from(this.notes.values()).filter((n) => n.copy === wikilink);
   }
 
+  getNotesByWork(workSlug: string): Note[] {
+    const wikilink = `[[works/${workSlug}]]`;
+    return Array.from(this.notes.values()).filter((n) => n.work === wikilink);
+  }
+
   getEditionByISBN(isbn: string): Edition | undefined {
     return this.getAllEditions().find((e) => e.isbn === isbn);
   }
