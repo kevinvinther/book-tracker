@@ -219,6 +219,16 @@ export interface SourceLookupResult {
   cover_url?: string;
 }
 
+export interface SourceLookupError {
+  source: string;
+  reason: string;
+}
+
+export interface MultiSourceLookupResponse {
+  results: SourceLookupResult[];
+  errors?: SourceLookupError[];
+}
+
 export interface QuickAddPayload {
   title: string;
   subtitle?: string;

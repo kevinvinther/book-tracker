@@ -2,6 +2,8 @@ import { existsSync, readFileSync, writeFileSync, renameSync, mkdirSync } from "
 import { join } from "path";
 import { homedir } from "os";
 import { randomUUID } from "crypto";
+import * as cheerio from "cheerio";
+import { fetchHtml, isbn13ToIsbn10, ScrapeError } from "./scrape.js";
 
 function expandHome(path: string): string {
   if (path.startsWith("~")) {
@@ -26,7 +28,15 @@ export interface LookupResult {
   cover_image?: string;
   cover_url?: string;
   contributors?: { role: string; name: string }[];
-  source: "openlibrary" | "google";
+  source: SourceId;
+}
+
+// A lookup query carries the ISBN plus optional title/author, which the
+// title+author image scrapers (Google Images, Kindle covers) search by.
+export interface LookupQuery {
+  isbn: string;
+  title?: string;
+  author?: string;
 }
 
 // ---- Cache ----
@@ -298,15 +308,267 @@ export async function lookupGoogleBooks(isbn: string): Promise<Omit<LookupResult
   return normalizeGoogleBooksData(data);
 }
 
+// ---- Scraper sources (Goodreads, Amazon, Google Images, Kindle covers) ----
+//
+// None of these has a usable official API, so each fetches a public page and
+// parses it with cheerio. A clean "no book here" returns null (no-match); a
+// block / parse failure throws ScrapeError so the caller can report it.
+
+interface JsonLdBook {
+  "@type"?: string | string[];
+  name?: string;
+  author?: unknown;
+  publisher?: unknown;
+  datePublished?: string;
+  numberOfPages?: number;
+  inLanguage?: string;
+  bookFormat?: string;
+  description?: string;
+  image?: string | string[];
+}
+
+function findBookJsonLd($: cheerio.CheerioAPI): JsonLdBook | null {
+  let found: JsonLdBook | null = null;
+  $('script[type="application/ld+json"]').each((_, el) => {
+    if (found) return;
+    const raw = $(el).contents().text();
+    if (!raw.trim()) return;
+    try {
+      const parsed = JSON.parse(raw);
+      const candidates = Array.isArray(parsed) ? parsed : [parsed];
+      for (const c of candidates) {
+        const type = c?.["@type"];
+        const isBook = type === "Book" || (Array.isArray(type) && type.includes("Book")) || c?.bookFormat;
+        if (isBook && c.name) {
+          found = c as JsonLdBook;
+          return;
+        }
+      }
+    } catch {
+      // Ignore malformed JSON-LD blocks; other extraction paths still apply.
+    }
+  });
+  return found;
+}
+
+function jsonLdAuthorNames(author: unknown): string[] {
+  const items = Array.isArray(author) ? author : author ? [author] : [];
+  return items
+    .map((a) => (typeof a === "string" ? a : (a as { name?: string })?.name))
+    .filter((n): n is string => typeof n === "string" && n.trim() !== "")
+    .map((n) => n.trim());
+}
+
+function firstImage(image: string | string[] | undefined): string | undefined {
+  if (!image) return undefined;
+  return Array.isArray(image) ? image[0] : image;
+}
+
+export async function lookupGoodreads(query: LookupQuery): Promise<SourceData | null> {
+  // The /search endpoint is bot-blocked (returns an empty 202). The legacy
+  // /book/isbn/<isbn> endpoint 200s and redirects to the book page.
+  const html = await fetchHtml(`https://www.goodreads.com/book/isbn/${encodeURIComponent(query.isbn)}`);
+  const $ = cheerio.load(html);
+  const ld = findBookJsonLd($);
+
+  const title =
+    ld?.name?.trim() ||
+    $('h1[data-testid="bookTitle"]').first().text().trim() ||
+    $('meta[property="og:title"]').attr("content")?.trim() ||
+    "";
+  // A bare search-results page (no redirect to a book) has no book title.
+  if (!title) return null;
+
+  const result: SourceData = { title, authors: [], genres: [] };
+
+  const authors = ld ? jsonLdAuthorNames(ld.author) : [];
+  if (authors.length === 0) {
+    $('[data-testid="name"] a.ContributorLink, a.ContributorLink__name').each((_, el) => {
+      const name = $(el).text().trim();
+      if (name) authors.push(name);
+    });
+  }
+  result.authors = authors;
+
+  const description = ld?.description?.trim() || $('meta[property="og:description"]').attr("content")?.trim();
+  if (description) result.description = description;
+
+  const publisher = (ld?.publisher as { name?: string })?.name ?? (typeof ld?.publisher === "string" ? ld.publisher : undefined);
+  if (publisher) result.publisher = publisher;
+
+  // Goodreads' JSON-LD omits the date; the page shows "First published <date>".
+  const pubInfo = $('[data-testid="publicationInfo"]').first().text().trim();
+  const pubMatch = pubInfo.match(/^(?:First p|P)ublished\s+(.+)$/i);
+  if (ld?.datePublished) result.publish_date = ld.datePublished;
+  else if (pubMatch) result.publish_date = pubMatch[1].trim();
+  if (ld?.numberOfPages) result.page_count = ld.numberOfPages;
+  if (ld?.inLanguage) result.language = ld.inLanguage;
+  if (ld?.bookFormat) result.format = ld.bookFormat.replace(/^https?:\/\/schema\.org\//, "");
+
+  const cover = firstImage(ld?.image) || $('meta[property="og:image"]').attr("content");
+  if (cover) result.cover_url = cover;
+
+  const genres: string[] = [];
+  $('[data-testid="genresList"] a, .BookPageMetadataSection__genreButton a').each((_, el) => {
+    const g = $(el).text().toLowerCase().trim();
+    if (g && !genres.includes(g)) genres.push(g);
+  });
+  if (genres.length > 0) result.genres = genres;
+
+  return result;
+}
+
+export async function lookupAmazon(query: LookupQuery): Promise<SourceData | null> {
+  const isbn10 = isbn13ToIsbn10(query.isbn);
+  const url = isbn10
+    ? `https://www.amazon.com/dp/${isbn10}`
+    : `https://www.amazon.com/s?k=${encodeURIComponent(query.isbn)}&i=stripbooks`;
+  const html = await fetchHtml(url);
+  const $ = cheerio.load(html);
+
+  const title = $("#productTitle").first().text().trim();
+  // No product title means either a search page with no hit or a layout we
+  // can't read — treat as a no-match rather than an error.
+  if (!title) return null;
+
+  const result: SourceData = { title, authors: [], genres: [] };
+
+  const authors: string[] = [];
+  $("#bylineInfo .author a.a-link-normal, #bylineInfo span.author a").each((_, el) => {
+    const name = $(el).text().trim();
+    if (name && !authors.includes(name)) authors.push(name);
+  });
+  result.authors = authors;
+
+  const description = $("#bookDescription_feature_div").text().trim();
+  if (description) result.description = description;
+
+  // Cover: #imgBlkFront carries a JSON map of {url: [w,h]}; take the first key.
+  const dynamic = $("#imgBlkFront").attr("data-a-dynamic-image") || $("#landingImage").attr("data-a-dynamic-image");
+  let cover: string | undefined;
+  if (dynamic) {
+    try {
+      cover = Object.keys(JSON.parse(dynamic))[0];
+    } catch {
+      // fall through to src
+    }
+  }
+  cover = cover || $("#imgBlkFront").attr("src") || $("#landingImage").attr("src");
+  if (cover) result.cover_url = cover;
+
+  // Format (e.g. "Hardcover") from the product subtitle binding.
+  const format = $("#productSubtitle").text().trim().split("–")[0].trim();
+  if (format) result.format = format;
+
+  // Detail bullets: "Publisher : ...", "Language : ...", "Print length : 320 pages",
+  // "Publication date : ...".
+  $("#detailBullets_feature_div li, #productDetailsTable li").each((_, el) => {
+    // Amazon detail bullets are padded with bidi/zero-width marks (U+200E etc.).
+    const text = $(el)
+      .text()
+      .replace(/[\u200e\u200f\u202a-\u202e\ufeff]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+    const m = text.match(/^([^:]+):\s*(.+)$/);
+    if (!m) return;
+    const label = m[1].toLowerCase().trim();
+    const value = m[2].trim();
+    if (label.includes("publisher") && !result.publisher) {
+      result.publisher = value.replace(/\s*\([^)]*\)\s*$/, "").trim();
+    } else if (label.includes("language") && !result.language) {
+      result.language = value;
+    } else if ((label.includes("print length") || label.includes("hardcover") || label.includes("paperback")) && !result.page_count) {
+      const pages = value.match(/(\d+)\s*pages?/);
+      if (pages) result.page_count = Number(pages[1]);
+    } else if (label.includes("publication date") && !result.publish_date) {
+      result.publish_date = value;
+    }
+  });
+
+  // Genres from the category breadcrumb trail (drop the leading "Books").
+  const genres: string[] = [];
+  $("#wayfinding-breadcrumbs_feature_div a").each((_, el) => {
+    const g = $(el).text().toLowerCase().trim();
+    if (g && g !== "books" && !genres.includes(g)) genres.push(g);
+  });
+  if (genres.length > 0) result.genres = genres;
+
+  return result;
+}
+
+// Cover-only sources: search by title + author, return only a cover URL.
+
+function coverResult(coverUrl: string): SourceData {
+  return { title: "", authors: [], genres: [], cover_url: coverUrl };
+}
+
+function imageSearchQuery(query: LookupQuery): string | null {
+  if (!query.title || query.title.trim() === "") return null;
+  return [query.title.trim(), query.author?.trim()].filter(Boolean).join(" ");
+}
+
+export async function lookupGoogleImages(query: LookupQuery): Promise<SourceData | null> {
+  const base = imageSearchQuery(query);
+  if (!base) return null;
+  const html = await fetchHtml(`https://www.google.com/search?tbm=isch&q=${encodeURIComponent(`${base} book cover`)}`);
+  const $ = cheerio.load(html);
+
+  let cover: string | undefined;
+  $("img").each((_, el) => {
+    if (cover) return;
+    const src = $(el).attr("src") || $(el).attr("data-src");
+    if (src && /^https?:\/\//.test(src) && !/\/images\/branding\//.test(src)) {
+      cover = src;
+    }
+  });
+  if (!cover) return null;
+  return coverResult(cover);
+}
+
+export async function lookupKindleCovers(query: LookupQuery): Promise<SourceData | null> {
+  const base = imageSearchQuery(query);
+  if (!base) return null;
+  const html = await fetchHtml(`https://www.amazon.com/s?k=${encodeURIComponent(base)}&i=digital-text`);
+  const $ = cheerio.load(html);
+
+  const cover = $("img.s-image").first().attr("src");
+  if (!cover) return null;
+  return coverResult(cover);
+}
+
 // ---- Multi-source lookup ----
 
-export type SourceId = "google" | "openlibrary";
+export type SourceId =
+  | "google"
+  | "openlibrary"
+  | "goodreads"
+  | "amazon"
+  | "googleimages"
+  | "kindlecovers";
 
-export const ALL_SOURCES: SourceId[] = ["google", "openlibrary"];
+// Every selectable source.
+export const ALL_SOURCES: SourceId[] = [
+  "google",
+  "openlibrary",
+  "goodreads",
+  "amazon",
+  "googleimages",
+  "kindlecovers",
+];
 
-const SOURCE_FETCHERS: Record<SourceId, (isbn: string) => Promise<Omit<LookupResult, "source"> | null>> = {
-  google: lookupGoogleBooks,
-  openlibrary: lookupOpenLibrary,
+// Queried when the request omits `sources`. The two cover-only image scrapers
+// are the slowest/most fragile, so they are opt-in (excluded from the default).
+export const DEFAULT_SOURCES: SourceId[] = ["google", "openlibrary", "goodreads", "amazon"];
+
+type SourceData = Omit<LookupResult, "source">;
+
+const SOURCE_FETCHERS: Record<SourceId, (query: LookupQuery) => Promise<SourceData | null>> = {
+  google: (q) => lookupGoogleBooks(q.isbn),
+  openlibrary: (q) => lookupOpenLibrary(q.isbn),
+  goodreads: lookupGoodreads,
+  amazon: lookupAmazon,
+  googleimages: lookupGoogleImages,
+  kindlecovers: lookupKindleCovers,
 };
 
 function sourceCachePath(isbn: string, source: SourceId, libraryPath: string): string {
@@ -342,42 +604,62 @@ export function writeSourceCache(isbn: string, source: SourceId, data: LookupRes
 }
 
 async function lookupSource(
-  isbn: string,
+  query: LookupQuery,
   source: SourceId,
   libraryPath: string,
   skipCache: boolean,
 ): Promise<LookupResult | null> {
   if (!skipCache) {
-    const cached = readSourceCache(isbn, source, libraryPath);
+    const cached = readSourceCache(query.isbn, source, libraryPath);
     if (cached) {
-      console.log(`[lookup] Per-source cache hit for ISBN ${isbn} (${source})`);
+      console.log(`[lookup] Per-source cache hit for ISBN ${query.isbn} (${source})`);
       return cached;
     }
   }
   // Unlike lookupISBN, the multi-source path does NOT download covers — it returns
   // the raw cover_url so the client can preview remotely; the chosen cover is
-  // downloaded later, when the edit page saves.
-  const data = await SOURCE_FETCHERS[source](isbn);
+  // downloaded later, when the edit page saves. A scraper may throw ScrapeError
+  // here; that propagates and becomes an `errors` entry in lookupAllSources.
+  const data = await SOURCE_FETCHERS[source](query);
   if (!data) return null;
   const result: LookupResult = { ...data, source };
-  writeSourceCache(isbn, source, result, libraryPath);
+  writeSourceCache(query.isbn, source, result, libraryPath);
   return result;
 }
 
+export interface SourceLookupError {
+  source: SourceId;
+  reason: string;
+}
+
+export interface MultiSourceLookup {
+  results: LookupResult[];
+  errors: SourceLookupError[];
+}
+
 export async function lookupAllSources(
-  isbn: string,
+  query: LookupQuery,
   sources: SourceId[],
   libraryPath: string,
   skipCache = false,
-): Promise<LookupResult[]> {
+): Promise<MultiSourceLookup> {
   const settled = await Promise.allSettled(
-    sources.map((s) => lookupSource(isbn, s, libraryPath, skipCache)),
+    sources.map((s) => lookupSource(query, s, libraryPath, skipCache)),
   );
   const results: LookupResult[] = [];
-  for (const r of settled) {
-    if (r.status === "fulfilled" && r.value) results.push(r.value);
-  }
-  return results;
+  const errors: SourceLookupError[] = [];
+  settled.forEach((r, i) => {
+    const source = sources[i];
+    if (r.status === "fulfilled") {
+      // A null value is a clean no-match — omit it from both arrays.
+      if (r.value) results.push(r.value);
+    } else {
+      const reason = r.reason instanceof ScrapeError ? r.reason.reason : "error";
+      console.warn(`[lookup] Source ${source} failed for ISBN ${query.isbn}: ${reason}`);
+      errors.push({ source, reason });
+    }
+  });
+  return { results, errors };
 }
 
 // ---- Cover Download ----

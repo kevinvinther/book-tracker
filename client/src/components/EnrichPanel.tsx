@@ -1,17 +1,48 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { SourceLookupResult } from "@/lib/types";
+import type { SourceLookupResult, SourceLookupError } from "@/lib/types";
 
 const SOURCES = [
   { id: "google", label: "Google Books" },
   { id: "openlibrary", label: "Open Library" },
+  { id: "goodreads", label: "Goodreads" },
+  { id: "amazon", label: "Amazon" },
+  { id: "googleimages", label: "Google Images" },
+  { id: "kindlecovers", label: "Kindle covers" },
 ] as const;
 
 const SOURCE_LABELS: Record<string, string> = {
   google: "Google Books",
   openlibrary: "Open Library",
+  goodreads: "Goodreads",
+  amazon: "Amazon",
+  googleimages: "Google Images",
+  kindlecovers: "Kindle covers",
 };
+
+// Default selection: the clean APIs plus the full-metadata scrapers are on; the
+// two cover-only image scrapers are opt-in (slowest / most often blocked).
+const DEFAULT_SELECTED: Record<string, boolean> = {
+  google: true,
+  openlibrary: true,
+  goodreads: true,
+  amazon: true,
+  googleimages: false,
+  kindlecovers: false,
+};
+
+const FAILURE_LABELS: Record<string, string> = {
+  blocked: "blocked",
+  timeout: "timed out",
+  parse_error: "couldn't parse",
+  http_error: "request failed",
+  error: "failed",
+};
+
+function failureLabel(reason: string): string {
+  return FAILURE_LABELS[reason] ?? "failed";
+}
 
 function sourceLabel(id: string): string {
   return SOURCE_LABELS[id] ?? id;
@@ -53,17 +84,18 @@ function displayValue(result: SourceLookupResult, field: EnrichField): string | 
 interface EnrichPanelProps {
   isbn: string;
   current: Record<EnrichField, string>;
-  onAdopt: (field: EnrichField, value: unknown) => void;
+  onAdopt: (field: EnrichField, value: unknown, mode?: "replace" | "merge") => void;
   onAdoptCover: (coverUrl: string) => void;
 }
 
 export function EnrichPanel({ isbn, current, onAdopt, onAdoptCover }: EnrichPanelProps) {
-  const [selected, setSelected] = useState<Record<string, boolean>>({ google: true, openlibrary: true });
+  const [selected, setSelected] = useState<Record<string, boolean>>({ ...DEFAULT_SELECTED });
   const [skipCache, setSkipCache] = useState(false);
   const [loading, setLoading] = useState(false);
   const [fetched, setFetched] = useState(false);
   const [error, setError] = useState("");
   const [results, setResults] = useState<SourceLookupResult[]>([]);
+  const [sourceErrors, setSourceErrors] = useState<SourceLookupError[]>([]);
 
   const hasIsbn = isbn.trim() !== "";
   const chosenSources = SOURCES.filter((s) => selected[s.id]).map((s) => s.id);
@@ -73,6 +105,9 @@ export function EnrichPanel({ isbn, current, onAdopt, onAdoptCover }: EnrichPane
     setLoading(true);
     setError("");
     const params = new URLSearchParams({ isbn: isbn.trim(), sources: chosenSources.join(",") });
+    // The cover-only image sources search by text, so forward title + author.
+    if (current.title?.trim()) params.set("title", current.title.trim());
+    if (current.authors?.trim()) params.set("author", current.authors.trim());
     if (skipCache) params.set("nocache", "1");
 
     fetch(`/api/lookup/all?${params.toString()}`)
@@ -80,8 +115,9 @@ export function EnrichPanel({ isbn, current, onAdopt, onAdoptCover }: EnrichPane
         if (!res.ok) throw new Error(`Lookup failed (${res.status})`);
         return res.json();
       })
-      .then((data: { results: SourceLookupResult[] }) => {
+      .then((data: { results: SourceLookupResult[]; errors?: SourceLookupError[] }) => {
         setResults(data.results ?? []);
+        setSourceErrors(data.errors ?? []);
         setFetched(true);
       })
       .catch((e) => setError(e.message || "Lookup failed"))
@@ -124,6 +160,16 @@ export function EnrichPanel({ isbn, current, onAdopt, onAdoptCover }: EnrichPane
 
           {error && <p role="alert" className="mt-2 text-xs text-destructive">{error}</p>}
 
+          {sourceErrors.length > 0 && (
+            <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+              {sourceErrors.map((e) => (
+                <li key={e.source} className="text-xs text-amber-600 dark:text-amber-500">
+                  {sourceLabel(e.source)} — {failureLabel(e.reason)}
+                </li>
+              ))}
+            </ul>
+          )}
+
           {fetched && results.length === 0 && !loading && (
             <p className="mt-3 text-xs text-muted-foreground">No results from the selected sources.</p>
           )}
@@ -151,15 +197,29 @@ export function EnrichPanel({ isbn, current, onAdopt, onAdoptCover }: EnrichPane
                         const same = cur !== "" && o.text === cur;
                         return (
                           <div key={o.source} className="flex items-start gap-3">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              className="h-7 w-14 shrink-0 justify-center"
-                              onClick={() => onAdopt(f.key, o.raw)}
-                            >
-                              Use
-                            </Button>
+                            <div className="flex w-14 shrink-0 flex-col gap-1">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-7 w-full justify-center"
+                                onClick={() => onAdopt(f.key, o.raw, "replace")}
+                              >
+                                Use
+                              </Button>
+                              {f.key === "genres" && (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 w-full justify-center text-xs"
+                                  title="Merge these genres into the current set"
+                                  onClick={() => onAdopt(f.key, o.raw, "merge")}
+                                >
+                                  Add
+                                </Button>
+                              )}
+                            </div>
                             <span className="w-28 shrink-0 pt-1 text-xs text-muted-foreground">{sourceLabel(o.source)}</span>
                             <span className={cn("min-w-0 flex-1 pt-1 text-sm", same ? "text-muted-foreground" : "text-foreground")}>
                               {o.text}

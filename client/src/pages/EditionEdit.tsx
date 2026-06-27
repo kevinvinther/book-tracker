@@ -120,7 +120,7 @@ export default function EditionEdit() {
       .finally(() => setUploading(false));
   }
 
-  function handleAdopt(field: EnrichField, value: unknown) {
+  function handleAdopt(field: EnrichField, value: unknown, mode: "replace" | "merge" = "replace") {
     switch (field) {
       case "title": setTitle(String(value)); break;
       case "subtitle": setSubtitle(String(value)); break;
@@ -131,7 +131,13 @@ export default function EditionEdit() {
       case "format": setFormat(String(value)); break;
       case "language": setLanguage(String(value)); break;
       case "authors": setAuthors((value as string[]).map((n) => ({ slug: `new:${n}`, name: n }))); break;
-      case "genres": setGenres(value as string[]); break;
+      case "genres":
+        setGenres((prev) =>
+          mode === "merge"
+            ? Array.from(new Set([...prev, ...(value as string[])]))
+            : (value as string[]),
+        );
+        break;
     }
   }
 
