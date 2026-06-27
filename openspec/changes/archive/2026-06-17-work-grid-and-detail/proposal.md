@@ -1,3 +1,9 @@
+> ⚠️ **Superseded by [`enrich-edit-pages`](../../2026-06-27-enrich-edit-pages/proposal.md)** (archived 2026-06-27)
+>
+> The "Edit Work" modal (`EditWorkModal`) introduced here is replaced by a dedicated work edit page at `/works/:slug/edit`.
+
+---
+
 ## Why
 
 The backend has full CRUD for Work, Author, Edition, Copy, and Series, but there is no UI to browse or manage any of it. The Work Grid and Work Detail pages are the front door of the app — without them there is no way to see the library at all.

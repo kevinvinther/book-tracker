@@ -37,15 +37,15 @@ The Edition Detail page SHALL display all copies linked to the edition as a list
 - **THEN** the page displays "No copies of this edition yet"
 
 ### Requirement: Edition Detail page has Add Copy and Edit Edition buttons
-The Edition Detail page SHALL display an "Add Copy" button that opens a modal with fields for condition, location, status, and acquisition_source, submitting `POST /api/copies`. It SHALL also display an "Edit Edition" button that opens a modal for mutable edition fields, submitting `PATCH /api/editions/:slug`.
+The Edition Detail page SHALL display an "Add Copy" button that opens a modal with fields for condition, location, status, and acquisition_source, submitting `POST /api/copies`. It SHALL also display an "Edit Edition" button that navigates to the dedicated edition edit page at `/editions/:slug/edit` (replacing the former edit modal).
 
 #### Scenario: Adding a copy
 - **WHEN** the user clicks "Add Copy", fills in condition and location, and submits
 - **THEN** a new copy is created via `POST /api/copies` and the page refreshes
 
 #### Scenario: Editing edition metadata
-- **WHEN** the user clicks "Edit Edition", changes the publisher, and submits
-- **THEN** the edition is updated via `PATCH /api/editions/:slug` and the page refreshes
+- **WHEN** the user clicks "Edit Edition"
+- **THEN** the app navigates to `/editions/:slug/edit`, where the edition (and its parent work's shared fields) can be edited and enriched from external sources
 
 ### Requirement: Edition Detail notes
 The Edition Detail page SHALL display a "Notes" section using the `NoteTimeline` component. The section SHALL fetch and display all notes referencing the current edition, in reverse-chronological order with an "Add Note" button. The "Add Note" button SHALL open the `NoteEditorModal` in create mode, pre-targeting the current edition. When no notes exist, the section SHALL display "No notes yet."
@@ -83,3 +83,4 @@ When an edition has no ISBN, the metadata section SHALL display the ISBN label w
 #### Scenario: Edition with ISBN shows value
 - **WHEN** an edition has an `isbn` value set
 - **THEN** the ISBN row is displayed with the actual ISBN value (existing behavior, unchanged)
+
