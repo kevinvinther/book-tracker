@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { lookupISBN, lookupAllSources, ALL_SOURCES, SourceId } from "../lib/lookup.js";
+import { lookupISBN, lookupAllSources, ALL_SOURCES, DEFAULT_SOURCES, SourceId } from "../lib/lookup.js";
 
 export function createLookupRouter(libraryPath: string): Router {
   const router = Router();
@@ -16,12 +16,20 @@ export function createLookupRouter(libraryPath: string): Router {
     const sourcesParam = typeof req.query.sources === "string" ? req.query.sources : "";
     const requested = sourcesParam
       ? sourcesParam.split(",").map((s) => s.trim()).filter(Boolean)
-      : ALL_SOURCES;
+      : DEFAULT_SOURCES;
     const sources = requested.filter((s): s is SourceId => (ALL_SOURCES as string[]).includes(s));
 
+    const title = typeof req.query.title === "string" ? req.query.title.trim() : undefined;
+    const author = typeof req.query.author === "string" ? req.query.author.trim() : undefined;
+
     try {
-      const results = await lookupAllSources(isbn.trim(), sources, libraryPath, nocache);
-      res.json({ results });
+      const { results, errors } = await lookupAllSources(
+        { isbn: isbn.trim(), title: title || undefined, author: author || undefined },
+        sources,
+        libraryPath,
+        nocache,
+      );
+      res.json({ results, errors });
     } catch (err) {
       console.error("[lookup] Error during multi-source lookup:", err);
       res.status(500).json({ error: "Lookup failed" });

@@ -248,4 +248,55 @@ describe("GET /api/lookup/all", () => {
     expect(existsSync(join(cacheDir, "9780000000007.json"))).toBe(true);
     expect(existsSync(join(cacheDir, "9780000000007.openlibrary.json"))).toBe(true);
   });
+
+  it("includes an errors array in the response", async () => {
+    mockBothSources();
+    const res = await api("/api/lookup/all?isbn=9780000000010&sources=google,openlibrary");
+    const body = await res.json();
+    expect(Array.isArray(body.errors)).toBe(true);
+    expect(body.errors).toEqual([]);
+  });
+
+  it("forwards title and author to text-search cover sources", async () => {
+    const calls: string[] = [];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation((url: string) => {
+        if (url.includes("localhost") || url.includes("127.0.0.1")) return realFetch(url);
+        calls.push(url);
+        return Promise.resolve({
+          status: 200,
+          ok: true,
+          text: () => Promise.resolve('<html><body><img src="https://example.com/c.jpg"></body></html>'),
+        } as unknown as Response);
+      }),
+    );
+
+    const res = await api(
+      "/api/lookup/all?isbn=9780000000011&sources=googleimages&title=Dune&author=Frank%20Herbert&nocache=1",
+    );
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.results[0].cover_url).toBe("https://example.com/c.jpg");
+
+    const imgCall = calls.find((u) => u.includes("tbm=isch"));
+    expect(imgCall).toBeDefined();
+    expect(decodeURIComponent(imgCall!)).toContain("Dune");
+    expect(decodeURIComponent(imgCall!)).toContain("Frank Herbert");
+  });
+
+  it("reports a blocked scraper in errors", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockImplementation((url: string) => {
+        if (url.includes("localhost") || url.includes("127.0.0.1")) return realFetch(url);
+        return Promise.resolve({ status: 503, ok: false } as unknown as Response);
+      }),
+    );
+
+    const res = await api("/api/lookup/all?isbn=9780000000012&sources=amazon&nocache=1");
+    const body = await res.json();
+    expect(body.results).toEqual([]);
+    expect(body.errors).toEqual([{ source: "amazon", reason: "blocked" }]);
+  });
 });
