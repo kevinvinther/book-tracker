@@ -99,7 +99,9 @@ export function createEditionsRouter(index: Index, libraryPath: string): Router 
     const { frontmatter } = readFile(filePath);
 
     for (const field of MUTABLE_FIELDS) {
-      if (req.body[field] !== undefined) {
+      if (req.body[field] === null) {
+        delete frontmatter[field];
+      } else if (req.body[field] !== undefined) {
         frontmatter[field] = req.body[field];
       }
     }

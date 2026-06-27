@@ -1,10 +1,9 @@
 import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useEdition } from "@/hooks/useEdition";
 import { useCopiesByEdition } from "@/hooks/useCopiesByEdition";
 import { CopyCard } from "@/components/CopyCard";
 import { NoteTimeline } from "@/components/NoteTimeline";
-import { EditEditionModal } from "@/components/EditEditionModal";
 import { AddCopyModal } from "@/components/AddCopyModal";
 import { Skeleton } from "@/components/Skeleton";
 import { Button } from "@/components/ui/button";
@@ -12,8 +11,8 @@ import Markdown from "react-markdown";
 
 export default function EditionDetail() {
   const { slug = "" } = useParams();
+  const navigate = useNavigate();
   const { edition, loading, notFound, error, refetch } = useEdition(slug);
-  const [editOpen, setEditOpen] = useState(false);
   const [addCopyOpen, setAddCopyOpen] = useState(false);
 
   const editionSlugForCopies = edition?.slug ?? slug;
@@ -73,7 +72,7 @@ export default function EditionDetail() {
           <Button variant="outline" size="sm" onClick={() => setAddCopyOpen(true)}>
             Add Copy
           </Button>
-          <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+          <Button variant="outline" size="sm" onClick={() => navigate(`/editions/${edition.slug}/edit`)}>
             Edit Edition
           </Button>
         </div>
@@ -169,7 +168,6 @@ export default function EditionDetail() {
         </details>
       )}
 
-      <EditEditionModal edition={edition} open={editOpen} onOpenChange={setEditOpen} onSaved={refetch} />
       <AddCopyModal
         editionSlug={edition.slug}
         workSlug={editionWorkForCopy}

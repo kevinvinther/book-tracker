@@ -1,11 +1,9 @@
-import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useWork } from "@/hooks/useWork";
 import { useEditionsByWork } from "@/hooks/useEditionsByWork";
 import { useCopiesByWork } from "@/hooks/useCopiesByWork";
 import { CopyCard } from "@/components/CopyCard";
 import { NoteTimeline } from "@/components/NoteTimeline";
-import { EditWorkModal } from "@/components/EditWorkModal";
 import { Skeleton } from "@/components/Skeleton";
 import { CoverImage } from "@/components/CoverImage";
 import { Button } from "@/components/ui/button";
@@ -13,10 +11,10 @@ import Markdown from "react-markdown";
 
 export default function WorkDetail() {
   const { slug = "" } = useParams();
+  const navigate = useNavigate();
   const { work, loading, notFound, error, refetch } = useWork(slug);
   const { editions } = useEditionsByWork(slug);
   const { copies } = useCopiesByWork(slug);
-  const [editOpen, setEditOpen] = useState(false);
 
   if (notFound) {
     return (
@@ -71,7 +69,7 @@ export default function WorkDetail() {
         <Link to="/" className="text-sm text-muted-foreground hover:text-foreground">
           ← Back to shelf
         </Link>
-        <Button variant="outline" size="sm" onClick={() => setEditOpen(true)}>
+        <Button variant="outline" size="sm" onClick={() => navigate(`/works/${work.slug}/edit`)}>
           Edit Work
         </Button>
       </div>
@@ -178,8 +176,6 @@ export default function WorkDetail() {
           </div>
         </details>
       )}
-
-      <EditWorkModal work={work} open={editOpen} onOpenChange={setEditOpen} onSaved={refetch} />
     </div>
   );
 }

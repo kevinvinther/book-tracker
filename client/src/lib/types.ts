@@ -23,6 +23,7 @@ export interface Work {
   series_meta?: SeriesMeta | null;
   series_position?: number;
   primary_cover?: string;
+  aliases?: string[];
   created_at: string;
   edition_count?: number;
   copy_count?: number;
@@ -201,6 +202,21 @@ export interface Note {
   edition_meta: NoteEditionMeta | null;
   work_meta: NoteWorkMeta | null;
   read_through_meta: NoteReadThroughMeta | null;
+}
+
+export interface SourceLookupResult {
+  source: string;
+  title: string;
+  subtitle?: string;
+  authors: string[];
+  publisher?: string;
+  publish_date?: string;
+  page_count?: number;
+  format?: string;
+  language?: string;
+  genres?: string[];
+  description?: string;
+  cover_url?: string;
 }
 
 export interface QuickAddPayload {

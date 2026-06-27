@@ -18,6 +18,7 @@ import { createCopiesRouter } from "./routes/copies.js";
 import { createSeriesRouter } from "./routes/series.js";
 import { createQuickAddRouter } from "./routes/quick-add.js";
 import { createLookupRouter } from "./routes/lookup.js";
+import { downloadCover } from "./lib/lookup.js";
 import { createNotesRouter } from "./routes/notes.js";
 import { createSearchRouter } from "./routes/search.js";
 import { createStatsRouter } from "./routes/stats.js";
@@ -93,6 +94,21 @@ app.post("/api/attachments/upload", upload.single("file"), (req, res) => {
       return;
     }
     res.json({ filename: req.file.filename });
+  });
+
+  // Download a remote image (e.g. a cover chosen during enrich) into attachments/.
+  app.post("/api/attachments/download", async (req, res) => {
+    const url = req.body?.url;
+    if (!url || typeof url !== "string" || !url.trim()) {
+      res.status(400).json({ error: "url is required" });
+      return;
+    }
+    const filename = await downloadCover(url.trim(), config.library_path);
+    if (!filename) {
+      res.status(502).json({ error: "Failed to download image" });
+      return;
+    }
+    res.json({ filename });
   });
 
   // Multer error handling middleware
