@@ -1,3 +1,9 @@
+> ⚠️ **Superseded by [`fix-stats-page`](../../2026-06-30-fix-stats-page/proposal.md)** (archived 2026-06-30)
+>
+> The pages-per-day definition (active days per read-through), the date-range edge behavior (date-only `to` treated as start-of-day and the degenerate `from === to` skip), and the unfiltered rating breakdowns were replaced. Other reading/library/note computations carry forward.
+
+---
+
 ## Supersedes
 
 None.

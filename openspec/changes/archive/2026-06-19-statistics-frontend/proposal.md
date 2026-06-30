@@ -1,3 +1,9 @@
+> ⚠️ **Superseded by [`fix-stats-page`](../../2026-06-30-fix-stats-page/proposal.md)** (archived 2026-06-30)
+>
+> The three-section layout (Library → Reading → Notes), the four-option time-range selector, and the uncapped genre/series charts were replaced by a two-zone layout, an expanded preset set, and capped charts. Chart components and data-fetching carry forward.
+
+---
+
 ## Supersedes
 
 None.
