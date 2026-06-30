@@ -6,6 +6,7 @@ import { WorkCard } from "@/components/WorkCard";
 import { ResponsiveDialog } from "@/components/ResponsiveDialog";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { normalizeGenre } from "@/lib/genres";
 
 const SORT_OPTIONS = [
   { value: "created_at", label: "Date added" },
@@ -45,7 +46,10 @@ export default function WorkGrid() {
     return Array.from(set).sort();
   }, [works]);
 
-  const visibleWorks = genre ? works.filter((w) => w.genres?.includes(genre)) : works;
+  const normalizedGenre = genre ? normalizeGenre(genre) : "";
+  const visibleWorks = normalizedGenre
+    ? works.filter((w) => w.genres?.some((g) => normalizeGenre(g) === normalizedGenre))
+    : works;
 
   function setSort(next: string) {
     setSearchParams((prev) => {
@@ -64,8 +68,8 @@ export default function WorkGrid() {
     });
   }
 
-  function handleGenreSelect(g: string) {
-    setGenre(g === genre ? "" : g);
+  function handleGenreSelect(next: string) {
+    setGenre(next);
     setFilterOpen(false);
   }
 
@@ -132,19 +136,22 @@ export default function WorkGrid() {
           >
             All
           </button>
-          {genres.map((g) => (
-            <button
-              key={g}
-              onClick={() => setGenre(g === genre ? "" : g)}
-              aria-pressed={genre === g}
-              className={cn(
-                "rounded-full px-3 py-1 text-xs font-medium transition-colors",
-                genre === g ? "bg-stamp text-stamp-foreground" : "bg-secondary text-secondary-foreground hover:bg-muted",
-              )}
-            >
-              {g}
-            </button>
-          ))}
+          {genres.map((g) => {
+            const active = normalizeGenre(g) === normalizedGenre;
+            return (
+              <button
+                key={g}
+                onClick={() => setGenre(active ? "" : g)}
+                aria-pressed={active}
+                className={cn(
+                  "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                  active ? "bg-stamp text-stamp-foreground" : "bg-secondary text-secondary-foreground hover:bg-muted",
+                )}
+              >
+                {g}
+              </button>
+            );
+          })}
         </div>
       )}
 
@@ -160,19 +167,22 @@ export default function WorkGrid() {
           >
             All
           </button>
-          {genres.map((g) => (
-            <button
-              key={g}
-              onClick={() => handleGenreSelect(g === genre ? "" : g)}
-              aria-pressed={genre === g}
-              className={cn(
-                "rounded-full px-4 py-2 md:py-1 text-sm font-medium transition-colors",
-                genre === g ? "bg-stamp text-stamp-foreground" : "bg-secondary text-secondary-foreground hover:bg-muted",
-              )}
-            >
-              {g}
-            </button>
-          ))}
+          {genres.map((g) => {
+            const active = normalizeGenre(g) === normalizedGenre;
+            return (
+              <button
+                key={g}
+                onClick={() => handleGenreSelect(active ? "" : g)}
+                aria-pressed={active}
+                className={cn(
+                  "rounded-full px-4 py-2 md:py-1 text-sm font-medium transition-colors",
+                  active ? "bg-stamp text-stamp-foreground" : "bg-secondary text-secondary-foreground hover:bg-muted",
+                )}
+              >
+                {g}
+              </button>
+            );
+          })}
         </div>
       </ResponsiveDialog>
 

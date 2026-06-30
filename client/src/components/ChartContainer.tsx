@@ -6,6 +6,8 @@ interface ChartContainerProps {
   isEmpty?: boolean;
   emptyMessage?: string;
   height?: number;
+  /** Optional interactive content rendered below the chart (e.g. a "Show more" toggle). */
+  footer?: ReactNode;
 }
 
 export default function ChartContainer({
@@ -14,6 +16,7 @@ export default function ChartContainer({
   isEmpty = false,
   emptyMessage = "No data yet",
   height = 200,
+  footer,
 }: ChartContainerProps) {
   return (
     <div className="rounded-lg border border-rule bg-card p-4">
@@ -27,6 +30,7 @@ export default function ChartContainer({
           {children}
         </div>
       )}
+      {!isEmpty && footer}
     </div>
   );
 }

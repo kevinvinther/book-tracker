@@ -384,16 +384,13 @@ describe("Statistics API", () => {
       expect(body.reading.total_pages_read).toBe(1035);
     });
 
-    it("computes avg pages per day from active days in range", async () => {
+    it("computes avg pages per day from calendar days elapsed in range", async () => {
       const res = await api("/api/stats?year=2025");
       const body = await res.json();
-      // fellowship-hc-1: active 2025-02-01 to 2025-03-01 = 28 days, 423 pages
-      // towers-hc-1 (spanning): active 2025-01-01 (clipped from 2024-12-15) to 2025-01-20 = 19 days, 252 pages
-      // towers-hc-2 (reading): active 2025-06-01 to 2025-12-31 (clipped) days vary, 160 pages
-      // no-series-pb: active 2025-04-01 to 2025-05-01 = 30 days, 200 pages
-      // Total pages: 1035, total active days: 28+19+30+214 = 291? no, towers-hc-2 is still reading at 'now'
-      // The active days for towers-hc-2 depends on current date
-      expect(body.reading.avg_pages_per_day).toBeGreaterThan(0);
+      // 2025 is fully in the past (current date is 2026), so the denominator is
+      // the full 365 calendar days of 2025. total_pages_read = 1035.
+      // 1035 / 365 = 2.835... → 2.8
+      expect(body.reading.avg_pages_per_day).toBe(2.8);
     });
 
     it("computes copies acquired in 2025", async () => {
@@ -586,6 +583,10 @@ describe("Statistics API", () => {
       expect(body.reading.currently_reading_count).toBe(0);
       expect(body.reading.avg_rating_by_work).toEqual([]);
       expect(body.reading.avg_rating_by_author).toEqual([]);
+      expect(body.reading.avg_pages_per_day).toBe(0);
+      expect(body.reading.pages_per_period).toEqual([]);
+      expect(body.library.unread_count).toBe(0);
+      expect(body.library.percent_read).toBe(0);
       expect(body.notes.total_notes).toBe(0);
       expect(body.notes.notes_per_month).toEqual({});
       expect(body.notes.most_annotated_works).toEqual([]);
@@ -604,6 +605,130 @@ describe("Statistics API", () => {
       expect(body.reading.finished_count).toBe(2);
       // Notes in Q1 2025: Jan, Feb, Mar = 3
       expect(body.notes.total_notes).toBe(3);
+    });
+
+    it("treats the `to` bound as inclusive of the whole end day", async () => {
+      // The Mar 1 note is dated 2025-03-01T12:00:00. With an inclusive end-of-day
+      // `to`, it falls inside [Feb 1, Mar 1]; with a start-of-day `to` it would not.
+      const res = await api("/api/stats?from=2025-02-01&to=2025-03-01");
+      const body = await res.json();
+      // Feb 15 note + Mar 1 (12:00) note = 2
+      expect(body.notes.total_notes).toBe(2);
+    });
+
+    it("computes a single-day range without skipping stats", async () => {
+      // fellowship-hc-1 logged 100 pages on 2025-02-10 (and nothing else that day
+      // across the library). A same-day range must still count that activity.
+      const res = await api("/api/stats?from=2025-02-10&to=2025-02-10");
+      const body = await res.json();
+      expect(body.range).toEqual({ from: "2025-02-10", to: "2025-02-10" });
+      expect(body.reading.total_pages_read).toBe(100);
+      // Denominator clamps to a minimum of 1 day → 100 pages / 1 day.
+      expect(body.reading.avg_pages_per_day).toBe(100);
+    });
+  });
+
+  describe("Pages per day", () => {
+    it("divides by calendar days elapsed for a fully-past range", async () => {
+      // fellowship-pb-1: pages logged 2024-10-10 (100) and 2024-11-15 (323) = 423.
+      // Range 2024-10-01..2024-11-15 inclusive = 46 calendar days. 423/46 = 9.19 → 9.2
+      const res = await api("/api/stats?from=2024-10-01&to=2024-11-15");
+      const body = await res.json();
+      expect(body.reading.total_pages_read).toBe(423);
+      expect(body.reading.avg_pages_per_day).toBe(9.2);
+    });
+
+    it("caps the denominator at today for a range extending into the future", async () => {
+      // to=2099 would balloon the denominator to ~27000 days if not capped at today;
+      // capping keeps pages/day meaningful (well above 1).
+      const res = await api("/api/stats?from=2025-01-01&to=2099-12-31");
+      const body = await res.json();
+      expect(body.reading.total_pages_read).toBe(1035);
+      expect(body.reading.avg_pages_per_day).toBeGreaterThan(1);
+    });
+
+    it("sums all-time pages and derives a baseline from earliest activity", async () => {
+      // All-time total across every page_log: 423+423+352+160+200 = 1558
+      const res = await api("/api/stats?year=all");
+      const body = await res.json();
+      expect(body.reading.total_pages_read).toBe(1558);
+      expect(body.reading.avg_pages_per_day).toBeGreaterThan(0);
+    });
+  });
+
+  describe("Range-scoped ratings", () => {
+    it("includes only read-throughs finished within the range", async () => {
+      // year=2025: the-fellowship has two rated read-throughs, but pb-1 finished in
+      // 2024 → only hc-1 (9.0) contributes.
+      const res = await api("/api/stats?year=2025");
+      const body = await res.json();
+      const fellowship = body.reading.avg_rating_by_work.find(
+        (w: { slug: string }) => w.slug === "the-fellowship",
+      );
+      expect(fellowship.avg_rating).toBe(9.0);
+      expect(fellowship.read_through_count).toBe(1);
+    });
+
+    it("includes every rated read-through for all-time", async () => {
+      const res = await api("/api/stats?year=all");
+      const body = await res.json();
+      const fellowship = body.reading.avg_rating_by_work.find(
+        (w: { slug: string }) => w.slug === "the-fellowship",
+      );
+      expect(fellowship.avg_rating).toBe(8.5);
+      expect(fellowship.read_through_count).toBe(2);
+    });
+  });
+
+  describe("Unread and percent read", () => {
+    it("counts in-possession, never-started copies as unread", async () => {
+      const res = await api("/api/stats?year=all");
+      const body = await res.json();
+      // Only fellowship-lent (status lent, no read-throughs) is unread.
+      expect(body.library.unread_count).toBe(1);
+    });
+
+    it("computes percent of works with a finished read-through", async () => {
+      const res = await api("/api/stats?year=all");
+      const body = await res.json();
+      // fellowship + towers finished, no-series-work only DNF → 2/3 → 67
+      expect(body.library.percent_read).toBe(67);
+    });
+
+    it("does not scope unread/percent_read by the date range", async () => {
+      const res = await api("/api/stats?year=2025");
+      const body = await res.json();
+      expect(body.library.unread_count).toBe(1);
+      expect(body.library.percent_read).toBe(67);
+    });
+  });
+
+  describe("Reading velocity series", () => {
+    it("returns contiguous daily buckets for a short range", async () => {
+      const res = await api("/api/stats?from=2025-02-01&to=2025-03-01");
+      const body = await res.json();
+      const series = body.reading.pages_per_period;
+      // Feb 1..Mar 1 inclusive = 29 contiguous daily buckets.
+      expect(series).toHaveLength(29);
+      const byPeriod = Object.fromEntries(
+        series.map((p: { period: string; pages: number }) => [p.period, p.pages]),
+      );
+      expect(byPeriod["2025-02-10"]).toBe(100);
+      expect(byPeriod["2025-02-20"]).toBe(150);
+      expect(byPeriod["2025-03-01"]).toBe(173);
+      // Chronologically ordered.
+      const periods = series.map((p: { period: string }) => p.period);
+      expect([...periods].sort()).toEqual(periods);
+    });
+
+    it("buckets by month for all-time spans", async () => {
+      const res = await api("/api/stats?year=all");
+      const body = await res.json();
+      const series = body.reading.pages_per_period;
+      expect(series.length).toBeGreaterThan(0);
+      for (const p of series) {
+        expect(p.period).toMatch(/^\d{4}-\d{2}$/);
+      }
     });
   });
 });
