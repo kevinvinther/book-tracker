@@ -1,6 +1,6 @@
 import { Router, Request } from "express";
 import { Index } from "../lib/index.js";
-import { ReadThrough, PageLog, Copy, Work, Author, Note } from "../lib/types.js";
+import { Note } from "../lib/types.js";
 import { normalizeGenre } from "../lib/genres.js";
 
 interface DateRange {
@@ -14,12 +14,12 @@ function extractSlug(wikilink: string | undefined, prefix: string): string | nul
   return match ? match[1] : null;
 }
 
-function parseDateInput(input: string): string {
+function parseDateInput(input: string, boundary: "start" | "end"): string {
   if (/^\d{4}-\d{2}-\d{2}$/.test(input)) {
-    return `${input}T00:00:00.000Z`;
+    return boundary === "end" ? `${input}T23:59:59.999Z` : `${input}T00:00:00.000Z`;
   }
   if (/^\d{4}$/.test(input)) {
-    return `${input}-01-01T00:00:00.000Z`;
+    return boundary === "end" ? `${input}-12-31T23:59:59.999Z` : `${input}-01-01T00:00:00.000Z`;
   }
   return new Date(input).toISOString();
 }
@@ -52,8 +52,8 @@ function parseDateRange(query: Request["query"]): DateRange | null {
     let fromDate: string;
     let toDate: string;
     try {
-      fromDate = parseDateInput(from);
-      toDate = parseDateInput(to);
+      fromDate = parseDateInput(from, "start");
+      toDate = parseDateInput(to, "end");
     } catch {
       throw { status: 400, message: "Invalid date format. Use YYYY-MM-DD." };
     }
@@ -68,27 +68,51 @@ function parseDateRange(query: Request["query"]): DateRange | null {
   return null;
 }
 
-function isReadThroughInRange(rt: ReadThrough, from: string, to: string): boolean {
-  return rt.started_date <= to && (!rt.finished_date || rt.finished_date >= from);
+const MS_PER_DAY = 86400000;
+
+type Granularity = "day" | "week" | "month";
+
+function dayNumber(iso: string): number {
+  return Math.floor(new Date(iso).getTime() / MS_PER_DAY);
 }
 
-function pagesReadInRange(rt: ReadThrough, from: string, to: string): number {
-  let total = 0;
-  for (let i = 1; i < rt.page_log.length; i++) {
-    const entryDate = rt.page_log[i].date;
-    if (entryDate >= from && entryDate <= to) {
-      total += rt.page_log[i].page - rt.page_log[i - 1].page;
-    }
+function pickGranularity(spanDays: number): Granularity {
+  if (spanDays <= 62) return "day";
+  if (spanDays <= 366) return "week";
+  return "month";
+}
+
+// Monday-start week, keyed by the ISO date of that Monday (UTC).
+function weekStart(iso: string): string {
+  const d = new Date(iso);
+  const dow = (d.getUTCDay() + 6) % 7; // Mon=0 .. Sun=6
+  d.setUTCDate(d.getUTCDate() - dow);
+  d.setUTCHours(0, 0, 0, 0);
+  return d.toISOString().slice(0, 10);
+}
+
+function bucketKey(iso: string, gran: Granularity): string {
+  if (gran === "day") return iso.slice(0, 10);
+  if (gran === "month") return iso.slice(0, 7);
+  return weekStart(iso);
+}
+
+// Contiguous bucket keys spanning [from, to], so the velocity series has no gaps.
+function enumerateBuckets(from: string, to: string, gran: Granularity): string[] {
+  const keys: string[] = [];
+  const end = new Date(to);
+  const cursor = new Date(from);
+  cursor.setUTCHours(0, 0, 0, 0);
+  if (gran === "month") cursor.setUTCDate(1);
+  else if (gran === "week") cursor.setUTCDate(cursor.getUTCDate() - ((cursor.getUTCDay() + 6) % 7));
+  let guard = 0;
+  while (cursor <= end && guard++ < 100000) {
+    keys.push(bucketKey(cursor.toISOString(), gran));
+    if (gran === "day") cursor.setUTCDate(cursor.getUTCDate() + 1);
+    else if (gran === "week") cursor.setUTCDate(cursor.getUTCDate() + 7);
+    else cursor.setUTCMonth(cursor.getUTCMonth() + 1);
   }
-  return total;
-}
-
-function activeDaysInRange(rt: ReadThrough, from: string, to: string): number {
-  const start = rt.started_date > from ? rt.started_date : from;
-  const end = rt.finished_date && rt.finished_date < to ? rt.finished_date : to;
-  const startDay = Math.floor(new Date(start).getTime() / 86400000);
-  const endDay = Math.floor(new Date(end).getTime() / 86400000);
-  return Math.max(0, endDay - startDay);
+  return keys;
 }
 
 function isDateInRange(dateStr: string | undefined, from: string, to: string): boolean {
@@ -161,33 +185,59 @@ export function createStatsRouter(index: Index, _libraryPath: string): Router {
 
       // ── Reading stats ───────────────────────────────────────────
 
+      const nowIso = new Date().toISOString();
+      const inRange = (date: string): boolean =>
+        !range || (date >= range.from && date <= range.to);
+
       let finished_count = 0;
       let currently_reading_count = 0;
-      let total_pages_read = 0;
-      let total_active_days = 0;
-      const workRatings = new Map<string, { sum: number; count: number; title: string }>();
       let copies_acquired = 0;
+      let unread_count = 0;
+      let earliestPageLog: string | null = null;
+      let earliestStarted: string | null = null;
+      const finishedWorkSlugs = new Set<string>();
+      const workRatings = new Map<string, { sum: number; count: number; title: string }>();
+      const pageDeltas: { date: string; delta: number }[] = [];
 
       for (const copy of index.getAllCopies()) {
         const workSlug = extractSlug(copy.work, "works");
         const workTitle = workSlug ? index.getWork(workSlug)?.title || "" : "";
+        const readThroughs = copy.read_throughs || [];
 
-        if (range) {
-          if (range.from === range.to) continue; // degenerate range, skip
+        // Unread/TBR: still in possession, never started.
+        if ((copy.status === "owned" || copy.status === "lent") && readThroughs.length === 0) {
+          unread_count++;
         }
 
-        for (const rt of copy.read_throughs || []) {
+        for (const rt of readThroughs) {
           if (rt.status === "reading") {
             currently_reading_count++;
           }
-
-          if (range && isReadThroughInRange(rt, range.from, range.to)) {
-            total_pages_read += pagesReadInRange(rt, range.from, range.to);
-            total_active_days += activeDaysInRange(rt, range.from, range.to);
+          if (rt.status === "finished" && workSlug) {
+            finishedWorkSlugs.add(workSlug);
           }
 
-          if (rt.rating !== undefined && rt.rating !== null) {
-            if (workSlug) {
+          if (rt.started_date && (earliestStarted === null || rt.started_date < earliestStarted)) {
+            earliestStarted = rt.started_date;
+          }
+          for (let i = 0; i < rt.page_log.length; i++) {
+            const date = rt.page_log[i].date;
+            if (earliestPageLog === null || date < earliestPageLog) {
+              earliestPageLog = date;
+            }
+            if (i > 0) {
+              pageDeltas.push({ date, delta: rt.page_log[i].page - rt.page_log[i - 1].page });
+            }
+          }
+
+          // Ratings are range-scoped by finished_date; all-time keeps every rated read-through.
+          if (rt.rating !== undefined && rt.rating !== null && workSlug) {
+            const ratingInScope =
+              !range ||
+              (rt.finished_date != null &&
+                rt.finished_date >= range.from &&
+                rt.finished_date <= range.to);
+            if (ratingInScope) {
               const existing = workRatings.get(workSlug);
               if (existing) {
                 existing.sum += rt.rating;
@@ -214,10 +264,45 @@ export function createStatsRouter(index: Index, _libraryPath: string): Router {
         }
       }
 
-      const avg_pages_per_day =
-        total_active_days > 0
-          ? Math.round((total_pages_read / total_active_days) * 10) / 10
-          : 0;
+      const total_pages_read = pageDeltas.reduce(
+        (sum, e) => (inRange(e.date) ? sum + e.delta : sum),
+        0,
+      );
+
+      const earliestActivity = earliestPageLog ?? earliestStarted;
+
+      // Pages/day: pages in range ÷ calendar days elapsed, capped at today.
+      const denomFrom = range ? range.from : earliestActivity;
+      const denomTo = range ? (range.to < nowIso ? range.to : nowIso) : nowIso;
+      let avg_pages_per_day = 0;
+      if (denomFrom) {
+        const days = Math.max(1, dayNumber(denomTo) - dayNumber(denomFrom) + 1);
+        avg_pages_per_day = Math.round((total_pages_read / days) * 10) / 10;
+      }
+
+      // Reading velocity series: contiguous buckets over the range (capped at today).
+      const bucketFrom = range ? range.from : earliestActivity;
+      const bucketTo = range ? (range.to < nowIso ? range.to : nowIso) : nowIso;
+      let pages_per_period: { period: string; pages: number }[] = [];
+      if (bucketFrom) {
+        const span = dayNumber(bucketTo) - dayNumber(bucketFrom) + 1;
+        const gran = pickGranularity(span);
+        const buckets = new Map<string, number>();
+        for (const key of enumerateBuckets(bucketFrom, bucketTo, gran)) {
+          buckets.set(key, 0);
+        }
+        for (const e of pageDeltas) {
+          if (!inRange(e.date)) continue;
+          const key = bucketKey(e.date, gran);
+          buckets.set(key, (buckets.get(key) || 0) + e.delta);
+        }
+        pages_per_period = Array.from(buckets.entries())
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([period, pages]) => ({ period, pages }));
+      }
+
+      const percent_read =
+        total_works > 0 ? Math.round((finishedWorkSlugs.size / total_works) * 100) : 0;
 
       const avg_rating_by_work = Array.from(workRatings.entries())
         .map(([slug, { sum, count, title }]) => ({
@@ -309,6 +394,8 @@ export function createStatsRouter(index: Index, _libraryPath: string): Router {
           works_by_genre,
           works_by_language,
           works_by_series,
+          unread_count,
+          percent_read,
         },
         reading: {
           finished_count,
@@ -318,6 +405,7 @@ export function createStatsRouter(index: Index, _libraryPath: string): Router {
           avg_rating_by_work,
           avg_rating_by_author,
           copies_acquired,
+          pages_per_period,
         },
         notes: {
           total_notes,

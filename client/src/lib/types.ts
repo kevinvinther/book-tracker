@@ -268,6 +268,13 @@ export interface LibraryStats {
   works_by_genre: Record<string, number>;
   works_by_language: Record<string, number>;
   works_by_series: Record<string, number>;
+  unread_count: number;
+  percent_read: number;
+}
+
+export interface PagesPerPeriod {
+  period: string;
+  pages: number;
 }
 
 export interface RatingByWork {
@@ -292,6 +299,7 @@ export interface ReadingStats {
   avg_rating_by_work: RatingByWork[];
   avg_rating_by_author: RatingByAuthor[];
   copies_acquired: number;
+  pages_per_period: PagesPerPeriod[];
 }
 
 export interface AnnotatedWork {
