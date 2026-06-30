@@ -2,9 +2,7 @@
 
 ## Purpose
 Client home page that displays a responsive grid of all Works as cover thumbnails, with live search, sort, and genre filtering.
-
 ## Requirements
-
 ### Requirement: The system SHALL render a responsive grid of Work cover thumbnails at the route `/`, fetched from `GET /api/works`.
 The system SHALL render a responsive grid of Work cover thumbnails at the route `/library`, fetched from `GET /api/works`. The route `/` no longer renders this grid (it renders the reading dashboard); the grid is reached via the "Library" navigation entry.
 
@@ -56,15 +54,28 @@ The grid SHALL support sorting by title, author, or date added, implemented via 
 - **THEN** the grid re-fetches with `?sort=title` and displays works in that order
 
 ### Requirement: The grid SHALL support filtering by genre, computed client-side from the genres present on the currently loaded works.
-The grid SHALL support filtering by genre. On viewports 768px and above, genre chips SHALL be displayed inline below the toolbar. On viewports below 768px, genre chips SHALL be accessible via a "Filters" button that opens a bottom sheet dialog.
+
+The grid SHALL support filtering by genre. On viewports 768px and above, genre chips SHALL be displayed inline below the toolbar. On viewports below 768px, genre chips SHALL be accessible via a "Filters" button that opens a bottom sheet dialog. The active genre filter SHALL be reflected in and seeded from the `?genre=` URL query parameter, so a link from another page (e.g. the stats page) lands with that genre pre-selected. Genre matching SHALL be performed on the normalized genre value (lowercase, trimmed, spaces collapsed to hyphens), so a normalized slug from the URL (e.g. `science-fiction`) matches a work whose raw genre is `Science Fiction`.
 
 #### Scenario: Genre chip inline on desktop
+
 - **WHEN** the user selects a genre chip on a desktop viewport
-- **THEN** only works whose `genres` array includes that genre are shown
+- **THEN** only works whose genres normalize to the selected genre are shown, and the `?genre=` parameter updates
 
 #### Scenario: Genre filter via bottom sheet on mobile
+
 - **WHEN** the user taps the "Filters" button on a mobile viewport
 - **THEN** a bottom sheet opens with genre chips; selecting a chip filters the grid and closes the sheet
+
+#### Scenario: Genre is seeded from the URL parameter on load
+
+- **WHEN** the user navigates to `/library?genre=science-fiction`
+- **THEN** the grid loads with that genre pre-selected and shows only works whose genres normalize to `science-fiction`
+
+#### Scenario: Normalized matching tolerates raw genre casing
+
+- **WHEN** the active genre is `science-fiction` and a work has the raw genre `Science Fiction`
+- **THEN** that work is shown (the raw value is normalized before comparison)
 
 ### Requirement: Empty state
 When no works exist in the library, the grid SHALL show an empty-state message with a prompt to add the first book.
@@ -99,3 +110,4 @@ When a work has zero authors in its `authors_meta` array, the card SHALL display
 #### Scenario: Work with empty author list
 - **WHEN** a work has `authors_meta` as an empty array or `null`
 - **THEN** the card displays "Unknown author" in the author position with `text-muted-foreground` styling
+
